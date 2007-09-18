@@ -1,51 +1,24 @@
-##############################################################################
-#
-# Copyright (c) 2006 Zope Corporation and Contributors.
-# All Rights Reserved.
-#
-# This software is subject to the provisions of the Zope Public License,
-# Version 2.1 (ZPL).  A copy of the ZPL should accompany this distribution.
-# THIS SOFTWARE IS PROVIDED "AS IS" AND ANY AND ALL EXPRESS OR IMPLIED
-# WARRANTIES ARE DISCLAIMED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
-# FOR A PARTICULAR PURPOSE.
-#
-##############################################################################
-"""Setup for zope.event package
-"""
+# Copyright (c) 2004-2007 gocept gmbh & co. kg
+# See also LICENSE.txt
+# $Id$
+"""Setup for gocept.objectquery package"""
 
-import os
 from setuptools import setup, find_packages
 
-
-def read(*rnames):
-    return open(os.path.join(os.path.dirname(__file__), *rnames)).read()
-
-name = ''
+name = 'gocept.objectquery'
 
 setup(
     name=name,
-    version='0.1d',
+    version='0.1',
     url='http://www.python.org/pypi/'+name,
     license='ZPL 2.1',
-    description='ZODB Indexing',
-    author='gocept gmbh & co. kg',
+    description='A framework for indexing and querying python objects',
+    author='Sebastian Wehrmann',
     author_email='sw@gocept.com',
-    long_description=(
-        read('README.txt')
-        + '\n' +
-        'Detailed Documentation\n'
-        '**********************\n'
-        + '\n' +
-        read('src', 'zope', 'event', 'README.txt')
-        + '\n' +
-        'Download\n'
-        '**********************\n'
-        ),
-      packages=find_packages('src'),
-      package_dir={'': 'src'},
-      namespace_packages=['zope',],
-      include_package_data=True,
-      install_requires=['setuptools'],
-      zip_safe=False,
-      )
+    packages=find_packages('src'),
+    package_dir={'': 'src'},
+    namespace_packages=['gocept',],
+    include_package_data=True,
+    install_requires=['setuptools'],
+    zip_safe=False,
+    )

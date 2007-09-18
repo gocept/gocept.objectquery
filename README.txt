@@ -1,14 +1,9 @@
-**********
-zope.event
-**********
+===========
+ObjectQuery
+===========
 
-The zope.event package provides a simple event system.  It provides:
+ObjectQuery is licensed under ZPL 2.1
 
-- An event publishing system
+Copyright 2004-2007 by "gocept gmbh & co. kg":http://www.gocept.com
 
-- A very simple event-dispatching system on which more sophisticated
-  event dispatching systems can be built.  (For example, a type-based
-  event dispatching system that builds on zope.event can be found in
-  zope.component.
 
-.. contents::

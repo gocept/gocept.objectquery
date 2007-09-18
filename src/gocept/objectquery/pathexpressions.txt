@@ -1,0 +1,12 @@
+==============================================
+Querying objects with regular path expressions
+==============================================
+
+Regular path expressions:
+
+    >>> from gocept.objectquery.pathexpressions import QueryProcessor
+    >>> from gocept.objectquery.collection import Collection
+    >>> objects = Collection()
+    >>> query = QueryProcessor(objects)
+    >>> query('/Foo')
+    <ResultSet object at 0x...>
