@@ -9,4 +9,4 @@ Regular path expressions:
     >>> objects = Collection()
     >>> query = QueryProcessor(objects)
     >>> query('/Foo')
-    <ResultSet object at 0x...>
+    <gocept.objectquery.resultset.ResultSet object at 0x...>

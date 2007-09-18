@@ -9,6 +9,7 @@ from zope.testing import doctest
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTest(doctest.DocFileSuite("pathexpressions.txt"))
+    suite.addTest(doctest.DocFileSuite("pathexpressions.txt",
+                                       optionflags=doctest.ELLIPSIS))
     return suite
 
