@@ -2,11 +2,42 @@
 Querying objects with regular path expressions
 ==============================================
 
-Regular path expressions:
+You create a QueryProcessor like this:
 
     >>> from gocept.objectquery.pathexpressions import QueryProcessor
     >>> from gocept.objectquery.collection import Collection
     >>> objects = Collection()
     >>> query = QueryProcessor(objects)
+    >>> query
+    <gocept.objectquery.pathexpressions.QueryProcessor object at 0x...>
+
+Some regular path expressions that do work:
+
+    >>> query('/')
+    <gocept.objectquery.resultset.ResultSet object at 0x...>
     >>> query('/Foo')
     <gocept.objectquery.resultset.ResultSet object at 0x...>
+    >>> query('/Foo/_?/Bar+')
+    <gocept.objectquery.resultset.ResultSet object at 0x...>
+    >>> query('/chapter13/_*/figure1')
+    <gocept.objectquery.resultset.ResultSet object at 0x...>
+
+Some regular path expressions that do *not* work:
+
+    >>> query('/*')
+    Traceback (most recent call last):
+    ...
+    SyntaxError: ...
+    >>> query('*')
+    Traceback (most recent call last):
+    ...
+    SyntaxError: ...
+    >>> query('Bar')
+    Traceback (most recent call last):
+    ...
+    SyntaxError: ...
+    >>> query('/Foo/?Bar')
+    Traceback (most recent call last):
+    ...
+    SyntaxError: ...
+

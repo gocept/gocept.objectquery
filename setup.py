@@ -19,6 +19,9 @@ setup(
     package_dir={'': 'src'},
     namespace_packages=['gocept',],
     include_package_data=True,
-    install_requires=['setuptools'],
+    install_requires=[
+        'setuptools',
+        'reflex'
+    ],
     zip_safe=False,
     )
