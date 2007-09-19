@@ -17,7 +17,7 @@ Some regular path expressions that do work:
     <gocept.objectquery.resultset.ResultSet object at 0x...>
     >>> query('/Foo')
     <gocept.objectquery.resultset.ResultSet object at 0x...>
-    >>> query('/Foo/_?/Bar+')
+    >>> query('Foo/_?/Bar+')
     <gocept.objectquery.resultset.ResultSet object at 0x...>
     >>> query('/chapter13/_*/figure1')
     <gocept.objectquery.resultset.ResultSet object at 0x...>
@@ -25,18 +25,20 @@ Some regular path expressions that do work:
     <gocept.objectquery.resultset.ResultSet object at 0x...>
     >>> query('/a1/_*/AB+[@P="0815"]|_*/_')
     <gocept.objectquery.resultset.ResultSet object at 0x...>
+    >>> query('(E1/E2)*/E3/((E4[@A="v"])|(E5/_*/E6))')
+    <gocept.objectquery.resultset.ResultSet object at 0x...>
 
 Some regular path expressions that do *not* work:
 
+    >>> query('')
+    Traceback (most recent call last):
+    ...
+    SyntaxError: Query must not be empty.
     >>> query('/*')
     Traceback (most recent call last):
     ...
     SyntaxError: ...
     >>> query('*')
-    Traceback (most recent call last):
-    ...
-    SyntaxError: ...
-    >>> query('Bar')
     Traceback (most recent call last):
     ...
     SyntaxError: ...
@@ -60,3 +62,7 @@ Some regular path expressions that do *not* work:
     Traceback (most recent call last):
     ...
     SyntaxError: ...
+    >>> query('(E1/E2)*/E3/(E4[@A="v"])|(E5/_*/E6))')
+    Traceback (most recent call last):
+    ...
+    SyntaxError: Open parenthesis count does not match close parenthesis count
