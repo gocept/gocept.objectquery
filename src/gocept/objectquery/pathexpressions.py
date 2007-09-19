@@ -29,6 +29,8 @@ class QueryProcessor(object):
         T_OCC_ONE_OR_MORE = 6
         T_OCC_MULTI = 7
         T_STRING = 10
+        T_ATTR_KEY = 11
+        T_ATTR_VALUE = 12
         T_PRECEDENCE_BEGIN = 15
         T_PRECEDENCE_END = 16
 
@@ -41,7 +43,7 @@ class QueryProcessor(object):
         self.scanner.rule("", tostate="subrpe")
 
         self.scanner.state("subrpe")
-        self.scanner.rule ("[a-zA-Z1-9_][\w_]*", tostate="occ", token=T_STRING)
+        self.scanner.rule ("[a-zA-Z0-9_][\w_]*", tostate="occ", token=T_STRING)
 
         self.scanner.state( "occ" )
         self.scanner.rule ("\?", tostate="predicate", token=T_OCC_ONE)
@@ -50,6 +52,13 @@ class QueryProcessor(object):
         self.scanner.rule ("", tostate="predicate")
 
         self.scanner.state("predicate")
+        self.scanner.rule ("\[@", tostate="predicate_expl")
         self.scanner.rule("", tostate="subexp")
+
+        self.scanner.state("predicate_expl")
+        self.scanner.rule ("[a-zA-Z0-9_][\w_]*", token=T_ATTR_KEY)
+        self.scanner.rule ("=\"")
+        self.scanner.rule ("[a-zA-Z0-9 _][\w_]*", token=T_ATTR_VALUE)
+        self.scanner.rule ("\"\]", tostate="subexp")
 
         return self.scanner
