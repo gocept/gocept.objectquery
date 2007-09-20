@@ -1,0 +1,15 @@
+============================================
+Lexical analysis of regular path expressions
+============================================
+
+ >>> from gocept.objectquery.pathexpressions import Lexer
+ >>> l = Lexer()
+
+ >>> l.lex('/')
+ Exception ...
+
+ >>> l.lex('foo')
+ [('identifier', 'foo')]
+
+ >>> l.lex('/foo|/bar')
+ [('pathsep', '/'), ('identifier', 'foo'), ('operator', '|'), ('pathsep', '/'), ('identifier', 'bar')]
