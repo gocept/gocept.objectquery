@@ -30,6 +30,7 @@ class QueryProcessor(object):
         if (self._bracket_count != 0):
             raise SyntaxError('Open parenthesis count does not match close '
                               'parenthesis count')
+        #print self._bracket_count
         return gocept.objectquery.resultset.ResultSet()
 
     def _inc_lexer_bracket(self, token_stream):
@@ -38,11 +39,14 @@ class QueryProcessor(object):
 
     def _dec_lexer_bracket(self, token_stream):
         """ Help method decrementing the count of paranthesises. """
+        if (self._bracket_count == 0):
+            raise SyntaxError('Wrong closing paranthesis. No more open '
+                              'paranthesises left.')
         self._bracket_count = self._bracket_count - 1
 
     def _init_lexer(self):
         """ Initialize the lexer with rpe rules.
-        
+
         Here the lexer is being initialized with rules that match regular path
         expressions. Please read ***LINKDIPLOMATHESIS*** for more details.
         """
