@@ -7,6 +7,12 @@ import reflex
 import StringIO
 
 class QueryProcessor(object):
+    """ Processes a rpe query to the db and returns the results.
+
+    QueryProcessor processes a regular path expression query by using
+    reflex-0.1 from Talin <viridia at gmail com>. It returns a resultset
+    object with the results from the database.
+    """
 
     def __init__(self, collection):
         self._bracket_count = 0
@@ -18,23 +24,28 @@ class QueryProcessor(object):
             raise SyntaxError('Query must not be empty.')
         self.expression = StringIO.StringIO(expression)
         self.iterer = self.lexer( self.expression )
-        # do something with lexer (dummy begin)
         for token in self.iterer:
-            self.temp = token.id
-        # (dummy end)
+            # do something with lexer
+            self.temp = token.id    # DUMMY
         if (self._bracket_count != 0):
             raise SyntaxError('Open parenthesis count does not match close '
                               'parenthesis count')
         return gocept.objectquery.resultset.ResultSet()
 
     def _inc_lexer_bracket(self, token_stream):
+        """ Help method incrementing the count of paranthesises. """
         self._bracket_count = self._bracket_count + 1
 
     def _dec_lexer_bracket(self, token_stream):
+        """ Help method decrementing the count of paranthesises. """
         self._bracket_count = self._bracket_count - 1
 
     def _init_lexer(self):
-        """ init the lexer with RPE rules """
+        """ Initialize the lexer with rpe rules.
+        
+        Here the lexer is being initialized with rules that match regular path
+        expressions. Please read ***LINKDIPLOMATHESIS*** for more details.
+        """
 
         T_PATHSEPERATOR = 1
         T_UNION = 2
@@ -48,19 +59,19 @@ class QueryProcessor(object):
         T_PREC_END = 16
 
         self.scanner = reflex.scanner("rpe")
-        self.scanner.rule("\(", self._inc_lexer_bracket, tostate="rpe")
+        self.scanner.rule("\(", self._inc_lexer_bracket, tostate="rpe", token=T_PREC_BEGIN)
         self.scanner.rule("/", tostate="subexp", token=T_PATHSEPERATOR)
         self.scanner.rule("[a-zA-Z0-9_][\w_]*", tostate="occ", token=T_STRING)
 
         self.scanner.state("subexp")
-        self.scanner.rule("\)", self._dec_lexer_bracket, tostate="occ")
-        self.scanner.rule("\(", self._inc_lexer_bracket, tostate="subexp")
+        self.scanner.rule("\)", self._dec_lexer_bracket, tostate="occ", token=T_PREC_END)
+        self.scanner.rule("\(", self._inc_lexer_bracket, tostate="subexp", token=T_PREC_BEGIN)
         self.scanner.rule("/", tostate="subrpe", token=T_PATHSEPERATOR)
         self.scanner.rule("\|", tostate="subexp", token=T_UNION)
         self.scanner.rule("", tostate="subrpe")
 
         self.scanner.state("subrpe")
-        self.scanner.rule("\(", self._inc_lexer_bracket, tostate="subrpe")
+        self.scanner.rule("\(", self._inc_lexer_bracket, tostate="subrpe", token=T_PREC_BEGIN)
         self.scanner.rule ("[a-zA-Z0-9_][\w_]*", tostate="occ", token=T_STRING)
 
         self.scanner.state( "occ" )
