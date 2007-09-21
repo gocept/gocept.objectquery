@@ -25,23 +25,31 @@ class QueryParser(object):
     """ """
 
     def __init__(self):
-        self.declaration = r'''
+        declaration = r'''
         rpe         := path, ('|', path)*
-        path        := ((klammer / normal), occurence?, '|'?)+
-        klammer     := '(', path+, ')'
-        normal      := '/'?, pe, ('/', pe)*
-        pe          := ('_' / IDENTIFIER), occurence?, predicate?
+        path        := ((bracket / normal), occurence?, '|'?)+
+        bracket     := '(', path+, ')'
+        normal      := '/'?, pathelem, ('/', pathelem)*
+        pathelem    := ('_' / IDENTIFIER), occurence?, predicate?
         predicate   := ('[', '@', IDENTIFIER, '=', '"', ATTRVALUE, '"', ']') 
         occurence   := '?' / '+' / '*'
         IDENTIFIER  := [a-zA-Z0-9]+
         ATTRVALUE   := [a-zA-Z0-9 ]+
         '''
+        self.parser = Parser(declaration)
 
-    def check(self):
-        parser = Parser(self.declaration)
+    def check(self, expression=None, level="rpe"):
+        """ Check expression for syntax errors. """
 
-    def parse(self, expression, level="rpe"):
-        parser = Parser(self.declaration)
-        success, children, nextcharacter = parser.parse(expression,
-                                                        level)
-        assert success and nextcharacter==len(expression), """Wasn't able to parse %s as a %s (%s chars parsed of %s), returned value was %s"""%(repr(expression), level, nextcharacter, len(expression), (success, children, nextcharacter))
+        if (expression is not None):
+            succ, child, nextchar = self.parser.parse(expression, level)
+            assert succ and nextchar==len(expression), """Wasn't able to "
+                "parse %s as a %s (%s chars parsed of %s), returned value"
+                 was %s"""%(repr(expression), level, nextchar,
+                            len(expression), (succ, child, nextchar))
+
+    def parse(self, expression):
+        """ """
+
+        succ, child, nextchar = self.parser.parse(expression, "rpe")
+        return child
