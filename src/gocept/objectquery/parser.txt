@@ -1,0 +1,69 @@
+================================
+Parsing regular path expressions
+================================
+
+Import the QueryParser:
+
+ >>> from gocept.objectquery.pathexpressions import QueryParser
+ >>> p = QueryParser()
+
+Check the RPE-Declaration:
+
+ >>> p.check()
+
+Some positive RPE-Tests:
+
+ >>> p.parse('foo', 'IDENTIFIER')
+
+ >>> p.parse('foo bar', 'ATTRVALUE')
+
+ >>> p.parse('?', 'occurence')
+ >>> p.parse('*', 'occurence')
+ >>> p.parse('+', 'occurence')
+
+ >>> p.parse('[@blabla="blub"]', 'predicate')
+
+ >>> p.parse('_?', 'pe')
+ >>> p.parse('_[@blabla="blub"]', 'pe')
+ >>> p.parse('foo', 'pe')
+ >>> p.parse('foo*', 'pe')
+ >>> p.parse('foo?[@blabla="blub"]', 'pe')
+
+ >>> p.parse('/foo', 'path')
+ >>> p.parse('foo/bar', 'path')
+ >>> p.parse('/foo/bar/boo', 'path')
+ >>> p.parse('/foo*/bar', 'path')
+ >>> p.parse('/foo/_*/bar', 'path')
+ >>> p.parse('/foo/_*[@a="b"]/bar', 'path')
+ >>> p.parse('/foo[@a="b"]/_*/bar+[@a2="b2 b3"]/fou', 'path')
+
+ >>> p.parse('/foo[@a="b"]/_*/bar+[@a2="b2 b3"]/fou')
+ >>> p.parse('(foo/bar)')
+ >>> p.parse('(foo/bar)|(foo/bar)')
+ >>> p.parse('(foo/bar)|(foo/bar)|(foo/bar)')
+ >>> p.parse('(/E1/E2)?/E3((/E4[@A="v"])|(E5/_*/E6))')
+ >>> p.parse('(((((E1)|(E2))|(E3/E4))|(E5/E6/E7))|(E7/E8))')
+ >>> p.parse('(a|b)|c')
+
+Some negative RPE-Tests:
+
+ >>> p.parse('')
+ Traceback (most recent call last):
+ ...
+ AssertionError: ...
+ >>> p.parse('/')
+ Traceback (most recent call last):
+ ...
+ AssertionError: ...
+ >>> p.parse('foo/')
+ Traceback (most recent call last):
+ ...
+ AssertionError: ...
+ >>> p.parse('foo[a="v"]')
+ Traceback (most recent call last):
+ ...
+ AssertionError: ...
+ >>> p.parse('((abc/def)|(ghi/jkl)')
+ Traceback (most recent call last):
+ ...
+ AssertionError: ...
