@@ -27,7 +27,7 @@ class QueryParser(object):
     def __init__(self):
         declaration = r'''
         rpe             := ((bracket / normal), occurence?, UNION?)+
-        bracket         := OPEN_BRACKET, rpe+, CLOSE_BRACKET
+        bracket         := open_bracket, rpe+, close_bracket
         normal          := PATH_SEPERATOR?, pathelem, (PATH_SEPERATOR, pathelem)*
         pathelem        := (WILDCARD / IDENTIFIER), occurence?, predicate?
         predicate       := (PREDICATE_BEGIN, IDENTIFIER, '=', '"', ATTRVALUE, '"', PREDICATE_END)
@@ -37,8 +37,8 @@ class QueryParser(object):
         PATH_SEPERATOR  := '/'
         WILDCARD        := '_'
         UNION           := '|'
-        OPEN_BRACKET    := '('
-        CLOSE_BRACKET   := ')'
+        open_bracket    := '('
+        close_bracket   := ')'
         PREDICATE_BEGIN := '[@'
         PREDICATE_END   := ']'
         OCC_NONE_OR_ONE := '?'
@@ -47,15 +47,31 @@ class QueryParser(object):
         '''
         self.parser = Parser(declaration)
 
-    def _modify_result(self, result, expression, output=[]):
+    def _modify_result(self, result, expression, output):
+        # stop condition
         if result is None:
             return output
         else:
+            # Is result[0] a string? If yes, then do something with it
             if (isinstance(result[0], basestring)):
+                # Is result[0] uppercase? If yes, then append it to the list
+                # as {Identifier: Value}
                 if (result[0] == result[0].upper()):
                     output.append({result[0]: expression[result[1]:result[2]]})
+                # result[0] is not uppercase: go deeper
                 else:
-                    output = self._modify_result(result[3],expression,output)
+                    # is result[0] = "pathelem" oder "bracket":
+                    # generate a subtupel
+                    if ((result[0] == "pathelem") or (result[0] == "bracket")):
+                        temp = output
+                        output = self._modify_result(result[3],expression, [])
+                        temp.append(output)
+                        output = temp
+                    # go deeper
+                    else:
+                        output = self._modify_result(result[3],expression,output)
+            # result[0] is not a string, so it is a tupel
+            # go deeper for each tupel
             else:
                 for i in result:
                     output = self._modify_result(i,expression,output)

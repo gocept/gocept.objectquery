@@ -70,5 +70,13 @@ No parsing:
 
  >>> p.parse('/foo*')
  [{'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'foo'}, {'OCC_MULTI': '*'}]]
- >>> p.parse('/foo/bar')
+ >>> p.parse('/foo*/bar')
  [{'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'foo'}, {'OCC_MULTI': '*'}], {'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'bar'}]]
+ >>> p.parse('/foo?[@A="v"]')
+ [{'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'foo'}, {'OCC_NONE_OR_ONE': '?'}, {'PREDICATE_BEGIN': '[@'}, {'IDENTIFIER': 'A'}, {'ATTRVALUE': 'v'}, {'PREDICATE_END': ']'}]]
+ >>> p.parse('(foo/bar)')
+ [[[{'IDENTIFIER': 'foo'}], {'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'bar'}]]]
+ >>> p.parse('(foo/bar)|(foo/bar)')
+ [[[{'IDENTIFIER': 'foo'}], {'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'bar'}]], {'UNION': '|'}, [[{'IDENTIFIER': 'foo'}], {'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'bar'}]]]
+ >>> p.parse('(/E1/E2)?/E3((/E4[@A="v"])|(E5/_*/E6))')
+ [[{'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'E1'}], {'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'E2'}]], {'OCC_NONE_OR_ONE': '?'}, {'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'E3'}], [[{'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'E4'}, {'PREDICATE_BEGIN': '[@'}, {'IDENTIFIER': 'A'}, {'ATTRVALUE': 'v'}, {'PREDICATE_END': ']'}]], {'UNION': '|'}, [[{'IDENTIFIER': 'E5'}], {'PATH_SEPERATOR': '/'}, [{'WILDCARD': '_'}, {'OCC_MULTI': '*'}], {'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'E6'}]]]]
