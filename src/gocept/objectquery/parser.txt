@@ -28,13 +28,12 @@ Some positive RPE-Tests:
  >>> p.check('foo*', 'pathelem')
  >>> p.check('foo?[@blabla="blub"]', 'pathelem')
 
- >>> p.check('/foo', 'path')
- >>> p.check('foo/bar', 'path')
- >>> p.check('/foo/bar/boo', 'path')
- >>> p.check('/foo*/bar', 'path')
- >>> p.check('/foo/_*/bar', 'path')
- >>> p.check('/foo/_*[@a="b"]/bar', 'path')
- >>> p.check('/foo[@a="b"]/_*/bar+[@a2="b2 b3"]/fou', 'path')
+ >>> p.check('foo/bar', 'rpe')
+ >>> p.check('/foo/bar/boo', 'rpe')
+ >>> p.check('/foo*/bar', 'rpe')
+ >>> p.check('/foo/_*/bar', 'rpe')
+ >>> p.check('/foo/_*[@a="b"]/bar', 'rpe')
+ >>> p.check('/foo[@a="b"]/_*/bar+[@a2="b2 b3"]/fou', 'rpe')
 
  >>> p.check('/foo[@a="b"]/_*/bar+[@a2="b2 b3"]/fou')
  >>> p.check('(foo/bar)')
@@ -69,4 +68,7 @@ Some negative RPE-Tests:
 
 No parsing:
 
- >>> p.parse('/bar')
+ >>> p.parse('/foo*')
+ [{'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'foo'}, {'OCC_MULTI': '*'}]]
+ >>> p.parse('/foo/bar')
+ [{'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'foo'}, {'OCC_MULTI': '*'}], {'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'bar'}]]
