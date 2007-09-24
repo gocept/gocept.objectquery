@@ -3,10 +3,7 @@
 # $Id$
 
 import gocept.objectquery.resultset
-import StringIO
-from simpleparse.common import numbers, strings, comments
 from simpleparse.parser import Parser
-from simpleparse.dispatchprocessor import *
 
 class QueryProcessor(object):
     """ Processes a rpe query to the db and returns the results.
@@ -33,7 +30,9 @@ class QueryParser(object):
         predicate       := (PREDICATE_BEGIN, IDENTIFIER, '=', '"', ATTRVALUE, '"', PREDICATE_END)
         occurence       := OCC_NONE_OR_ONE / OCC_ONE_OR_MORE / OCC_MULTI
         IDENTIFIER      := [a-zA-Z0-9]+
-        ATTRVALUE       := [a-zA-Z0-9 ]+ / string_double_quote
+        ATTRVALUE       := text / quoted_text
+        text            := [a-zA-Z0-9 ]+, quoted_text*
+        quoted_text     := [a-zA-Z0-9 ]*, '\"', [a-zA-Z0-9 ]+, '\"', [a-zA-Z0-9 ]*
         PATH_SEPERATOR  := '/'
         WILDCARD        := '_'
         UNION           := '|'

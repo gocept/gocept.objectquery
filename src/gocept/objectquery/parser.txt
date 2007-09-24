@@ -25,6 +25,12 @@ Some positive RPE-Tests:
  [[[{'IDENTIFIER': 'a'}], {'UNION': '|'}, [{'IDENTIFIER': 'b'}]], {'UNION': '|'}, [{'IDENTIFIER': 'c'}]]
  >>> p.parse('a[@b="\"abc\""]')
  [[{'IDENTIFIER': 'a'}, {'PREDICATE_BEGIN': '[@'}, {'IDENTIFIER': 'b'}, {'ATTRVALUE': '"abc"'}, {'PREDICATE_END': ']'}]]
+ >>> p.parse('a[@b="a\"b\"c"]')
+ [[{'IDENTIFIER': 'a'}, {'PREDICATE_BEGIN': '[@'}, {'IDENTIFIER': 'b'}, {'ATTRVALUE': 'a"b"c'}, {'PREDICATE_END': ']'}]]
+ >>> p.parse('a[@b="\"b\"c"]')
+ [[{'IDENTIFIER': 'a'}, {'PREDICATE_BEGIN': '[@'}, {'IDENTIFIER': 'b'}, {'ATTRVALUE': '"b"c'}, {'PREDICATE_END': ']'}]]
+ >>> p.parse('a[@b="a\"b\"c\"d\""]')
+ [[{'IDENTIFIER': 'a'}, {'PREDICATE_BEGIN': '[@'}, {'IDENTIFIER': 'b'}, {'ATTRVALUE': 'a"b"c"d"'}, {'PREDICATE_END': ']'}]]
 
 
 Some negative RPE-Tests:
