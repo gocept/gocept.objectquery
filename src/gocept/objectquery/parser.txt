@@ -7,64 +7,48 @@ Import the QueryParser:
  >>> from gocept.objectquery.pathexpressions import QueryParser
  >>> p = QueryParser()
 
-Check the RPE-Declaration:
-
- >>> p.check()
-
 Some positive RPE-Tests:
 
- >>> p.check('foo', 'IDENTIFIER')
- >>> p.check('foo bar', 'ATTRVALUE')
+ >>> p.parse('/foo?')
+ [{'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'foo'}, {'OCC_NONE_OR_ONE': '?'}]]
+ >>> p.parse('foo/bar*[@a="b"]')
+ [[{'IDENTIFIER': 'foo'}], {'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'bar'}, {'OCC_MULTI': '*'}, {'PREDICATE_BEGIN': '[@'}, {'IDENTIFIER': 'a'}, {'ATTRVALUE': 'b'}, {'PREDICATE_END': ']'}]]
+ >>> p.parse('/foo[@a="b"]/_*/bar+[@a2="b2 b3"]/fou')
+ [{'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'foo'}, {'PREDICATE_BEGIN': '[@'}, {'IDENTIFIER': 'a'}, {'ATTRVALUE': 'b'}, {'PREDICATE_END': ']'}], {'PATH_SEPERATOR': '/'}, [{'WILDCARD': '_'}, {'OCC_MULTI': '*'}], {'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'bar'}, {'OCC_ONE_OR_MORE': '+'}, {'PREDICATE_BEGIN': '[@'}, {'IDENTIFIER': 'a2'}, {'ATTRVALUE': 'b2 b3'}, {'PREDICATE_END': ']'}], {'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'fou'}]]
+ >>> p.parse('/foo[@a="b"]/_*/bar+[@a2="b2 b3"]/fou')
+ [{'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'foo'}, {'PREDICATE_BEGIN': '[@'}, {'IDENTIFIER': 'a'}, {'ATTRVALUE': 'b'}, {'PREDICATE_END': ']'}], {'PATH_SEPERATOR': '/'}, [{'WILDCARD': '_'}, {'OCC_MULTI': '*'}], {'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'bar'}, {'OCC_ONE_OR_MORE': '+'}, {'PREDICATE_BEGIN': '[@'}, {'IDENTIFIER': 'a2'}, {'ATTRVALUE': 'b2 b3'}, {'PREDICATE_END': ']'}], {'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'fou'}]]
+ >>> p.parse('(/E1/E2)?/E3((/E4[@A="v"])|(E5/_*/E6))')
+ [[{'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'E1'}], {'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'E2'}]], {'OCC_NONE_OR_ONE': '?'}, {'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'E3'}], [[{'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'E4'}, {'PREDICATE_BEGIN': '[@'}, {'IDENTIFIER': 'A'}, {'ATTRVALUE': 'v'}, {'PREDICATE_END': ']'}]], {'UNION': '|'}, [[{'IDENTIFIER': 'E5'}], {'PATH_SEPERATOR': '/'}, [{'WILDCARD': '_'}, {'OCC_MULTI': '*'}], {'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'E6'}]]]]
+ >>> p.parse('(((((E1)|(E2))|(E3/E4))|(E5/E6/E7))|(E7/E8))')
+ [[[[[[[{'IDENTIFIER': 'E1'}]], {'UNION': '|'}, [[{'IDENTIFIER': 'E2'}]]], {'UNION': '|'}, [[{'IDENTIFIER': 'E3'}], {'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'E4'}]]], {'UNION': '|'}, [[{'IDENTIFIER': 'E5'}], {'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'E6'}], {'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'E7'}]]], {'UNION': '|'}, [[{'IDENTIFIER': 'E7'}], {'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'E8'}]]]]
+ >>> p.parse('(a|b)|c')
+ [[[{'IDENTIFIER': 'a'}], {'UNION': '|'}, [{'IDENTIFIER': 'b'}]], {'UNION': '|'}, [{'IDENTIFIER': 'c'}]]
+ >>> p.parse('a[@b="\"abc\""]')
+ [[{'IDENTIFIER': 'a'}, {'PREDICATE_BEGIN': '[@'}, {'IDENTIFIER': 'b'}, {'ATTRVALUE': '"abc"'}, {'PREDICATE_END': ']'}]]
 
- >>> p.check('?', 'occurence')
- >>> p.check('*', 'occurence')
- >>> p.check('+', 'occurence')
-
- >>> p.check('[@blabla="blub"]', 'predicate')
-
- >>> p.check('_?', 'pathelem')
- >>> p.check('_[@blabla="blub"]', 'pathelem')
- >>> p.check('foo', 'pathelem')
- >>> p.check('foo*', 'pathelem')
- >>> p.check('foo?[@blabla="blub"]', 'pathelem')
-
- >>> p.check('foo/bar', 'rpe')
- >>> p.check('/foo/bar/boo', 'rpe')
- >>> p.check('/foo*/bar', 'rpe')
- >>> p.check('/foo/_*/bar', 'rpe')
- >>> p.check('/foo/_*[@a="b"]/bar', 'rpe')
- >>> p.check('/foo[@a="b"]/_*/bar+[@a2="b2 b3"]/fou', 'rpe')
-
- >>> p.check('/foo[@a="b"]/_*/bar+[@a2="b2 b3"]/fou')
- >>> p.check('(foo/bar)')
- >>> p.check('(foo/bar)|(foo/bar)')
- >>> p.check('(foo/bar)|(foo/bar)|(foo/bar)')
- >>> p.check('(/E1/E2)?/E3((/E4[@A="v"])|(E5/_*/E6))')
- >>> p.check('(((((E1)|(E2))|(E3/E4))|(E5/E6/E7))|(E7/E8))')
- >>> p.check('(a|b)|c')
 
 Some negative RPE-Tests:
 
- >>> p.check('')
+ >>> p.parse('')
  Traceback (most recent call last):
  ...
- AssertionError: ...
- >>> p.check('/')
+ SyntaxError: ...
+ >>> p.parse('/')
  Traceback (most recent call last):
  ...
- AssertionError: ...
- >>> p.check('foo/')
+ SyntaxError: ...
+ >>> p.parse('foo/')
  Traceback (most recent call last):
  ...
- AssertionError: ...
- >>> p.check('foo[a="v"]')
+ SyntaxError: ...
+ >>> p.parse('foo[a="v"]')
  Traceback (most recent call last):
  ...
- AssertionError: ...
- >>> p.check('((abc/def)|(ghi/jkl)')
+ SyntaxError: ...
+ >>> p.parse('((abc/def)|(ghi/jkl)')
  Traceback (most recent call last):
  ...
- AssertionError: ...
+ SyntaxError: ...
 
 No parsing:
 

@@ -33,7 +33,7 @@ class QueryParser(object):
         predicate       := (PREDICATE_BEGIN, IDENTIFIER, '=', '"', ATTRVALUE, '"', PREDICATE_END)
         occurence       := OCC_NONE_OR_ONE / OCC_ONE_OR_MORE / OCC_MULTI
         IDENTIFIER      := [a-zA-Z0-9]+
-        ATTRVALUE       := [a-zA-Z0-9 ]+
+        ATTRVALUE       := [a-zA-Z0-9 ]+ / string_double_quote
         PATH_SEPERATOR  := '/'
         WILDCARD        := '_'
         UNION           := '|'
@@ -77,24 +77,11 @@ class QueryParser(object):
                     output = self._modify_result(i,expression,output)
         return output
 
-    def check(self, expression=None, level="rpe"):
-        """ Check expression for syntax errors. """
-
-        if (expression is not None):
-            succ, child, nextchar = self.parser.parse(expression, level)
-            assert succ and nextchar==len(expression), """Wasn't able to "
-                "parse %s as a %s (%s chars parsed of %s), returned value"
-                 was %s"""%(repr(expression), level, nextchar,
-                            len(expression), (succ, child, nextchar))
-
     def parse(self, expression):
         """ """
 
         if (expression is not None):
             succ, child, nextchar = self.parser.parse(expression, "rpe")
-            assert succ and nextchar==len(expression), """Wasn't able to "
-                "parse %s as a %s (%s chars parsed of %s), returned value"
-                 was %s"""%(repr(expression), level, nextchar,
-                            len(expression), (succ, child, nextchar))
+            if (not succ or (nextchar != len(expression))):
+                raise SyntaxError("Wrong syntax in regular path expression")
         return self._modify_result(child, expression, [])
-#        return child
