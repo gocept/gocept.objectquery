@@ -3,7 +3,7 @@
 # $Id$
 
 import gocept.objectquery.resultset
-from simpleparse.parser import Parser
+import simpleparse.parser
 
 class QueryProcessor(object):
     """ Processes a rpe query to the db and returns the results.
@@ -15,15 +15,31 @@ class QueryProcessor(object):
 
     def __init__(self, collection):
         self.collection = collection
+        self.parser = QueryParser()
 
     def __call__(self, expression):
+        parse_tree = self.parser.parse(expression)
+        return self._process_parse_tree(parse_tree)
+
+    def _process_parse_tree(self, parse_tree):
+
         return gocept.objectquery.resultset.ResultSet()
+
+    def _eejoin(self, elem_1, elem_2):
+        pass
+
+    def _eajoin(self, elem, attr):
+        pass
+
+    def _kcjoin(self, elem):
+        pass
 
 class QueryParser(object):
 
     def __init__(self):
         declaration = r'''
-        rpe             := ((bracket / normal), occurence?, UNION?)+
+        rpe             := ((bracket / normal), occurence?, (UNION /
+                           PATH_SEPARATOR)?)+
         bracket         := open_bracket, rpe+, close_bracket
         normal          := PATH_SEPARATOR?, pathelem,
                            (PATH_SEPARATOR, pathelem)*
@@ -48,7 +64,7 @@ class QueryParser(object):
         OCC_ONE_OR_MORE := '+'
         OCC_MULTI       := '*'
         '''
-        self.parser = Parser(declaration)
+        self.parser = simpleparse.parser.Parser(declaration)
 
     def _modify_result(self, result, expression, output):
         # stop condition
@@ -69,9 +85,12 @@ class QueryParser(object):
             elif result[0] == "pathelem":
                 rtemp = self._modify_result(result[3], expression, [])
                 if output == []:
-                    return rtemp
+                    output = rtemp
                 else:
-                    output.append(rtemp)
+                    if rtemp == []:
+                        output.append(None)
+                    else:
+                        output.append(rtemp)
             elif result[0] == "occurence":
                 rtemp = self._modify_result(result[3], expression, [])
                 output = ['KCJOIN', rtemp, output]
@@ -113,5 +132,4 @@ class QueryParser(object):
             succ, child, nextchar = self.parser.parse(expression, "rpe")
             if (not succ or (nextchar != len(expression))):
                 raise SyntaxError("Wrong syntax in regular path expression")
-#        print child
         return self._modify_result(child, expression, [])

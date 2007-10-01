@@ -10,5 +10,6 @@ from zope.testing import doctest
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTest(doctest.DocFileSuite("parser.txt",
+                                       "pathexpressions.txt",
                                        optionflags=doctest.ELLIPSIS))
     return suite

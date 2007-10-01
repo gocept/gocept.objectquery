@@ -20,32 +20,32 @@ The Parser returns a data structure, which allows to recursively call the
 Join-Functions with two parameters. Here a simple example, where we join the
 element *foo* with the element *bar*:
 
- >>> p.parse('foo/bar')
- ['EEJOIN', ('ELEM', 'foo'), ('ELEM', 'bar')]
+    >>> p.parse('foo/bar')
+    ['EEJOIN', ('ELEM', 'foo'), ('ELEM', 'bar')]
 
 It is also possible, to join only one element:
 
- >>> p.parse('/foo')
- ['EEJOIN', None, ('ELEM', 'foo')]
+    >>> p.parse('/foo')
+    ['EEJOIN', None, ('ELEM', 'foo')]
 
 Occurence works the same way: its an KCJOIN with the occurence parameter
 (+,?,*) and the element:
 
- >>> p.parse('/foo?')
- ['EEJOIN', None, ['KCJOIN', ('OCC', '?'), ('ELEM', 'foo')]]
- >>> p.parse('foo*/bar')
- ['EEJOIN', ['KCJOIN', ('OCC', '*'), ('ELEM', 'foo')], ('ELEM', 'bar')]
+    >>> p.parse('/foo?')
+    ['EEJOIN', None, ['KCJOIN', ('OCC', '?'), ('ELEM', 'foo')]]
+    >>> p.parse('foo*/bar')
+    ['EEJOIN', ['KCJOIN', ('OCC', '*'), ('ELEM', 'foo')], ('ELEM', 'bar')]
 
 More Pathjoins work like a tree, where the leaves are the elements:
 
- >>> p.parse('foo/bar/bou')
- ['EEJOIN', ['EEJOIN', ('ELEM', 'foo'), ('ELEM', 'bar')], ('ELEM', 'bou')]
+    >>> p.parse('foo/bar/bou')
+    ['EEJOIN', ['EEJOIN', ('ELEM', 'foo'), ('ELEM', 'bar')], ('ELEM', 'bou')]
 
 Attributes are parsed te same way: its an ATTR-Function with ID and VALUE as
 parameters:
 
- >>> p.parse('foo/bar*[@a="b"]')
- ['EEJOIN', ('ELEM', 'foo'), ['EAJOIN', ['ATTR', ('ID', 'a'), ('VALUE', 'b')], ['KCJOIN', ('OCC', '*'), ('ELEM', 'bar')]]]
+    >>> p.parse('foo/bar*[@a="b"]')
+    ['EEJOIN', ('ELEM', 'foo'), ['EAJOIN', ['ATTR', ('ID', 'a'), ('VALUE', 'b')], ['KCJOIN', ('OCC', '*'), ('ELEM', 'bar')]]]
 
 Element can also be a wildcard:
 
@@ -75,8 +75,8 @@ A Union of two EEJOINS
 
 A really big example with everything possible included:
 
- >>> p.parse('(E1/E2)*/E3|((E4[@A="v"])|(E5/_*/E6))')
- ['UNION', ['EEJOIN', ['KCJOIN', ('OCC', '*'), ['EEJOIN', ('ELEM', 'E1'), ('ELEM', 'E2')]], ('ELEM', 'E3')], ['UNION', ['EAJOIN', ['ATTR', ('ID', 'A'), ('VALUE', 'v')], ('ELEM', 'E4')], ['EEJOIN', ['EEJOIN', ('ELEM', 'E5'), ['KCJOIN', ('OCC', '*'), ('WILDCARD', '_')]], ('ELEM', 'E6')]]]
+ >>> p.parse('(E1/E2)*/E3/((E4[@A="v"])|(E5/_*/E6))')
+ ['EEJOIN', ['EEJOIN', ['KCJOIN', ('OCC', '*'), ['EEJOIN', ('ELEM', 'E1'), ('ELEM', 'E2')]], ('ELEM', 'E3')], ['UNION', ['EAJOIN', ['ATTR', ('ID', 'A'), ('VALUE', 'v')], ('ELEM', 'E4')], ['EEJOIN', ['EEJOIN', ('ELEM', 'E5'), ['KCJOIN', ('OCC', '*'), ('WILDCARD', '_')]], ('ELEM', 'E6')]]]
 
 Some negative RPE-Tests
 =======================
@@ -91,13 +91,6 @@ Empty querys are not allowed:
 Do not use only a path seperator:
 
  >>> p.parse('/')
- Traceback (most recent call last):
- ...
- SyntaxError: ...
-
-Path seperator at the end of a path has no sense:
-
- >>> p.parse('foo/')
  Traceback (most recent call last):
  ...
  SyntaxError: ...
