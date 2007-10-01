@@ -25,15 +25,19 @@ class QueryParser(object):
         declaration = r'''
         rpe             := ((bracket / normal), occurence?, UNION?)+
         bracket         := open_bracket, rpe+, close_bracket
-        normal          := PATH_SEPERATOR?, pathelem, (PATH_SEPERATOR, pathelem)*
-        pathelem        := (WILDCARD / IDENTIFIER), occurence?, predicate?
-        predicate       := (PREDICATE_BEGIN, IDENTIFIER, '=', '"', ATTRVALUE, '"', PREDICATE_END)
+        normal          := PATH_SEPARATOR?, pathelem,
+                           (PATH_SEPARATOR, pathelem)*
+        pathelem        := (WILDCARD / ELEM), occurence?, predicate?
+        predicate       := (PREDICATE_BEGIN, ID, '=', '"', ATTRVALUE, '"',
+                            PREDICATE_END)
         occurence       := OCC_NONE_OR_ONE / OCC_ONE_OR_MORE / OCC_MULTI
-        IDENTIFIER      := [a-zA-Z0-9]+
+        ID              := ELEM
+        ELEM            := [a-zA-Z0-9]+
         ATTRVALUE       := text / quoted_text
         text            := [a-zA-Z0-9 ]+, quoted_text*
-        quoted_text     := [a-zA-Z0-9 ]*, '\"', [a-zA-Z0-9 ]+, '\"', [a-zA-Z0-9 ]*
-        PATH_SEPERATOR  := '/'
+        quoted_text     := [a-zA-Z0-9 ]*, '\"', [a-zA-Z0-9 ]+, '\"',
+                           [a-zA-Z0-9 ]*
+        PATH_SEPARATOR  := '/'
         WILDCARD        := '_'
         UNION           := '|'
         open_bracket    := '('
@@ -49,32 +53,45 @@ class QueryParser(object):
     def _modify_result(self, result, expression, output):
         # stop condition
         if result is None:
-            return output
-        else:
-            # Is result[0] a string? If yes, then do something with it
-            if (isinstance(result[0], basestring)):
-                # Is result[0] uppercase? If yes, then append it to the list
-                # as {Identifier: Value}
-                if (result[0] == result[0].upper()):
-                    output.append({result[0]: expression[result[1]:result[2]]})
-                # result[0] is not uppercase: go deeper
+            return None
+        elif isinstance(result[0], basestring):
+            if result[0] == "normal":
+                return self._modify_result(result[3], expression, [])
+            elif result[0] == "pathelem":
+                rtemp = self._modify_result(result[3], expression, [])
+                if output == []:
+                    return rtemp
                 else:
-                    # is result[0] = "pathelem" oder "bracket":
-                    # generate a subtupel
-                    if ((result[0] == "pathelem") or (result[0] == "bracket")):
-                        temp = output
-                        output = self._modify_result(result[3],expression, [])
-                        temp.append(output)
-                        output = temp
-                    # go deeper
-                    else:
-                        output = self._modify_result(result[3],expression,output)
-            # result[0] is not a string, so it is a tupel
-            # go deeper for each tupel
-            else:
-                for i in result:
-                    output = self._modify_result(i,expression,output)
+                    output.append(rtemp)
+            elif result[0] == "occurence":
+                rtemp = self._modify_result(result[3], expression, [])
+                output = ['OCCJOIN', rtemp, output]
+            elif result[0] == "predicate":
+                rtemp = self._modify_result(result[3], expression, ["ATTR"])
+                output = ['EAJOIN', rtemp, output]
+            elif result[0] == "PATH_SEPARATOR":
+                if output == []:
+                    output = None
+                output = ['EEJOIN', output]
+            elif result[0] == "ELEM":
+                return ("ELEM", expression[result[1]:result[2]])
+            elif result[0] == "WILDCARD":
+                return ("WILDCARD", expression[result[1]:result[2]])
+            elif result[0] == "OCC_NONE_OR_ONE":
+                return ("OCC", "?")
+            elif result[0] == "OCC_ONE_OR_MORE":
+                return ("OCC", "+")
+            elif result[0] == "OCC_MULTI":
+                return ("OCC", "*")
+            elif result[0] == "ID":
+                output.append(("ID", expression[result[1]:result[2]]))
+            elif result[0] == "ATTRVALUE":
+                output.append(("VALUE", expression[result[1]:result[2]]))
+        else:
+            for i in result:
+                output = (self._modify_result(i, expression, output))
         return output
+
 
     def parse(self, expression):
         """ """
@@ -83,4 +100,5 @@ class QueryParser(object):
             succ, child, nextchar = self.parser.parse(expression, "rpe")
             if (not succ or (nextchar != len(expression))):
                 raise SyntaxError("Wrong syntax in regular path expression")
-        return self._modify_result(child, expression, [])
+        print self._modify_result(child, expression, [])
+#        return child

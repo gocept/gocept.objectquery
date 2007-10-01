@@ -7,30 +7,50 @@ Import the QueryParser:
  >>> from gocept.objectquery.pathexpressions import QueryParser
  >>> p = QueryParser()
 
-Some positive RPE-Tests:
+The Parser returns a data structure, which allows to recursively call the
+Join-Functions with two parameters. Here a simple example, where we join the
+element *foo* with the element *bar*:
+
+ >>> p.parse('foo/bar')
+ ['EEJOIN', ('ELEM', 'foo'), ('ELEM', 'bar')]
+
+It is also possible, to join only one element:
+
+ >>> p.parse('/foo')
+ ['EEJOIN', None, ('ELEM', 'foo')]
+
+Occurence works the same way: its an OCCJOIN with the occurence parameter
+(+,?,*) and the element:
 
  >>> p.parse('/foo?')
- [{'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'foo'}, {'OCC_NONE_OR_ONE': '?'}]]
+ ['EEJOIN', None, ['OCCJOIN', ('OCC', '?'), ('ELEM', 'foo')]]
+ >>> p.parse('foo*/bar')
+ ['EEJOIN', ['OCCJOIN', ('OCC', '*'), ('ELEM', 'foo')], ('ELEM', 'bar')]
+
+More Pathjoins work like a tree, where the leaves are the elements:
+
+ >>> p.parse('foo/bar/bou')
+ ['EEJOIN', ['EEJOIN', ('ELEM', 'foo'), ('ELEM', 'bar')], ('ELEM', 'bou')]
+
+Attributes are parsed te same way: its an ATTR-Function with ID and VALUE as
+parameters:
+
  >>> p.parse('foo/bar*[@a="b"]')
- [[{'IDENTIFIER': 'foo'}], {'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'bar'}, {'OCC_MULTI': '*'}, {'PREDICATE_BEGIN': '[@'}, {'IDENTIFIER': 'a'}, {'ATTRVALUE': 'b'}, {'PREDICATE_END': ']'}]]
+ ['EEJOIN', ('ELEM', 'foo'), ['EAJOIN', ['ATTR', ('ID', 'a'), ('VALUE', 'b')], ['OCCJOIN', ('OCC', '*'), ('ELEM', 'bar')]]]
+
+Element can also be a wildcard:
+
+ >>> p.parse('/_*/bar')
+ ['EEJOIN', ['EEJOIN', None, ['OCCJOIN', ('OCC', '*'), ('WILDCARD', '_')]], ('ELEM', 'bar')]
+
+To show the mightiness of the parser, here a more complex example:
+
  >>> p.parse('/foo[@a="b"]/_*/bar+[@a2="b2 b3"]/fou')
- [{'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'foo'}, {'PREDICATE_BEGIN': '[@'}, {'IDENTIFIER': 'a'}, {'ATTRVALUE': 'b'}, {'PREDICATE_END': ']'}], {'PATH_SEPERATOR': '/'}, [{'WILDCARD': '_'}, {'OCC_MULTI': '*'}], {'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'bar'}, {'OCC_ONE_OR_MORE': '+'}, {'PREDICATE_BEGIN': '[@'}, {'IDENTIFIER': 'a2'}, {'ATTRVALUE': 'b2 b3'}, {'PREDICATE_END': ']'}], {'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'fou'}]]
- >>> p.parse('/foo[@a="b"]/_*/bar+[@a2="b2 b3"]/fou')
- [{'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'foo'}, {'PREDICATE_BEGIN': '[@'}, {'IDENTIFIER': 'a'}, {'ATTRVALUE': 'b'}, {'PREDICATE_END': ']'}], {'PATH_SEPERATOR': '/'}, [{'WILDCARD': '_'}, {'OCC_MULTI': '*'}], {'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'bar'}, {'OCC_ONE_OR_MORE': '+'}, {'PREDICATE_BEGIN': '[@'}, {'IDENTIFIER': 'a2'}, {'ATTRVALUE': 'b2 b3'}, {'PREDICATE_END': ']'}], {'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'fou'}]]
- >>> p.parse('(/E1/E2)?/E3((/E4[@A="v"])|(E5/_*/E6))')
- [[{'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'E1'}], {'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'E2'}]], {'OCC_NONE_OR_ONE': '?'}, {'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'E3'}], [[{'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'E4'}, {'PREDICATE_BEGIN': '[@'}, {'IDENTIFIER': 'A'}, {'ATTRVALUE': 'v'}, {'PREDICATE_END': ']'}]], {'UNION': '|'}, [[{'IDENTIFIER': 'E5'}], {'PATH_SEPERATOR': '/'}, [{'WILDCARD': '_'}, {'OCC_MULTI': '*'}], {'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'E6'}]]]]
- >>> p.parse('(((((E1)|(E2))|(E3/E4))|(E5/E6/E7))|(E7/E8))')
- [[[[[[[{'IDENTIFIER': 'E1'}]], {'UNION': '|'}, [[{'IDENTIFIER': 'E2'}]]], {'UNION': '|'}, [[{'IDENTIFIER': 'E3'}], {'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'E4'}]]], {'UNION': '|'}, [[{'IDENTIFIER': 'E5'}], {'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'E6'}], {'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'E7'}]]], {'UNION': '|'}, [[{'IDENTIFIER': 'E7'}], {'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'E8'}]]]]
- >>> p.parse('(a|b)|c')
- [[[{'IDENTIFIER': 'a'}], {'UNION': '|'}, [{'IDENTIFIER': 'b'}]], {'UNION': '|'}, [{'IDENTIFIER': 'c'}]]
- >>> p.parse('a[@b="\"abc\""]')
- [[{'IDENTIFIER': 'a'}, {'PREDICATE_BEGIN': '[@'}, {'IDENTIFIER': 'b'}, {'ATTRVALUE': '"abc"'}, {'PREDICATE_END': ']'}]]
- >>> p.parse('a[@b="a\"b\"c"]')
- [[{'IDENTIFIER': 'a'}, {'PREDICATE_BEGIN': '[@'}, {'IDENTIFIER': 'b'}, {'ATTRVALUE': 'a"b"c'}, {'PREDICATE_END': ']'}]]
- >>> p.parse('a[@b="\"b\"c"]')
- [[{'IDENTIFIER': 'a'}, {'PREDICATE_BEGIN': '[@'}, {'IDENTIFIER': 'b'}, {'ATTRVALUE': '"b"c'}, {'PREDICATE_END': ']'}]]
- >>> p.parse('a[@b="a\"b\"c\"d\""]')
- [[{'IDENTIFIER': 'a'}, {'PREDICATE_BEGIN': '[@'}, {'IDENTIFIER': 'b'}, {'ATTRVALUE': 'a"b"c"d"'}, {'PREDICATE_END': ']'}]]
+ ['EEJOIN', ['EEJOIN', ['EEJOIN', ['EEJOIN', None, ['EAJOIN', ['ATTR', ('ID', 'a'), ('VALUE', 'b')], ('ELEM', 'foo')]], ['OCCJOIN', ('OCC', '*'), ('WILDCARD', '_')]], ['EAJOIN', ['ATTR', ('ID', 'a2'), ('VALUE', 'b2 b3')], ['OCCJOIN', ('OCC', '+'), ('ELEM', 'bar')]]], ('ELEM', 'fou')]
+
+You may also provide precedence by using round brackets:
+
+ >>> p.parse('(foo/bar)/boo')
 
 
 Some negative RPE-Tests:
@@ -55,18 +75,3 @@ Some negative RPE-Tests:
  Traceback (most recent call last):
  ...
  SyntaxError: ...
-
-No parsing:
-
- >>> p.parse('/foo*')
- [{'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'foo'}, {'OCC_MULTI': '*'}]]
- >>> p.parse('/foo*/bar')
- [{'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'foo'}, {'OCC_MULTI': '*'}], {'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'bar'}]]
- >>> p.parse('/foo?[@A="v"]')
- [{'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'foo'}, {'OCC_NONE_OR_ONE': '?'}, {'PREDICATE_BEGIN': '[@'}, {'IDENTIFIER': 'A'}, {'ATTRVALUE': 'v'}, {'PREDICATE_END': ']'}]]
- >>> p.parse('(foo/bar)')
- [[[{'IDENTIFIER': 'foo'}], {'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'bar'}]]]
- >>> p.parse('(foo/bar)|(foo/bar)')
- [[[{'IDENTIFIER': 'foo'}], {'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'bar'}]], {'UNION': '|'}, [[{'IDENTIFIER': 'foo'}], {'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'bar'}]]]
- >>> p.parse('(/E1/E2)?/E3((/E4[@A="v"])|(E5/_*/E6))')
- [[{'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'E1'}], {'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'E2'}]], {'OCC_NONE_OR_ONE': '?'}, {'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'E3'}], [[{'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'E4'}, {'PREDICATE_BEGIN': '[@'}, {'IDENTIFIER': 'A'}, {'ATTRVALUE': 'v'}, {'PREDICATE_END': ']'}]], {'UNION': '|'}, [[{'IDENTIFIER': 'E5'}], {'PATH_SEPERATOR': '/'}, [{'WILDCARD': '_'}, {'OCC_MULTI': '*'}], {'PATH_SEPERATOR': '/'}, [{'IDENTIFIER': 'E6'}]]]]
