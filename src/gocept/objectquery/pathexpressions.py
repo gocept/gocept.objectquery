@@ -58,9 +58,13 @@ class QueryParser(object):
             if result[0] == "rpe":
                 return self._modify_result(result[3], expression, [])
             elif result[0] == "normal":
-                return self._modify_result(result[3], expression, [])
+                return self._modify_result(result[3], expression, output)
             elif result[0] == "bracket":
-                output.append(self._modify_result(result[3], expression, []))
+                rtemp = self._modify_result(result[3], expression, [])
+                if output != []:
+                    output.append(rtemp)
+                else:
+                    output = rtemp;
                 return output
             elif result[0] == "pathelem":
                 rtemp = self._modify_result(result[3], expression, [])
@@ -70,7 +74,7 @@ class QueryParser(object):
                     output.append(rtemp)
             elif result[0] == "occurence":
                 rtemp = self._modify_result(result[3], expression, [])
-                output = ['OCCJOIN', rtemp, output]
+                output = ['KCJOIN', rtemp, output]
             elif result[0] == "predicate":
                 rtemp = self._modify_result(result[3], expression, ["ATTR"])
                 output = ['EAJOIN', rtemp, output]

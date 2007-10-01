@@ -2,10 +2,19 @@
 Parsing regular path expressions
 ================================
 
-Import the QueryParser:
+Imporing the QueryParser
+========================
+
+You can import the QueryParser as follow:
 
  >>> from gocept.objectquery.pathexpressions import QueryParser
+
+Get the QueryParer:
+
  >>> p = QueryParser()
+
+Some positive Examples
+======================
 
 The Parser returns a data structure, which allows to recursively call the
 Join-Functions with two parameters. Here a simple example, where we join the
@@ -19,13 +28,13 @@ It is also possible, to join only one element:
  >>> p.parse('/foo')
  ['EEJOIN', None, ('ELEM', 'foo')]
 
-Occurence works the same way: its an OCCJOIN with the occurence parameter
+Occurence works the same way: its an KCJOIN with the occurence parameter
 (+,?,*) and the element:
 
  >>> p.parse('/foo?')
- ['EEJOIN', None, ['OCCJOIN', ('OCC', '?'), ('ELEM', 'foo')]]
+ ['EEJOIN', None, ['KCJOIN', ('OCC', '?'), ('ELEM', 'foo')]]
  >>> p.parse('foo*/bar')
- ['EEJOIN', ['OCCJOIN', ('OCC', '*'), ('ELEM', 'foo')], ('ELEM', 'bar')]
+ ['EEJOIN', ['KCJOIN', ('OCC', '*'), ('ELEM', 'foo')], ('ELEM', 'bar')]
 
 More Pathjoins work like a tree, where the leaves are the elements:
 
@@ -36,42 +45,72 @@ Attributes are parsed te same way: its an ATTR-Function with ID and VALUE as
 parameters:
 
  >>> p.parse('foo/bar*[@a="b"]')
- ['EEJOIN', ('ELEM', 'foo'), ['EAJOIN', ['ATTR', ('ID', 'a'), ('VALUE', 'b')], ['OCCJOIN', ('OCC', '*'), ('ELEM', 'bar')]]]
+ ['EEJOIN', ('ELEM', 'foo'), ['EAJOIN', ['ATTR', ('ID', 'a'), ('VALUE', 'b')], ['KCJOIN', ('OCC', '*'), ('ELEM', 'bar')]]]
 
 Element can also be a wildcard:
 
  >>> p.parse('/_*/bar')
- ['EEJOIN', ['EEJOIN', None, ['OCCJOIN', ('OCC', '*'), ('WILDCARD', '_')]], ('ELEM', 'bar')]
+ ['EEJOIN', ['EEJOIN', None, ['KCJOIN', ('OCC', '*'), ('WILDCARD', '_')]], ('ELEM', 'bar')]
 
 To show the mightiness of the parser, here a more complex example:
 
  >>> p.parse('/foo[@a="b"]/_*/bar+[@a2="b2 b3"]/fou')
- ['EEJOIN', ['EEJOIN', ['EEJOIN', ['EEJOIN', None, ['EAJOIN', ['ATTR', ('ID', 'a'), ('VALUE', 'b')], ('ELEM', 'foo')]], ['OCCJOIN', ('OCC', '*'), ('WILDCARD', '_')]], ['EAJOIN', ['ATTR', ('ID', 'a2'), ('VALUE', 'b2 b3')], ['OCCJOIN', ('OCC', '+'), ('ELEM', 'bar')]]], ('ELEM', 'fou')]
+ ['EEJOIN', ['EEJOIN', ['EEJOIN', ['EEJOIN', None, ['EAJOIN', ['ATTR', ('ID', 'a'), ('VALUE', 'b')], ('ELEM', 'foo')]], ['KCJOIN', ('OCC', '*'), ('WILDCARD', '_')]], ['EAJOIN', ['ATTR', ('ID', 'a2'), ('VALUE', 'b2 b3')], ['KCJOIN', ('OCC', '+'), ('ELEM', 'bar')]]], ('ELEM', 'fou')]
 
-You may also provide precedence by using round brackets and UNIONs:
+You may also provide precedence by using round brackets and UNIONs. Here a
+simple example:
+
+ >>> p.parse('(foo/bar)|boo')
+ ['UNION', ['EEJOIN', ('ELEM', 'foo'), ('ELEM', 'bar')], ('ELEM', 'boo')]
+
+And here the same example with changed precedence:
 
  >>> p.parse('foo|(bar/boo)')
  ['UNION', ('ELEM', 'foo'), ['EEJOIN', ('ELEM', 'bar'), ('ELEM', 'boo')]]
- >>> p.parse('(foo/bar)|boo')
 
-Some negative RPE-Tests:
+A Union of two EEJOINS
+
+ >>> p.parse('(foo/bar)|(boo/far)')
+ ['UNION', ['EEJOIN', ('ELEM', 'foo'), ('ELEM', 'bar')], ['EEJOIN', ('ELEM', 'boo'), ('ELEM', 'far')]]
+
+A really big example with everything possible included:
+
+ >>> p.parse('(E1/E2)*/E3|((E4[@A="v"])|(E5/_*/E6))')
+ ['UNION', ['EEJOIN', ['KCJOIN', ('OCC', '*'), ['EEJOIN', ('ELEM', 'E1'), ('ELEM', 'E2')]], ('ELEM', 'E3')], ['UNION', ['EAJOIN', ['ATTR', ('ID', 'A'), ('VALUE', 'v')], ('ELEM', 'E4')], ['EEJOIN', ['EEJOIN', ('ELEM', 'E5'), ['KCJOIN', ('OCC', '*'), ('WILDCARD', '_')]], ('ELEM', 'E6')]]]
+
+Some negative RPE-Tests
+=======================
+
+Empty querys are not allowed:
 
  >>> p.parse('')
  Traceback (most recent call last):
  ...
  SyntaxError: ...
+
+Do not use only a path seperator:
+
  >>> p.parse('/')
  Traceback (most recent call last):
  ...
  SyntaxError: ...
+
+Path seperator at the end of a path has no sense:
+
  >>> p.parse('foo/')
  Traceback (most recent call last):
  ...
  SyntaxError: ...
+
+Another example of a non-complete query:
+
  >>> p.parse('foo[a="v"]')
  Traceback (most recent call last):
  ...
  SyntaxError: ...
+
+Opening brackets need closing brackets:
+
  >>> p.parse('((abc/def)|(ghi/jkl)')
  Traceback (most recent call last):
  ...
