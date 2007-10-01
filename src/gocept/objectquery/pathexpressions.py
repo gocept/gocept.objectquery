@@ -55,8 +55,13 @@ class QueryParser(object):
         if result is None:
             return None
         elif isinstance(result[0], basestring):
-            if result[0] == "normal":
+            if result[0] == "rpe":
                 return self._modify_result(result[3], expression, [])
+            elif result[0] == "normal":
+                return self._modify_result(result[3], expression, [])
+            elif result[0] == "bracket":
+                output.append(self._modify_result(result[3], expression, []))
+                return output
             elif result[0] == "pathelem":
                 rtemp = self._modify_result(result[3], expression, [])
                 if output == []:
@@ -73,6 +78,10 @@ class QueryParser(object):
                 if output == []:
                     output = None
                 output = ['EEJOIN', output]
+            elif result[0] == "UNION":
+                if output == []:
+                    output = None
+                output = ['UNION', output]
             elif result[0] == "ELEM":
                 return ("ELEM", expression[result[1]:result[2]])
             elif result[0] == "WILDCARD":
@@ -100,5 +109,5 @@ class QueryParser(object):
             succ, child, nextchar = self.parser.parse(expression, "rpe")
             if (not succ or (nextchar != len(expression))):
                 raise SyntaxError("Wrong syntax in regular path expression")
-        print self._modify_result(child, expression, [])
-#        return child
+#        print child
+        return self._modify_result(child, expression, [])

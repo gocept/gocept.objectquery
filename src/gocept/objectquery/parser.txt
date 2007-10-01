@@ -48,10 +48,11 @@ To show the mightiness of the parser, here a more complex example:
  >>> p.parse('/foo[@a="b"]/_*/bar+[@a2="b2 b3"]/fou')
  ['EEJOIN', ['EEJOIN', ['EEJOIN', ['EEJOIN', None, ['EAJOIN', ['ATTR', ('ID', 'a'), ('VALUE', 'b')], ('ELEM', 'foo')]], ['OCCJOIN', ('OCC', '*'), ('WILDCARD', '_')]], ['EAJOIN', ['ATTR', ('ID', 'a2'), ('VALUE', 'b2 b3')], ['OCCJOIN', ('OCC', '+'), ('ELEM', 'bar')]]], ('ELEM', 'fou')]
 
-You may also provide precedence by using round brackets:
+You may also provide precedence by using round brackets and UNIONs:
 
- >>> p.parse('(foo/bar)/boo')
-
+ >>> p.parse('foo|(bar/boo)')
+ ['UNION', ('ELEM', 'foo'), ['EEJOIN', ('ELEM', 'bar'), ('ELEM', 'boo')]]
+ >>> p.parse('(foo/bar)|boo')
 
 Some negative RPE-Tests:
 
