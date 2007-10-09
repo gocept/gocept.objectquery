@@ -25,3 +25,7 @@ class ObjectCollection:
     def by_attr(self, id, value):
         return [elem for elem in self.collection
                         if hasattr(elem,id) and getattr(elem,id) == value]
+
+    def get_value(self, id):
+        return [getattr(elem,id) for elem in self.collection
+                        if hasattr(elem,id)]
