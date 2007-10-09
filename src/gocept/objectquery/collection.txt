@@ -41,3 +41,11 @@ Now use the init functionality:
     >>> oci = ObjectCollection([Telephone(), AddressBook()])
     >>> oci.all()
     [<Telephone object at 0x...>, <AddressBook object at 0x...>]
+
+Search by classname:
+
+    >>> oc.by_class("Telephone")
+    [<Telephone object at 0x...>, <Telephone object at 0x...>]
+    >>> oc.by_class("AddressBook")
+    [<AddressBook object at 0x...>, <AddressBook object at 0x...>, <AddressBook object at 0x...>]
+
