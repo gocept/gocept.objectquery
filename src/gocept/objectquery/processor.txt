@@ -1,0 +1,19 @@
+==============================================
+Querying objects with regular path expressions
+==============================================
+
+You create a QueryProcessor like this:
+
+    >>> from gocept.objectquery.pathexpressions import RPEQueryParser
+    >>> from gocept.objectquery.collection import ObjectCollection
+    >>> from gocept.objectquery.processor import QueryProcessor
+    >>> parser = RPEQueryParser()
+    >>> objects = ObjectCollection()
+    >>> query = QueryProcessor(parser, objects)
+    >>> query
+    <gocept.objectquery.processor.QueryProcessor object at 0x...>
+
+QueryParser returns a gocept.objectquery.resultset:
+
+    >>> query('/Foo')
+    <gocept.objectquery.resultset.ResultSet object at 0x...>

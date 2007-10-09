@@ -2,39 +2,9 @@
 # See also LICENSE.txt
 # $Id$
 
-import gocept.objectquery.resultset
 import simpleparse.parser
 
-class QueryProcessor(object):
-    """ Processes a rpe query to the db and returns the results.
-
-    QueryProcessor parses a regular path expression query by using
-    SimpleParser. It returns a resultset object with the results from
-    the database.
-    """
-
-    def __init__(self, collection):
-        self.collection = collection
-        self.parser = QueryParser()
-
-    def __call__(self, expression):
-        parse_tree = self.parser.parse(expression)
-        return self._process_parse_tree(parse_tree)
-
-    def _process_parse_tree(self, parse_tree):
-
-        return gocept.objectquery.resultset.ResultSet()
-
-    def _eejoin(self, elem_1, elem_2):
-        pass
-
-    def _eajoin(self, elem, attr):
-        pass
-
-    def _kcjoin(self, elem):
-        pass
-
-class QueryParser(object):
+class RPEQueryParser(object):
     """ Parses a rpe query and returns a readable result. """
     def __init__(self):
         declaration = r'''

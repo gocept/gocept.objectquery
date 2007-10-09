@@ -3,7 +3,7 @@
 # $Id$
 
 class ObjectCollection:
-    """ Holds Objects and gives functionality on them. """
+    """ Holds objects and gives functionality on them. """
     def __init__(self, collection=[]):
         """ initialize the collection """
         self.collection = collection
