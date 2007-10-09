@@ -1,0 +1,43 @@
+======================
+Using ObjectCollection
+======================
+
+Imporing the ObjectCollection
+=============================
+
+You can import the QueryParser as follow:
+
+    >>> from gocept.objectquery.collection import ObjectCollection
+
+Get a ObjectCollection:
+
+    >>> oc = ObjectCollection()
+
+Using the ObjectCollection
+==========================
+
+First create some example classes:
+
+    >>> class Telephone(object):
+    ...     pass
+    >>> class Person(object):
+    ...     pass
+    >>> class AddressBook(object):
+    ...     pass
+
+Add some objects to the collection:
+
+    >>> oc.add(Telephone())
+    >>> oc.add(AddressBook())
+    >>> oc.add(AddressBook())
+    >>> oc.add(Person())
+    >>> oc.add(AddressBook())
+    >>> oc.add(Telephone())
+    >>> oc.all()
+    [<Telephone object at 0x...>, <AddressBook object at 0x...>, <AddressBook object at 0x...>, <Person object at 0x...>, <AddressBook object at 0x...>, <Telephone object at 0x...>]
+
+Now use the init functionality:
+
+    >>> oci = ObjectCollection([Telephone(), AddressBook()])
+    >>> oci.all()
+    [<Telephone object at 0x...>, <AddressBook object at 0x...>]
