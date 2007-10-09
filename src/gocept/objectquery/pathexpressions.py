@@ -97,7 +97,9 @@ class RPEQueryParser(object):
                 rtemp = self._modify_result(result[3], expression, [])
                 output = ['KCJOIN', rtemp, output]
             elif result[0] == "predicate":
-                rtemp = self._modify_result(result[3], expression, ["ATTR"])
+                rtemp = self._modify_result(result[3], expression, [])
+                rtemp = (rtemp[0], rtemp[1])
+                rtemp = ["ATTR", rtemp]
                 output = ['EAJOIN', rtemp, output]
             elif result[0] == "PATH_SEPARATOR":
                 if output == []:
@@ -118,9 +120,9 @@ class RPEQueryParser(object):
             elif result[0] == "OCC_MULTI":
                 return ("OCC", "*")
             elif result[0] == "ID":
-                output.append(("ID", expression[result[1]:result[2]]))
+                output.append(expression[result[1]:result[2]])
             elif result[0] == "ATTRVALUE":
-                output.append(("VALUE", expression[result[1]:result[2]]))
+                output.append(expression[result[1]:result[2]])
         else:
             for i in result:
                 output = (self._modify_result(i, expression, output))

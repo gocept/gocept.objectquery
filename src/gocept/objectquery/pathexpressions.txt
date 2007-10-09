@@ -52,15 +52,15 @@ Attributes are parsed the same way: an ATTR-Function with ID and VALUE as
 parameters:
 
     >>> p.parse('foo/bar*[@a="b"]')
-    ['EEJOIN', ('ELEM', 'foo'), ['EAJOIN', ['ATTR', ('ID', 'a'), ('VALUE', 'b')], ['KCJOIN', ('OCC', '*'), ('ELEM', 'bar')]]]
+    ['EEJOIN', ('ELEM', 'foo'), ['EAJOIN', ['ATTR', ('a', 'b')], ['KCJOIN', ('OCC', '*'), ('ELEM', 'bar')]]]
 
 Attribute values may contain quoted strings:
 
     >>> p.parse('foo/bar[@a="b\"c d\"e"]')
-    ['EEJOIN', ('ELEM', 'foo'), ['EAJOIN', ['ATTR', ('ID', 'a'), ('VALUE', 'b"c d"e')], ('ELEM', 'bar')]]
+    ['EEJOIN', ('ELEM', 'foo'), ['EAJOIN', ['ATTR', ('a', 'b"c d"e')], ('ELEM', 'bar')]]
 
     >>> p.parse('foo/bar[@a="b"c d"e"]')
-    ['EEJOIN', ('ELEM', 'foo'), ['EAJOIN', ['ATTR', ('ID', 'a'), ('VALUE', 'b"c d"e')], ('ELEM', 'bar')]]
+    ['EEJOIN', ('ELEM', 'foo'), ['EAJOIN', ['ATTR', ('a', 'b"c d"e')], ('ELEM', 'bar')]]
 
 Element can also be a wildcard:
 
@@ -70,7 +70,7 @@ Element can also be a wildcard:
 To show the mightiness of the parser, here a more complex example:
 
     >>> p.parse('/foo[@a="b"]/_*/bar+[@a2="b2 b3"]/fou')
-    ['EEJOIN', ['EEJOIN', ['EEJOIN', ['EEJOIN', None, ['EAJOIN', ['ATTR', ('ID', 'a'), ('VALUE', 'b')], ('ELEM', 'foo')]], ['KCJOIN', ('OCC', '*'), ('WILDCARD', '_')]], ['EAJOIN', ['ATTR', ('ID', 'a2'), ('VALUE', 'b2 b3')], ['KCJOIN', ('OCC', '+'), ('ELEM', 'bar')]]], ('ELEM', 'fou')]
+    ['EEJOIN', ['EEJOIN', ['EEJOIN', ['EEJOIN', None, ['EAJOIN', ['ATTR', ('a', 'b')], ('ELEM', 'foo')]], ['KCJOIN', ('OCC', '*'), ('WILDCARD', '_')]], ['EAJOIN', ['ATTR', ('a2', 'b2 b3')], ['KCJOIN', ('OCC', '+'), ('ELEM', 'bar')]]], ('ELEM', 'fou')]
 
 You may also provide precedence by using round brackets and UNIONs. Here a
 simple example:
@@ -91,7 +91,7 @@ A Union of two EEJOINS
 A really big example with everything possible included:
 
     >>> p.parse('(E1/E2)*/E3/((E4[@A="v"])|(E5/_*/E6))')
-    ['EEJOIN', ['EEJOIN', ['KCJOIN', ('OCC', '*'), ['EEJOIN', ('ELEM', 'E1'), ('ELEM', 'E2')]], ('ELEM', 'E3')], ['UNION', ['EAJOIN', ['ATTR', ('ID', 'A'), ('VALUE', 'v')], ('ELEM', 'E4')], ['EEJOIN', ['EEJOIN', ('ELEM', 'E5'), ['KCJOIN', ('OCC', '*'), ('WILDCARD', '_')]], ('ELEM', 'E6')]]]
+    ['EEJOIN', ['EEJOIN', ['KCJOIN', ('OCC', '*'), ['EEJOIN', ('ELEM', 'E1'), ('ELEM', 'E2')]], ('ELEM', 'E3')], ['UNION', ['EAJOIN', ['ATTR', ('A', 'v')], ('ELEM', 'E4')], ['EEJOIN', ['EEJOIN', ('ELEM', 'E5'), ['KCJOIN', ('OCC', '*'), ('WILDCARD', '_')]], ('ELEM', 'E6')]]]
 
 Here some negative RPE-Tests
 ============================
