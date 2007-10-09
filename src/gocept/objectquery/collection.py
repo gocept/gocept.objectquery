@@ -21,3 +21,7 @@ class ObjectCollection:
     def by_class(self, name):
         return [elem for elem in self.collection
                         if elem.__class__.__name__ == name]
+
+    def by_attr(self, id, value):
+        return [elem for elem in self.collection
+                        if hasattr(elem,id) and getattr(elem,id) == value]

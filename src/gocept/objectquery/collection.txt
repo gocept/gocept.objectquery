@@ -49,3 +49,18 @@ Search by classname:
     >>> oc.by_class("AddressBook")
     [<AddressBook object at 0x...>, <AddressBook object at 0x...>, <AddressBook object at 0x...>]
 
+We need some attribute values to look for:
+
+    >>> class Telephone(object):
+    ...     def __init__(self, number=""):
+    ...         self.number = number
+    ...     def __call__(self, number):
+    ...         self.__init__(number)
+    >>> oc.add(Telephone(number="+49345122988912"))
+    >>> oc.add(Telephone(number="+4934512298891"))
+    >>> oc.add(Telephone(number="+4934512298892"))
+
+Now get the objects with that number:
+
+    >>> oc.by_attr("number", "+49345122988912")
+    [<Telephone object at 0x...>]
