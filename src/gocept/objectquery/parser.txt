@@ -23,19 +23,19 @@ element *foo* with the element *bar*:
     >>> p.parse('foo/bar')
     ['EEJOIN', ('ELEM', 'foo'), ('ELEM', 'bar')]
 
-It is also possible, to join only one element:
+It is also possible, to find only root elements:
 
     >>> p.parse('/foo')
     ['EEJOIN', None, ('ELEM', 'foo')]
 
-But trailing path separator is **not** allowed:
+But trailing path separators are **not** allowed:
 
     >>> p.parse('foo/')
     Traceback (most recent call last):
     ...
     SyntaxError: ...
 
-Occurence works the same way: it's an KCJOIN with the occurence parameter
+Occurrence works the same way: it's an KCJOIN with the occurrence parameter
 (+,?,*) and an element:
 
     >>> p.parse('/foo?')
@@ -106,6 +106,13 @@ Empty querys are not allowed:
 Do not use only a path separator:
 
     >>> p.parse('/')
+    Traceback (most recent call last):
+    ...
+    SyntaxError: ...
+
+Double path separators are also not allowed:
+
+    >>> p.parse('//foo')
     Traceback (most recent call last):
     ...
     SyntaxError: ...
