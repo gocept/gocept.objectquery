@@ -24,21 +24,15 @@ self-explanatory.
     ...     def __init__(self, id, number=""):
     ...         self.id = id
     ...         self.number = number
-    ...     def __call__(self, id, number):
-    ...         self.__init__(id, number)
     >>> class Person(object):
     ...     def __init__(self, id, name=""):
     ...         self.id = id
     ...         self.name = name
-    ...     def __call__(self, id, name):
-    ...         self.__init__(id, name)
     >>> class Address(object):
     ...     def __init__(self, id, street="", city=""):
     ...         self.id = id
     ...         self.street = street
     ...         self.city = city
-    ...     def __call__(self, id, street, city):
-    ...         self.__init__(id, street, city)
 
 Add some objects to the collection:
 

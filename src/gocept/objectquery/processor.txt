@@ -13,7 +13,34 @@ You create a QueryProcessor like this:
     >>> query
     <gocept.objectquery.processor.QueryProcessor object at 0x...>
 
-QueryParser returns a gocept.objectquery.resultset:
+Fill the collection with some examples:
 
-    >>> query('/Foo')
-    <gocept.objectquery.resultset.ResultSet object at 0x...>
+    >>> class Telephone(object):
+    ...     def __init__(self, id, number=""):
+    ...         self.id = id
+    ...         self.number = number
+    >>> class Person(object):
+    ...     def __init__(self, id, name=""):
+    ...         self.id = id
+    ...         self.name = name
+    >>> class Address(object):
+    ...     def __init__(self, id, street="", city=""):
+    ...         self.id = id
+    ...         self.street = street
+    ...         self.city = city
+    >>>
+    >>> objects.add(Address(0, street="Meckelstr. 24", city="Halle"))
+    >>> objects.add(Person(0, name="Sebastian"))
+    >>> objects.add(Person(0, name="Christian"))
+    >>> objects.add(Address(1))
+    >>> objects.add(Address(2, street="Forsterstrasse 29", city="Halle"))
+
+QueryParser returns a list of result objects:
+
+    >>> query('Address/Person[@name="Sebastian"]')
+    [<Person object at 0x...>]
+    >>> query('Address/Person')
+    [<Person object at 0x...>, <Person object at 0x...>]
+    >>> myaddress = query('/Address[@street="Forsterstrasse 29"]')
+    >>> myaddress[0].city
+    'Halle'

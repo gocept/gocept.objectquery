@@ -3,14 +3,12 @@
 # $Id$
 
 class ObjectCollection:
-    """ Holds objects and gives functionality on them. """
-    def __init__(self, collection=[]):
+    """ Holds objects and provides functionality on them. """
+    def __init__(self, collection=None):
         """ initialize the collection """
+        if collection is None:
+            collection = []
         self.collection = collection
-
-    def __call__(self, collection):
-        """ is used for recursiveness - give it a "smaller" version """
-        self.__init__(collection)
 
     def add(self, object):
         self.collection.append(object)
@@ -19,13 +17,13 @@ class ObjectCollection:
         return self.collection
 
     def by_class(self, name):
-        return [elem for elem in self.collection
-                        if elem.__class__.__name__ == name]
+        return [ elem for elem in self.collection
+                        if elem.__class__.__name__ == name ]
 
     def by_attr(self, id, value):
-        return [elem for elem in self.collection
-                        if hasattr(elem,id) and getattr(elem,id) == value]
+        return [ elem for elem in self.collection
+                        if hasattr(elem, id) and getattr(elem, id) == value ]
 
     def get_value(self, id):
-        return [getattr(elem,id) for elem in self.collection
-                        if hasattr(elem,id)]
+        return [ getattr(elem, id) for elem in self.collection
+                        if hasattr(elem, id) ]
