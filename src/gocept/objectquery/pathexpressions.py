@@ -114,11 +114,11 @@ class RPEQueryParser(object):
             elif result[0] == "WILDCARD":
                 return ("WILDCARD", expression[result[1]:result[2]])
             elif result[0] == "OCC_NONE_OR_ONE":
-                return ("OCC", "?")
+                return "?"
             elif result[0] == "OCC_ONE_OR_MORE":
-                return ("OCC", "+")
+                return "+"
             elif result[0] == "OCC_MULTI":
-                return ("OCC", "*")
+                return "*"
             elif result[0] == "ID":
                 output.append(expression[result[1]:result[2]])
             elif result[0] == "ATTRVALUE":

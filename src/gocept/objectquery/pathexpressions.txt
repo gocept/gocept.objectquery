@@ -39,9 +39,9 @@ Occurrence works the same way: it's an KCJOIN with the occurrence parameter
 (+,?,*) and an element:
 
     >>> p.parse('/foo?')
-    ['EEJOIN', None, ['KCJOIN', ('OCC', '?'), ('ELEM', 'foo')]]
+    ['EEJOIN', None, ['KCJOIN', '?', ('ELEM', 'foo')]]
     >>> p.parse('foo*/bar')
-    ['EEJOIN', ['KCJOIN', ('OCC', '*'), ('ELEM', 'foo')], ('ELEM', 'bar')]
+    ['EEJOIN', ['KCJOIN', '*', ('ELEM', 'foo')], ('ELEM', 'bar')]
 
 More Pathjoins work like a tree, where the leaves are the elements:
 
@@ -52,7 +52,7 @@ Attributes are parsed the same way: an ATTR-Function with ID and VALUE as
 parameters:
 
     >>> p.parse('foo/bar*[@a="b"]')
-    ['EEJOIN', ('ELEM', 'foo'), ['EAJOIN', ['ATTR', ('a', 'b')], ['KCJOIN', ('OCC', '*'), ('ELEM', 'bar')]]]
+    ['EEJOIN', ('ELEM', 'foo'), ['EAJOIN', ['ATTR', ('a', 'b')], ['KCJOIN', '*', ('ELEM', 'bar')]]]
 
 Attribute values may contain quoted strings:
 
@@ -65,12 +65,12 @@ Attribute values may contain quoted strings:
 Element can also be a wildcard:
 
     >>> p.parse('/_*/bar')
-    ['EEJOIN', ['EEJOIN', None, ['KCJOIN', ('OCC', '*'), ('WILDCARD', '_')]], ('ELEM', 'bar')]
+    ['EEJOIN', ['EEJOIN', None, ['KCJOIN', '*', ('WILDCARD', '_')]], ('ELEM', 'bar')]
 
 To show the mightiness of the parser, here a more complex example:
 
     >>> p.parse('/foo[@a="b"]/_*/bar+[@a2="b2 b3"]/fou')
-    ['EEJOIN', ['EEJOIN', ['EEJOIN', ['EEJOIN', None, ['EAJOIN', ['ATTR', ('a', 'b')], ('ELEM', 'foo')]], ['KCJOIN', ('OCC', '*'), ('WILDCARD', '_')]], ['EAJOIN', ['ATTR', ('a2', 'b2 b3')], ['KCJOIN', ('OCC', '+'), ('ELEM', 'bar')]]], ('ELEM', 'fou')]
+    ['EEJOIN', ['EEJOIN', ['EEJOIN', ['EEJOIN', None, ['EAJOIN', ['ATTR', ('a', 'b')], ('ELEM', 'foo')]], ['KCJOIN', '*', ('WILDCARD', '_')]], ['EAJOIN', ['ATTR', ('a2', 'b2 b3')], ['KCJOIN', '+', ('ELEM', 'bar')]]], ('ELEM', 'fou')]
 
 You may also provide precedence by using round brackets and UNIONs. Here a
 simple example:
@@ -91,7 +91,7 @@ A Union of two EEJOINS
 A really big example with everything possible included:
 
     >>> p.parse('(E1/E2)*/E3/((E4[@A="v"])|(E5/_*/E6))')
-    ['EEJOIN', ['EEJOIN', ['KCJOIN', ('OCC', '*'), ['EEJOIN', ('ELEM', 'E1'), ('ELEM', 'E2')]], ('ELEM', 'E3')], ['UNION', ['EAJOIN', ['ATTR', ('A', 'v')], ('ELEM', 'E4')], ['EEJOIN', ['EEJOIN', ('ELEM', 'E5'), ['KCJOIN', ('OCC', '*'), ('WILDCARD', '_')]], ('ELEM', 'E6')]]]
+    ['EEJOIN', ['EEJOIN', ['KCJOIN', '*', ['EEJOIN', ('ELEM', 'E1'), ('ELEM', 'E2')]], ('ELEM', 'E3')], ['UNION', ['EAJOIN', ['ATTR', ('A', 'v')], ('ELEM', 'E4')], ['EEJOIN', ['EEJOIN', ('ELEM', 'E5'), ['KCJOIN', '*', ('WILDCARD', '_')]], ('ELEM', 'E6')]]]
 
 Here some negative RPE-Tests
 ============================
