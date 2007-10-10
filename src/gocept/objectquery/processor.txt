@@ -16,31 +16,53 @@ You create a QueryProcessor like this:
 Fill the collection with some examples:
 
     >>> class Telephone(object):
-    ...     def __init__(self, id, number=""):
-    ...         self.id = id
+    ...     def __init__(self, ns, number=""):
+    ...         self.__ns__ = ns
     ...         self.number = number
     >>> class Person(object):
-    ...     def __init__(self, id, name=""):
-    ...         self.id = id
+    ...     def __init__(self, ns, name=""):
+    ...         self.__ns__ = ns
     ...         self.name = name
     >>> class Address(object):
-    ...     def __init__(self, id, street="", city=""):
-    ...         self.id = id
+    ...     def __init__(self, ns, street="", city=""):
+    ...         self.__ns__ = ns
     ...         self.street = street
     ...         self.city = city
-    >>>
-    >>> objects.add(Address(0, street="Meckelstr. 24", city="Halle"))
-    >>> objects.add(Person(0, name="Sebastian"))
-    >>> objects.add(Person(0, name="Christian"))
-    >>> objects.add(Address(1))
-    >>> objects.add(Address(2, street="Forsterstrasse 29", city="Halle"))
 
-QueryParser returns a list of result objects:
+Now fill the classes with some data:
 
-    >>> query('Address/Person[@name="Sebastian"]')
-    [<Person object at 0x...>]
-    >>> query('Address/Person')
-    [<Person object at 0x...>, <Person object at 0x...>]
-    >>> myaddress = query('/Address[@street="Forsterstrasse 29"]')
-    >>> myaddress[0].city
-    'Halle'
+    >>> objects.add(Address((1,100), street="Forsterstrasse", city="Halle"))
+    >>> objects.add(Address((101,50), street="Meckelstrasse", city="Halle"))
+    >>> objects.add(Person((2,8), name="Theuni"))
+    >>> objects.add(Person((11,8), name="coco"))
+    >>> objects.add(Person((21,8), name="nilo"))
+    >>> objects.add(Person((31,8), name="Basti"))
+    >>> objects.add(Person((102,8), name="Basti"))
+    >>> objects.add(Telephone((3,1), number="2298892"))
+    >>> objects.add(Telephone((12,1), number="2298890"))
+    >>> objects.add(Telephone((14,1), number="2298891"))
+    >>> objects.add(Telephone((22,1), number="2298894"))
+    >>> objects.add(Telephone((32,1), number="22988912"))
+    >>> objects.add(Telephone((103,1), number="342263"))
+
+Give the Telephone of all Persons names "coco":
+
+    >>> r = query('Address/Person[@name="coco"]/Telephone')
+    >>> len(r)
+    2
+    >>> r[0].number
+    '2298890'
+
+Give all Persons, that live in "Forsterstrasse":
+
+    >>> r = query('Address[@street="Forsterstrasse"]/Person*')
+    >>> len(r)
+    4
+
+Give the Telephones the Adress, which is in "Halle" and has only one Person:
+
+    >>> r = query('Address[@city="Halle"]/Person?/Telephone')
+    >>> len(r)
+    1
+    >>> r[0].number
+    '342263'

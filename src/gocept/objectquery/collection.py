@@ -16,9 +16,12 @@ class ObjectCollection:
     def all(self):
         return self.collection
 
-    def by_class(self, name):
+    def by_class(self, name, namespace):
         return [ elem for elem in self.collection
-                        if elem.__class__.__name__ == name ]
+                        if elem.__class__.__name__ == name
+                        and elem.__ns__[0] >= namespace[0]
+                        and elem.__ns__[0] <= (namespace[0] + namespace[1])
+               ]
 
     def by_attr(self, id, value):
         return [ elem for elem in self.collection

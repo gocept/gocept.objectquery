@@ -16,64 +16,57 @@ Get a ObjectCollection:
 Using the ObjectCollection
 ==========================
 
-First create some example classes. All have the attribute "id" which is like
-an object counter for the number of equal named classes. The rest should be
-self-explanatory.
+First create some example classes. All have the attribute "__ns__" which is
+a namespace tupel which consists oگ (order, size) variables.
 
     >>> class Telephone(object):
-    ...     def __init__(self, id, number=""):
-    ...         self.id = id
+    ...     def __init__(self, ns, number=""):
+    ...         self.__ns__ = ns
     ...         self.number = number
     >>> class Person(object):
-    ...     def __init__(self, id, name=""):
-    ...         self.id = id
+    ...     def __init__(self, ns, name=""):
+    ...         self.__ns__ = ns
     ...         self.name = name
     >>> class Address(object):
-    ...     def __init__(self, id, street="", city=""):
-    ...         self.id = id
+    ...     def __init__(self, ns, street="", city=""):
+    ...         self.__ns__ = ns
     ...         self.street = street
     ...         self.city = city
 
 Add some objects to the collection:
 
-    >>> oc.add(Telephone(0))
-    >>> oc.add(Address(0, street="Meckelstr. 24", city="Halle"))
-    >>> oc.add(Address(1))
-    >>> oc.add(Person(0, name="Sebastian"))
-    >>> oc.add(Address(2, street="Forsterstr. 29", city="Halle"))
-    >>> oc.add(Telephone(1, number="+49345122988912"))
+    >>> oc.add(Address((1,10), street="Meckelstrasse", city="Halle"))
+    >>> oc.add(Person((2,7), name="Sebastian"))
+    >>> oc.add(Telephone((3,1), number="+49345122988912"))
+    >>> oc.add(Telephone((5,1)))
     >>> oc.all()
-    [<Telephone object at 0x...>, <Address object at 0x...>, <Address object at 0x...>, <Person object at 0x...>, <Address object at 0x...>, <Telephone object at 0x...>]
+    [<Address object at 0x...>, <Person object at 0x...>, <Telephone object at 0x...>, <Telephone object at 0x...>]
 
 Now use the init functionality:
 
-    >>> oci = ObjectCollection([Telephone(0), Address(0)])
+    >>> oci = ObjectCollection([Address((1,5)), Person((2,2))])
     >>> oci.all()
-    [<Telephone object at 0x...>, <Address object at 0x...>]
+    [<Address object at 0x...>, <Person object at 0x...>]
 
 Search by classname:
 
-    >>> oc.by_class("Telephone")
+    >>> oc.by_class("Telephone", (1,10))
     [<Telephone object at 0x...>, <Telephone object at 0x...>]
-    >>> oc.by_class("Address")
-    [<Address object at 0x...>, <Address object at 0x...>, <Address object at 0x...>]
+    >>> oc.by_class("Address", (1,10))
+    [<Address object at 0x...>]
 
 Now search for some object attributes:
 
     >>> oc.by_attr("number", "+49345122988912")
     [<Telephone object at 0x...>]
     >>> oc.by_attr("city", "Halle")
-    [<Address object at 0x...>, <Address object at 0x...>]
-    >>> oc.by_attr("street", "")
     [<Address object at 0x...>]
-    >>> oc.by_attr("id", 1)
-    [<Address object at 0x...>, <Telephone object at 0x...>]
-    >>> oc.by_attr("id", "")
+    >>> oc.by_attr("street", "")
     []
 
 You may want to get some values:
 
     >>> oc.get_value("street")
-    ['Meckelstr. 24', '', 'Forsterstr. 29']
+    ['Meckelstrasse']
     >>> oc.get_value("name")
     ['Sebastian']
