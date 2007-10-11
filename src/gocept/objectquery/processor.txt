@@ -50,6 +50,21 @@ Now fill the classes with some data:
     >>> objects.add(Telephone(number="22988912"), p4)
     >>> objects.add(Telephone(number="342263"), p5)
 
+Root joins:
+
+    >>> r = query('/Address')
+    >>> len(r)
+    2
+    >>> r = query('/Telephone')
+    >>> len(r)
+    0
+
+Give all Telephones that are direct childs of Adresses:
+
+    >>> r = query('Address/Telephone')
+    >>> len(r)
+    0
+
 Give the Telephone of all Persons named "coco":
 
     >>> r = query('Address/Person[@name="coco"]/Telephone')

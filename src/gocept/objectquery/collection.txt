@@ -43,9 +43,9 @@ Add some objects to the collection:
 
 Search by classname:
 
-    >>> oc.by_class("Telephone", (1,10))
+    >>> oc.by_class("Telephone")
     [<Telephone object at 0x...>, <Telephone object at 0x...>]
-    >>> oc.by_class("Address", (1,10))
+    >>> oc.by_class("Address")
     [<Address object at 0x...>]
 
 Now search for some object attributes:

@@ -2,8 +2,8 @@
 # See also LICENSE.txt
 # $Id$
 
-MAX_CHILD = 6
-MAX_HEIGHT = 4
+MAX_CHILD = 1000
+MAX_HEIGHT = 400
 
 class RootObject:
     pass
@@ -41,7 +41,12 @@ class ObjectCollection:
     def all(self):
         return self.collection[1:]  # suppress the RootObject
 
-    def by_class(self, name, namespace):
+    def root(self):
+        return [ self.collection[0] ]
+
+    def by_class(self, name, namespace=None):
+        if namespace is None:
+            namespace = self._namespace.get(self.collection[0])
         return [ elem for elem in self.collection
                         if elem.__class__.__name__ == name
                         and self._namespace.get(elem)[0] > namespace[0]
@@ -52,6 +57,12 @@ class ObjectCollection:
     def by_attr(self, id, value):
         return [ elem for elem in self.collection
                         if hasattr(elem, id) and getattr(elem, id) == value ]
+
+    def is_direct_child(self, child, parent):
+        for elem in self._eeindex.get(parent):
+            if elem == child:
+                return True
+        return False
 
     def get_value(self, id):
         return [ getattr(elem, id) for elem in self.collection

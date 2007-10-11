@@ -35,13 +35,13 @@ class QueryProcessor(object):
         # get the elements
         elem1 = self._get_elem(elem1, namespace)
         if not elem1:       # root join
-            return elem2
-        else:
-            result = []
-            for par in elem1:
-                desc = self._get_elem(elem2,
-                                      self.collection.get_namespace(par))
-                result.extend(desc)
+            elem1 = self.collection.root()
+        result = []
+        for par in elem1:
+            desc = self._get_elem(elem2,
+                                  self.collection.get_namespace(par))
+            result.extend([ elem for elem in desc
+                           if self.collection.is_direct_child(elem, par) ])
         return result
 
     def _eajoin(self, elem1, elem2, namespace):
