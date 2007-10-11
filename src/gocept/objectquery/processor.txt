@@ -16,36 +16,41 @@ You create a QueryProcessor like this:
 Fill the collection with some examples:
 
     >>> class Telephone(object):
-    ...     def __init__(self, ns, number=""):
-    ...         self.__ns__ = ns
+    ...     def __init__(self, number=""):
     ...         self.number = number
     >>> class Person(object):
-    ...     def __init__(self, ns, name=""):
-    ...         self.__ns__ = ns
+    ...     def __init__(self, name=""):
     ...         self.name = name
     >>> class Address(object):
-    ...     def __init__(self, ns, street="", city=""):
-    ...         self.__ns__ = ns
+    ...     def __init__(self, street="", city=""):
     ...         self.street = street
     ...         self.city = city
 
 Now fill the classes with some data:
 
-    >>> objects.add(Address((1,100), street="Forsterstrasse", city="Halle"))
-    >>> objects.add(Address((101,50), street="Meckelstrasse", city="Halle"))
-    >>> objects.add(Person((2,8), name="Theuni"))
-    >>> objects.add(Person((11,8), name="coco"))
-    >>> objects.add(Person((21,8), name="nilo"))
-    >>> objects.add(Person((31,8), name="Basti"))
-    >>> objects.add(Person((102,8), name="Basti"))
-    >>> objects.add(Telephone((3,1), number="2298892"))
-    >>> objects.add(Telephone((12,1), number="2298890"))
-    >>> objects.add(Telephone((14,1), number="2298891"))
-    >>> objects.add(Telephone((22,1), number="2298894"))
-    >>> objects.add(Telephone((32,1), number="22988912"))
-    >>> objects.add(Telephone((103,1), number="342263"))
+    >>> a1 = Address(street="Forsterstrasse", city="Halle")
+    >>> a2 = Address(street="Meckelstrasse", city="Halle")
+    >>> objects.add(a1)
+    >>> objects.add(a2)
+    >>> p1 = Person(name="Theuni")
+    >>> p2 = Person(name="coco")
+    >>> p3 = Person(name="nilo")
+    >>> p4 = Person(name="Basti")
+    >>> p5 = Person(name="Basti")
+    >>> objects.add(p1, a1)
+    >>> objects.add(p2, a1)
+    >>> objects.add(p3, a1)
+    >>> objects.add(p4, a1)
+    >>> objects.add(p5, a2)
+    >>>
+    >>> objects.add(Telephone(number="2298892"), p1)
+    >>> objects.add(Telephone(number="2298890"), p2)
+    >>> objects.add(Telephone(number="2298891"), p2)
+    >>> objects.add(Telephone(number="2298894"), p3)
+    >>> objects.add(Telephone(number="22988912"), p4)
+    >>> objects.add(Telephone(number="342263"), p5)
 
-Give the Telephone of all Persons names "coco":
+Give the Telephone of all Persons named "coco":
 
     >>> r = query('Address/Person[@name="coco"]/Telephone')
     >>> len(r)

@@ -35,18 +35,14 @@ a namespace tupel which consists oگ (order, size) variables.
 
 Add some objects to the collection:
 
-    >>> oc.add(Address((1,10), street="Meckelstrasse", city="Halle"))
-    >>> oc.add(Person((2,7), name="Sebastian"))
-    >>> oc.add(Telephone((3,1), number="+49345122988912"))
-    >>> oc.add(Telephone((5,1)))
+    >>> address1 = Address((1,10), street="Meckelstrasse", city="Halle")
+    >>> oc.add(address1)
+    >>> person1 = Person((2,7), name="Sebastian")
+    >>> oc.add(person1, address1)
+    >>> oc.add(Telephone((3,1), number="+49345122988912"), person1)
+    >>> oc.add(Telephone((5,1)), person1)
     >>> oc.all()
     [<Address object at 0x...>, <Person object at 0x...>, <Telephone object at 0x...>, <Telephone object at 0x...>]
-
-Now use the init functionality:
-
-    >>> oci = ObjectCollection([Address((1,5)), Person((2,2))])
-    >>> oci.all()
-    [<Address object at 0x...>, <Person object at 0x...>]
 
 Search by classname:
 

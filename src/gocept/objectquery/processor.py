@@ -18,40 +18,36 @@ class QueryProcessor(object):
 
     def __call__(self, expression):
         qp = self.parser.parse(expression)
-        return self._process_queryplan(qp,(1,100))
+        namespace = self.collection.get_namespace(None)
+        return self._process_queryplan(qp, namespace)
 
-    def _get_elem(self, elem, ns):
+    def _get_elem(self, elem, namespace):
         if not elem:                # elem is None
             return None
         elif elem[0] == "ELEM":     # elem is ("ELEM", "...")
-            return self.collection.by_class(elem[1], ns)
+            return self.collection.by_class(elem[1], namespace)
         elif elem[0] == "ATTR":     # elem is ["ATTR", (ID, VALUE)]
             return self.collection.by_attr(elem[1][0], elem[1][1])
         else:                       # elem is [function, ...]
-            return self._process_queryplan(elem, ns)
+            return self._process_queryplan(elem, namespace)
 
-    def _eejoin(self, elem1, elem2, ns):
+    def _eejoin(self, elem1, elem2, namespace):
         # get the elements
-        elem1 = self._get_elem(elem1, ns)
+        elem1 = self._get_elem(elem1, namespace)
         if not elem1:       # root join
             return elem2
         else:
             result = []
             for par in elem1:
-                desc = self._get_elem(elem2, par.__ns__)
-                # join par (parent) and desc (descendant)
-                #for d in desc:
-                #    p_order, p_size = par.__ns__
-                #    d_order, d_size = d.__ns__
-                #    if d_order > p_order and d_order < (p_order + p_size):
-                #        result.append(d)
+                desc = self._get_elem(elem2,
+                                      self.collection.get_namespace(par))
                 result.extend(desc)
         return result
 
-    def _eajoin(self, elem1, elem2, ns):
+    def _eajoin(self, elem1, elem2, namespace):
         # get the elements
-        elem1 = self._get_elem(elem1, ns)
-        elem2 = self._get_elem(elem2, ns)
+        elem1 = self._get_elem(elem1, namespace)
+        elem2 = self._get_elem(elem2, namespace)
         # join elem1 and elem2
         result = []
         for x in elem1:
@@ -59,24 +55,9 @@ class QueryProcessor(object):
                 if x == y: result.append(x)
         return result
 
-    def _kcjoin(self, occ, elem, ns):
+    def _kcjoin(self, occ, elem, namespace):
         # get the elements
-        elem = self._get_elem(elem, ns)
-        # grouping
-        # bla = []
-        #for x in elem:
-        #    f = 0
-        #    for y in bla:
-        #        if x.__parent__ == y: f = 1
-        #    if f == 0:
-        #        bla.append(x.__parent__)
-        #elemn = []
-        #for x in bla:
-        #    elemn.append(x)
-        #    elemn[x] = []
-        #    for y in elem:
-        #        if y.__parent__ == x: elemn[x].append(y)
-        # do kcjoin
+        elem = self._get_elem(elem, namespace)
         if (occ == "?" and len(elem) < 2):
             return elem
         elif (occ == "+" and len(elem) > 0):
@@ -85,11 +66,11 @@ class QueryProcessor(object):
             return elem
         return []
 
-    def _process_queryplan(self, qp, ns):
+    def _process_queryplan(self, qp, namespace):
         if qp[0] == "EEJOIN":
-            result = self._eejoin(qp[1], qp[2], ns)
+            result = self._eejoin(qp[1], qp[2], namespace)
         elif qp[0] == "EAJOIN":
-            result = self._eajoin(qp[1], qp[2], ns)
+            result = self._eajoin(qp[1], qp[2], namespace)
         elif qp[0] == "KCJOIN":
-            result = self._kcjoin(qp[1], qp[2], ns)
+            result = self._kcjoin(qp[1], qp[2], namespace)
         return result
