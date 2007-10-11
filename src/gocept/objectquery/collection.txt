@@ -20,27 +20,24 @@ First create some example classes. All have the attribute "__ns__" which is
 a namespace tupel which consists oگ (order, size) variables.
 
     >>> class Telephone(object):
-    ...     def __init__(self, ns, number=""):
-    ...         self.__ns__ = ns
+    ...     def __init__(self, number=""):
     ...         self.number = number
     >>> class Person(object):
-    ...     def __init__(self, ns, name=""):
-    ...         self.__ns__ = ns
+    ...     def __init__(self, name=""):
     ...         self.name = name
     >>> class Address(object):
-    ...     def __init__(self, ns, street="", city=""):
-    ...         self.__ns__ = ns
+    ...     def __init__(self, street="", city=""):
     ...         self.street = street
     ...         self.city = city
 
 Add some objects to the collection:
 
-    >>> address1 = Address((1,10), street="Meckelstrasse", city="Halle")
+    >>> address1 = Address(street="Meckelstrasse", city="Halle")
     >>> oc.add(address1)
-    >>> person1 = Person((2,7), name="Sebastian")
+    >>> person1 = Person(name="Sebastian")
     >>> oc.add(person1, address1)
-    >>> oc.add(Telephone((3,1), number="+49345122988912"), person1)
-    >>> oc.add(Telephone((5,1)), person1)
+    >>> oc.add(Telephone(number="+49345122988912"), person1)
+    >>> oc.add(Telephone(), person1)
     >>> oc.all()
     [<Address object at 0x...>, <Person object at 0x...>, <Telephone object at 0x...>, <Telephone object at 0x...>]
 
