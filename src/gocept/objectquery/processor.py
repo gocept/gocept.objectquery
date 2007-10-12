@@ -26,6 +26,8 @@ class QueryProcessor(object):
             return None
         elif elem[0] == "ELEM":     # elem is ("ELEM", "...")
             return self.collection.by_class(elem[1], namespace)
+        elif elem[0] == "WILDCARD": # elem is ("WILDCARD", "_")
+            return self.collection.all()
         elif elem[0] == "ATTR":     # elem is ["ATTR", (ID, VALUE)]
             return self.collection.by_attr(elem[1][0], elem[1][1])
         else:                       # elem is [function, ...]

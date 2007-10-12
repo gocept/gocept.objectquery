@@ -86,3 +86,34 @@ Give the Telephones the Adress, which is in "Halle" and has only one Person:
     1
     >>> r[0].number
     '342263'
+
+Handle Wildcards correctly:
+
+    >>> r = query('/Address/_*/Telephone')
+    >>> len(r)
+    6
+
+What about precedence:
+
+    >>> r = query('/Address[@street="Forsterstrasse"]/Person/Telephone')
+    >>> len(r)
+    5
+    >>> r = query('(/Address[@street="Forsterstrasse"]/Person)/Telephone')
+    >>> len(r)
+    5
+    >>> r = query('/Address[@street="Forsterstrasse"]/(Person/Telephone)')
+    >>> len(r)
+    0
+    >>> r = query('(/Address/Person[@name="Basti"])/(Person/Telephone)')
+    >>> len(r)
+    2
+
+
+But pay attention. If you change the query from .."]/(Pers.. to .."](/Pers..
+you get an Address-Result with street name "Forsterstrasse":
+
+    >>> r = query('/Address[@street="Forsterstrasse"](/Person/Telephone)')
+    >>> len(r)
+    1
+    >>> r[0].street
+    'Forsterstrasse'
