@@ -2,8 +2,8 @@
 # See also LICENSE.txt
 # $Id$
 
-MAX_CHILD = 1000
-MAX_HEIGHT = 400
+MAX_CHILD = 10
+MAX_HEIGHT = 5
 
 class RootObject:
     pass
@@ -49,14 +49,14 @@ class ObjectCollection:
             namespace = self._namespace.get(self.collection[0])
         return [ elem for elem in self.collection
                         if elem.__class__.__name__ == name
-                        and self._namespace.get(elem)[0] > namespace[0]
-                        and self._namespace.get(elem)[0] < (namespace[0] +
+                        and self._namespace.get(elem)[0] >= namespace[0]
+                        and self._namespace.get(elem)[0] <= (namespace[0] +
                                                              namespace[1])
                ]
 
     def by_attr(self, id, value):
         return [ elem for elem in self.collection
-                        if hasattr(elem, id) and getattr(elem, id) == value ]
+                        if hasattr(elem, id) and (getattr(elem, id) == value) ]
 
     def is_direct_child(self, child, parent):
         for elem in self._eeindex.get(parent):
