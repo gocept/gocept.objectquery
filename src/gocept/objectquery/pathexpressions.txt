@@ -62,6 +62,11 @@ Attribute values may contain quoted strings:
     >>> p.parse('foo/bar[@a="b"c d"e"]')
     ['EEJOIN', ('ELEM', 'foo'), ['EAJOIN', ['ATTR', ('a', 'b"c d"e')], ('ELEM', 'bar')]]
 
+Attribute vales may also be empty:
+
+    >>> p.parse('/foo[@A=""]')
+    ['EEJOIN', None, ['EAJOIN', ['ATTR', ('A', '')], ('ELEM', 'foo')]]
+
 Element can also be a wildcard:
 
     >>> p.parse('/_*/bar')

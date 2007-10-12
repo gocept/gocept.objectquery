@@ -20,7 +20,7 @@ class RPEQueryParser(object):
         ID              := ELEM
         ELEM            := [a-zA-Z0-9]+
         ATTRVALUE       := text / quoted_text
-        text            := [a-zA-Z0-9 ]+, quoted_text*
+        text            := [a-zA-Z0-9 ]*, quoted_text*
         quoted_text     := [a-zA-Z0-9 ]*, '\"', [a-zA-Z0-9 ]+, '\"',
                            [a-zA-Z0-9 ]*
         PATH_SEPARATOR  := '/'
