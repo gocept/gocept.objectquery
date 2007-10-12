@@ -117,3 +117,12 @@ you get an Address-Result with street name "Forsterstrasse":
     1
     >>> r[0].street
     'Forsterstrasse'
+
+Unions:
+
+    >>> r = query('(/Address[@street="Forsterstrasse"])|(Person/Telephone)')
+    >>> len(r)
+    7
+    >>> r = query('(/Address)|(Person[@name="Basti"])')
+    >>> len(r)
+    4

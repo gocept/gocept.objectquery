@@ -68,6 +68,13 @@ class QueryProcessor(object):
             return elem
         return []
 
+    def _union(self, elem1, elem2, namespace):
+        # get the elements
+        elem1 = self._get_elem(elem1, namespace)
+        elem2 = self._get_elem(elem2, namespace)
+        elem1.extend(elem2)
+        return elem1
+
     def _process_queryplan(self, qp, namespace):
         if qp[0] == "EEJOIN":
             result = self._eejoin(qp[1], qp[2], namespace)
@@ -75,4 +82,6 @@ class QueryProcessor(object):
             result = self._eajoin(qp[1], qp[2], namespace)
         elif qp[0] == "KCJOIN":
             result = self._kcjoin(qp[1], qp[2], namespace)
+        elif qp[0] == "UNION":
+            result = self._union(qp[1], qp[2], namespace)
         return result
