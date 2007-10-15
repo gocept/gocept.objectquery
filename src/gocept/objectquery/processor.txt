@@ -17,12 +17,15 @@ Fill the collection with some examples:
 
     >>> class Telephone(object):
     ...     def __init__(self, number=""):
+    ...         self.ref = []
     ...         self.number = number
     >>> class Person(object):
     ...     def __init__(self, name=""):
+    ...         self.ref = []
     ...         self.name = name
     >>> class Address(object):
     ...     def __init__(self, street="", city=""):
+    ...         self.ref = []
     ...         self.street = street
     ...         self.city = city
 

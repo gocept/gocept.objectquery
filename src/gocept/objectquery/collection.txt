@@ -21,23 +21,27 @@ a namespace tupel which consists oگ (order, size) variables.
 
     >>> class Telephone(object):
     ...     def __init__(self, number=""):
+    ...         self.ref = []
     ...         self.number = number
     >>> class Person(object):
     ...     def __init__(self, name=""):
+    ...         self.ref = []
     ...         self.name = name
     >>> class Address(object):
     ...     def __init__(self, street="", city=""):
+    ...         self.ref = []
     ...         self.street = street
     ...         self.city = city
 
 Add some objects to the collection:
 
-    >>> address1 = Address(street="Meckelstrasse", city="Halle")
-    >>> oc.add(address1)
-    >>> person1 = Person(name="Sebastian")
-    >>> oc.add(person1, address1)
-    >>> oc.add(Telephone(number="+49345122988912"), person1)
-    >>> oc.add(Telephone(), person1)
+    >>> t1 = Telephone(number="22988912")
+    >>> t2 = Telephone(number="22988913")
+    >>> p1 = Person(name="Sebastian")
+    >>> p1.ref = [t1, t2]
+    >>> a1 = Address(street="Meckelstrasse", city="Halle")
+    >>> a1.ref = [p1]
+    >>> oc.index(a1)
     >>> oc.all()
     [<Address object at 0x...>, <Person object at 0x...>, <Telephone object at 0x...>, <Telephone object at 0x...>]
 
@@ -50,7 +54,7 @@ Search by classname:
 
 Now search for some object attributes:
 
-    >>> oc.by_attr("number", "+49345122988912")
+    >>> oc.by_attr("number", "22988912")
     [<Telephone object at 0x...>]
     >>> oc.by_attr("city", "Halle")
     [<Address object at 0x...>]

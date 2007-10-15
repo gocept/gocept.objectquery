@@ -38,6 +38,27 @@ class ObjectCollection:
         self._eeindex[object] = []
         self.collection.append(object)
 
+    def index(self, object, parent=None):
+        if self._namespace.get(object, None) is not None:
+            raise ValueError("%s already exists in collection" % object)
+        if parent == None:
+            parent = self.collection[0]
+        if str(type(object))[0:6] == "<class":
+            self._namespace[object] = self._get_new_namespace(parent)
+            self._eeindex[parent].append(object)
+            self._eeindex[object]= []
+            self.collection.append(object)
+        if hasattr(object, "__dict__"):
+            for x in object.__dict__.keys():
+                if str(type(object.__dict__[x])) == "<type 'list'>":
+                    for y in object.__dict__[x]:
+                        self.index(y, parent)
+                elif str(type(object.__dict__[x])) == "<type 'dict'>":
+                    for y in object.__dict__[x].keys():
+                        self.index(object.__dict__[x][y], parent)
+                elif str(type(object.__dict__[x]))[0:6] == "<class":
+                    self.index(object.__dict__[x], parent)
+
     def all(self):
         return self.collection[1:]  # suppress the RootObject
 
