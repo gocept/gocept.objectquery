@@ -51,24 +51,6 @@ Now fill the classes with some data:
     >>> objects.index(a2)
     >>> objects.index(a3)
 
-Test something:
-
-    >>> p5 = Person()
-    >>> a5 = Address(ref=[p5])
-    >>> p = RPEQueryParser()
-    >>> o = ObjectCollection()
-    >>> q = QueryProcessor(p, o)
-    >>> o.index(a5)
-    >>> a5.ref.append(p5)
-    >>> o.add(p5, a5)
-    >>> t5 = Telephone()
-    >>> t6 = Telephone()
-    >>> o.add(t5, p5)
-    >>> o.add(t5, p5)
-    >>> o.add(t5, p5)
-    >>> o.remove(t5, p5)
-    >>> o.add(t6, p5)
-
 Some example usecases
 ---------------------
 
@@ -176,8 +158,17 @@ Remove ``t2`` from ``p3`` and add it to ``p1``:
 Add same object more than once:
 
     >>> p3.ref.append(t2)
-    >>> objects.add(t2,p3)
+    >>> objects.add(t2, p3)
+    >>> r = query('Person/Telephone')
+    >>> r
+    [<Telephone object at 0x...>, <Telephone object at 0x...>, <Telephone object at 0x...>, <Telephone object at 0x...>]
 
+``r[0]`` and ``r[3]`` are now both t2 one and the same object:
+
+    >>> id(r[0]) == id(r[3])
+    True
+    >>> id(r[1]) == id(r[3])
+    False
 
 Problems
 --------
