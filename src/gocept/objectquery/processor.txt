@@ -59,17 +59,15 @@ Test something:
     >>> o = ObjectCollection()
     >>> q = QueryProcessor(p, o)
     >>> o.index(a5)
+    >>> a5.ref.append(p5)
     >>> o.add(p5, a5)
     >>> t5 = Telephone()
-    >>> p5.ref.append(t5)
-    >>> o.add(t5, p5)
     >>> t6 = Telephone()
-    >>> p5.ref.append(t6)
+    >>> o.add(t5, p5)
+    >>> o.add(t5, p5)
+    >>> o.add(t5, p5)
+    >>> o.remove(t5, p5)
     >>> o.add(t6, p5)
-    >>> t5.number="Muh"
-    >>> a5.ref.remove(p5)
-    >>> o.remove(p5, a5)
-    >>> o.collection
 
 Some example usecases
 ---------------------

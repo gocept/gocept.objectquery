@@ -18,12 +18,23 @@ class ObjectCollection:
         self.collection = [root]
         self._namespace = {root: [(1, MAX_CHILD**MAX_HEIGHT-1)]}
         self._eeindex = {root: []}
+        self._eenumber = {root: 1}
+
+    def _get_sons(self, object, pns):
+        sons = []
+        for elem in self._eeindex.get(object, self.collection[0]):
+            if elem not in sons:
+                for ons in self._namespace[elem]:
+                    if ons[0] >= pns[0] and ons[0] <= (pns[0] + pns[1]):
+                        sons.append(elem)
+        return sons
 
     def _get_new_namespace(self, object):
         newns = []
         nslist = self._namespace.get(object, self.collection[0])
         for namespace in nslist:
-            sons = len(self._eeindex.get(object, self.collection[0]))
+            sons = len(self._get_sons(object, namespace))
+#            sons = len(self._eeindex.get(object, self.collection[0]))
             if sons >= MAX_CHILD:
                 raise ValueError("Maximum number of childs exeeded (%i)"
                                  % MAX_CHILD)
@@ -44,8 +55,10 @@ class ObjectCollection:
                 self._namespace[object] = []
             self._namespace[object].extend(self._get_new_namespace(parent))
             self._eeindex[parent].append(object)
+            if self._eenumber.get(object, None) is None:
+                self._eenumber[object] = 0
+            self._eenumber[object] = self._eenumber[object] + 1
             self._eeindex[object]= []
-            found = False
             if not object in self.collection:
                 self.collection.append(object)
         if hasattr(object, "__dict__"):
@@ -62,17 +75,26 @@ class ObjectCollection:
                     self.add(object.__dict__[x], object)
 
     def remove(self, object, parent):
-        for elem in [ bla for bla in self._eeindex[object] ]:
-            self.remove(elem, object)
-        for pns in self._namespace[parent]:
-            for ons in self._namespace[object]:
-                if ons[0] >= pns[0] and ons[0] <= (pns[0] + pns[1]):
-                    self._namespace[object].remove(ons)
-        if self._namespace[object] == []:
-            del self._namespace[object]
-            self.collection.remove(object)
-        self._eeindex[parent].remove(object)
-        del self._eeindex[object]
+        parentlist = [ elem for elem in self._eeindex[parent] if elem ==
+                      object ]
+        for elem in parentlist:
+            self.unindex(elem, parent)
+            self._eeindex[parent].remove(elem)
+
+    def unindex(self, object, parent):
+        if self._eeindex.get(object, None) is not None:
+            for elem in [ bla for bla in self._eeindex[object] ]:
+                self.unindex(elem, object)
+            for pns in self._namespace[parent]:
+                for ons in self._namespace[object]:
+                    if ons[0] >= pns[0] and ons[0] <= (pns[0] + pns[1]):
+                        self._namespace[object].remove(ons)
+                        self._eenumber[object] = self._eenumber[object] - 1
+            if self._eenumber[object] <= 0:
+                del self._namespace[object]
+                self.collection.remove(object)
+                del self._eenumber[object]
+                del self._eeindex[object]
 
     def all(self):
         return self.collection[1:]  # suppress the RootObject
