@@ -16,31 +16,38 @@ class ObjectCollection:
         """ initialize the collection """
         root = RootObject()
         self.collection = [root]
-        self._namespace = {root: (1, MAX_CHILD**MAX_HEIGHT-1)}
+        self._namespace = {root: [(1, MAX_CHILD**MAX_HEIGHT-1)]}
         self._eeindex = {root: []}
 
     def _get_new_namespace(self, object):
-        namespace = self._namespace.get(object, self.collection[0])
-        sons = len(self._eeindex.get(object, self.collection[0]))
-        if sons >= MAX_CHILD:
-            raise ValueError("Maximum number of childs exeeded (%i)"
-                             % MAX_CHILD)
-        block_value = namespace[1] / MAX_CHILD
-        order_value = namespace[0] + 1 + (block_value * sons)
-        size_value = block_value - 1
-        return (order_value, size_value)
+        newns = []
+        nslist = self._namespace.get(object, self.collection[0])
+        for namespace in nslist:
+            sons = len(self._eeindex.get(object, self.collection[0]))
+            if sons >= MAX_CHILD:
+                raise ValueError("Maximum number of childs exeeded (%i)"
+                                 % MAX_CHILD)
+            block_value = namespace[1] / MAX_CHILD
+            order_value = namespace[0] + 1 + (block_value * sons)
+            size_value = block_value - 1
+            newns.append( (order_value, size_value) )
+        return newns
 
     def index(self, object):
         self.add(object, self.collection[0])
 
     def add(self, object, parent):
-        if self._namespace.get(object, None) is not None:
-            raise ValueError("%s already exists in collection" % object)
+        #if self._namespace.get(object, None) is not None:
+        #    raise ValueError("%s already exists in collection" % object)
         if str(type(object)).startswith("<class"):
-            self._namespace[object] = self._get_new_namespace(parent)
+            if self._namespace.get(object, None) is None:
+                self._namespace[object] = []
+            self._namespace[object].extend(self._get_new_namespace(parent))
             self._eeindex[parent].append(object)
             self._eeindex[object]= []
-            self.collection.append(object)
+            found = False
+            if not object in self.collection:
+                self.collection.append(object)
         if hasattr(object, "__dict__"):
             for x in object.__dict__.keys():
                 if isinstance(object.__dict__[x],
@@ -55,10 +62,17 @@ class ObjectCollection:
                     self.add(object.__dict__[x], object)
 
     def remove(self, object, parent):
-        del self._namespace[object]
+        for elem in [ bla for bla in self._eeindex[object] ]:
+            self.remove(elem, object)
+        for pns in self._namespace[parent]:
+            for ons in self._namespace[object]:
+                if ons[0] >= pns[0] and ons[0] <= (pns[0] + pns[1]):
+                    self._namespace[object].remove(ons)
+        if self._namespace[object] == []:
+            del self._namespace[object]
+            self.collection.remove(object)
         self._eeindex[parent].remove(object)
         del self._eeindex[object]
-        self.collection.remove(object)
 
     def all(self):
         return self.collection[1:]  # suppress the RootObject
@@ -66,15 +80,21 @@ class ObjectCollection:
     def root(self):
         return [ self.collection[0] ]
 
+    def _is_parent(self, nslist, parent):
+        for ons in nslist:
+            if ons[0] >= parent[0] and ons[0] <= (parent[0] + parent[1]):
+                return True
+        return False
+
     def by_class(self, name, namespace=None):
         if namespace is None:
             namespace = self._namespace.get(self.collection[0])
-        return [ elem for elem in self.collection
+        returnlist = []
+        for ns in namespace:
+            returnlist.extend([ elem for elem in self.collection
                         if elem.__class__.__name__ == name
-                        and self._namespace.get(elem)[0] >= namespace[0]
-                        and self._namespace.get(elem)[0] <= (namespace[0] +
-                                                             namespace[1])
-               ]
+                        and self._is_parent(self._namespace.get(elem), ns)])
+        return returnlist
 
     def by_attr(self, id, value):
         return [ elem for elem in self.collection

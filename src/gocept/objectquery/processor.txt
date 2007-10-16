@@ -51,6 +51,26 @@ Now fill the classes with some data:
     >>> objects.index(a2)
     >>> objects.index(a3)
 
+Test something:
+
+    >>> p5 = Person()
+    >>> a5 = Address(ref=[p5])
+    >>> p = RPEQueryParser()
+    >>> o = ObjectCollection()
+    >>> q = QueryProcessor(p, o)
+    >>> o.index(a5)
+    >>> o.add(p5, a5)
+    >>> t5 = Telephone()
+    >>> p5.ref.append(t5)
+    >>> o.add(t5, p5)
+    >>> t6 = Telephone()
+    >>> p5.ref.append(t6)
+    >>> o.add(t6, p5)
+    >>> t5.number="Muh"
+    >>> a5.ref.remove(p5)
+    >>> o.remove(p5, a5)
+    >>> o.collection
+
 Some example usecases
 ---------------------
 
@@ -154,6 +174,12 @@ Remove ``t2`` from ``p3`` and add it to ``p1``:
     >>> r = query('Person[@name="Theuni"]/Telephone')
     >>> len(r)
     1
+
+Add same object more than once:
+
+    >>> p3.ref.append(t2)
+    >>> objects.add(t2,p3)
+
 
 Problems
 --------
