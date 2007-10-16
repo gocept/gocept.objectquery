@@ -2,6 +2,9 @@
 Querying objects with regular path expressions
 ==============================================
 
+Create QueryProcessor and initialize the ObjectCollection
+---------------------------------------------------------
+
 You create a QueryProcessor like this:
 
     >>> from gocept.objectquery.pathexpressions import RPEQueryParser
@@ -47,6 +50,9 @@ Now fill the classes with some data:
     >>> objects.index(a1)
     >>> objects.index(a2)
     >>> objects.index(a3)
+
+Some example usecases
+---------------------
 
 Root joins:
 
@@ -124,3 +130,39 @@ Unions:
     >>> r = query('(/Address)|(Person[@name="Basti"])')
     >>> len(r)
     4
+
+Advanced usecases
+-----------------
+
+Remove ``t2`` from ``p3`` and add it to ``p1``:
+
+    >>> r = query('Person[@name="coco"]/Telephone')
+    >>> len(r)
+    2
+    >>> r = query('Person[@name="Theuni"]/Telephone')
+    >>> len(r)
+    0
+
+    >>> p3.ref.remove(t2)
+    >>> objects.remove(t2, p3)
+    >>> p1.ref.append(t2)
+    >>> objects.add(t2, p1)
+
+    >>> r = query('Person[@name="coco"]/Telephone')
+    >>> len(r)
+    1
+    >>> r = query('Person[@name="Theuni"]/Telephone')
+    >>> len(r)
+    1
+
+Problems
+--------
+
+Get Adresses with zero or one Person. This cannot be queries with RPE, because
+you cannot query for elements with conditions in subsequent elements. In the
+following example you *want* to get 2 address objects, but you *get* one
+person object:
+
+    >>> r = query('/Address/Person?')
+    >>> len(r)
+    1

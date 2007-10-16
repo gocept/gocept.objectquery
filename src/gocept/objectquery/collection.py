@@ -2,6 +2,8 @@
 # See also LICENSE.txt
 # $Id$
 
+import types
+
 MAX_CHILD = 10
 MAX_HEIGHT = 5
 
@@ -34,21 +36,29 @@ class ObjectCollection:
     def add(self, object, parent):
         if self._namespace.get(object, None) is not None:
             raise ValueError("%s already exists in collection" % object)
-        if str(type(object))[0:6] == "<class":
+        if str(type(object)).startswith("<class"):
             self._namespace[object] = self._get_new_namespace(parent)
             self._eeindex[parent].append(object)
             self._eeindex[object]= []
             self.collection.append(object)
         if hasattr(object, "__dict__"):
             for x in object.__dict__.keys():
-                if str(type(object.__dict__[x])) == "<type 'list'>":
+                if isinstance(object.__dict__[x],
+                              types.ListType) or isinstance(object.__dict__[x],
+                                                            types.TupleType):
                     for y in object.__dict__[x]:
                         self.add(y, object)
-                elif str(type(object.__dict__[x])) == "<type 'dict'>":
+                elif isinstance(object.__dict__[x], types.DictType):
                     for y in object.__dict__[x].keys():
                         self.add(object.__dict__[x][y], object)
-                elif str(type(object.__dict__[x]))[0:6] == "<class":
+                elif str(type(object.__dict__[x])).startswith("<class"):
                     self.add(object.__dict__[x], object)
+
+    def remove(self, object, parent):
+        del self._namespace[object]
+        self._eeindex[parent].remove(object)
+        del self._eeindex[object]
+        self.collection.remove(object)
 
     def all(self):
         return self.collection[1:]  # suppress the RootObject
