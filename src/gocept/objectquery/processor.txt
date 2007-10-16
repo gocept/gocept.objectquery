@@ -16,48 +16,43 @@ You create a QueryProcessor like this:
 Fill the collection with some examples:
 
     >>> class Telephone(object):
-    ...     def __init__(self, number=""):
-    ...         self.ref = []
+    ...     def __init__(self, ref=None, number=""):
+    ...         if ref is None: ref = []
+    ...         self.ref = ref
     ...         self.number = number
     >>> class Person(object):
-    ...     def __init__(self, name=""):
-    ...         self.ref = []
+    ...     def __init__(self, ref=None, name=""):
+    ...         if ref is None: ref = []
+    ...         self.ref = ref
     ...         self.name = name
     >>> class Address(object):
-    ...     def __init__(self, street="", city=""):
-    ...         self.ref = []
+    ...     def __init__(self, ref=None, street="", etage=""):
+    ...         if ref is None: ref = []
+    ...         self.ref = ref
     ...         self.street = street
-    ...         self.city = city
+    ...         self.etage = etage
 
 Now fill the classes with some data:
 
-    >>> a1 = Address(street="Forsterstrasse", city="Halle")
-    >>> a2 = Address(street="Meckelstrasse", city="Halle")
-    >>> objects.add(a1)
-    >>> objects.add(a2)
+    >>> t1 = Telephone(number="22988912")
+    >>> t2 = Telephone(number="2298890")
+    >>> t3 = Telephone(number="2298891")
     >>> p1 = Person(name="Theuni")
-    >>> p2 = Person(name="coco")
-    >>> p3 = Person(name="nilo")
-    >>> p4 = Person(name="Basti")
-    >>> p5 = Person(name="Basti")
-    >>> objects.add(p1, a1)
-    >>> objects.add(p2, a1)
-    >>> objects.add(p3, a1)
-    >>> objects.add(p4, a1)
-    >>> objects.add(p5, a2)
+    >>> p2 = Person(name="Basti", ref=[t1])
+    >>> p3 = Person(name="coco", ref=[t2, t3])
+    >>> a1 = Address(street="Meckelstrasse", etage="2")
+    >>> a2 = Address(street="Forsterstrasse", etage="2", ref=[p1, p2])
+    >>> a3 = Address(street="Forsterstrasse", etage="1", ref=[p3])
     >>>
-    >>> objects.add(Telephone(number="2298892"), p1)
-    >>> objects.add(Telephone(number="2298890"), p2)
-    >>> objects.add(Telephone(number="2298891"), p2)
-    >>> objects.add(Telephone(number="2298894"), p3)
-    >>> objects.add(Telephone(number="22988912"), p4)
-    >>> objects.add(Telephone(number="342263"), p5)
+    >>> objects.index(a1)
+    >>> objects.index(a2)
+    >>> objects.index(a3)
 
 Root joins:
 
     >>> r = query('/Address')
     >>> len(r)
-    2
+    3
     >>> r = query('/Telephone')
     >>> len(r)
     0
@@ -80,36 +75,36 @@ Give all Persons, that live in "Forsterstrasse":
 
     >>> r = query('Address[@street="Forsterstrasse"]/Person*')
     >>> len(r)
-    4
+    3
 
-Give the Telephones the Adress, which is in "Halle" and has only one Person:
+Give the Telephones of Persons who live *alone* at Forsterstrasse:
 
-    >>> r = query('Address[@city="Halle"]/Person?/Telephone')
+    >>> r = query('Address[@street="Forsterstrasse"]/Person?/Telephone')
     >>> len(r)
-    1
+    2
     >>> r[0].number
-    '342263'
+    '2298890'
 
 Handle Wildcards correctly:
 
     >>> r = query('/Address/_*/Telephone')
     >>> len(r)
-    6
+    3
 
 What about precedence:
 
     >>> r = query('/Address[@street="Forsterstrasse"]/Person/Telephone')
     >>> len(r)
-    5
+    3
     >>> r = query('(/Address[@street="Forsterstrasse"]/Person)/Telephone')
     >>> len(r)
-    5
+    3
     >>> r = query('/Address[@street="Forsterstrasse"]/(Person/Telephone)')
     >>> len(r)
     0
     >>> r = query('(/Address/Person[@name="Basti"])/(Person/Telephone)')
     >>> len(r)
-    2
+    1
 
 
 But pay attention. If you change the query from .."]/(Pers.. to .."](/Pers..
@@ -117,7 +112,7 @@ you get an Address-Result with street name "Forsterstrasse":
 
     >>> r = query('/Address[@street="Forsterstrasse"](/Person/Telephone)')
     >>> len(r)
-    1
+    2
     >>> r[0].street
     'Forsterstrasse'
 
@@ -125,7 +120,7 @@ Unions:
 
     >>> r = query('(/Address[@street="Forsterstrasse"])|(Person/Telephone)')
     >>> len(r)
-    7
+    5
     >>> r = query('(/Address)|(Person[@name="Basti"])')
     >>> len(r)
     4

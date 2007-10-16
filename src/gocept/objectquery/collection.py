@@ -14,7 +14,7 @@ class ObjectCollection:
         """ initialize the collection """
         root = RootObject()
         self.collection = [root]
-        self._namespace = {root: (1, pow(MAX_CHILD, MAX_HEIGHT)-1)}
+        self._namespace = {root: (1, MAX_CHILD**MAX_HEIGHT-1)}
         self._eeindex = {root: []}
 
     def _get_new_namespace(self, object):
@@ -28,21 +28,12 @@ class ObjectCollection:
         size_value = block_value - 1
         return (order_value, size_value)
 
-    def add(self, object, parent=None):
-        if self._namespace.get(object, None) is not None:
-            raise ValueError("%s already exists in collection" % object)
-        if parent == None:
-            parent = self.collection[0]
-        self._namespace[object] = self._get_new_namespace(parent)
-        self._eeindex[parent].append(object)
-        self._eeindex[object] = []
-        self.collection.append(object)
+    def index(self, object):
+        self.add(object, self.collection[0])
 
-    def index(self, object, parent=None):
+    def add(self, object, parent):
         if self._namespace.get(object, None) is not None:
             raise ValueError("%s already exists in collection" % object)
-        if parent == None:
-            parent = self.collection[0]
         if str(type(object))[0:6] == "<class":
             self._namespace[object] = self._get_new_namespace(parent)
             self._eeindex[parent].append(object)
@@ -52,12 +43,12 @@ class ObjectCollection:
             for x in object.__dict__.keys():
                 if str(type(object.__dict__[x])) == "<type 'list'>":
                     for y in object.__dict__[x]:
-                        self.index(y, parent)
+                        self.add(y, object)
                 elif str(type(object.__dict__[x])) == "<type 'dict'>":
                     for y in object.__dict__[x].keys():
-                        self.index(object.__dict__[x][y], parent)
+                        self.add(object.__dict__[x][y], object)
                 elif str(type(object.__dict__[x]))[0:6] == "<class":
-                    self.index(object.__dict__[x], parent)
+                    self.add(object.__dict__[x], object)
 
     def all(self):
         return self.collection[1:]  # suppress the RootObject
