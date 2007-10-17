@@ -32,33 +32,47 @@ class ObjectCollection:
     def _get_new_namespace(self, object):
         newns = []
         nslist = self._namespace.get(object, self.collection[0])
+        oldsons = 0
+        maxsons = 0
+        update = False
         for namespace in nslist:
             sons = len(self._get_sons(object, namespace))
-#            sons = len(self._eeindex.get(object, self.collection[0]))
+            if sons < oldsons:
+                update = True
+            if sons > maxsons:
+                maxsons = sons
+            oldsons = sons
+
+        for namespace in nslist:
+            sons = len(self._get_sons(object, namespace))
             if sons >= MAX_CHILD:
                 raise ValueError("Maximum number of childs exeeded (%i)"
                                  % MAX_CHILD)
-            block_value = namespace[1] / MAX_CHILD
-            order_value = namespace[0] + 1 + (block_value * sons)
-            size_value = block_value - 1
-            newns.append( (order_value, size_value) )
+            elif not update or sons < maxsons:
+                block_value = namespace[1] / MAX_CHILD
+                order_value = namespace[0] + 1 + (block_value * sons)
+                size_value = block_value - 1
+                newns.append( (order_value, size_value) )
         return newns
 
     def index(self, object):
-        self.add(object, self.collection[0])
+        #import pdb; pdb.set_trace() 
+        self.add(object, self.collection[0], first=True)
 
-    def add(self, object, parent):
-        #if self._namespace.get(object, None) is not None:
-        #    raise ValueError("%s already exists in collection" % object)
+    def add(self, object, parent, first=False):
         if str(type(object)).startswith("<class"):
             if self._namespace.get(object, None) is None:
                 self._namespace[object] = []
-            self._namespace[object].extend(self._get_new_namespace(parent))
+            newns = self._get_new_namespace(parent)
+            if first == True:
+                newns = [ newns[-1] ]
+            self._namespace[object].extend(newns)
             self._eeindex[parent].append(object)
             if self._eenumber.get(object, None) is None:
                 self._eenumber[object] = 0
-            self._eenumber[object] = self._eenumber[object] + 1
-            self._eeindex[object]= []
+            self._eenumber[object] = self._eenumber[object] + len(newns)
+            if self._eeindex.get(object, None) is None:
+                self._eeindex[object] = []
             if not object in self.collection:
                 self.collection.append(object)
         if hasattr(object, "__dict__"):
@@ -67,12 +81,12 @@ class ObjectCollection:
                               types.ListType) or isinstance(object.__dict__[x],
                                                             types.TupleType):
                     for y in object.__dict__[x]:
-                        self.add(y, object)
+                        self.add(y, object, first)
                 elif isinstance(object.__dict__[x], types.DictType):
                     for y in object.__dict__[x].keys():
-                        self.add(object.__dict__[x][y], object)
+                        self.add(object.__dict__[x][y], object, first)
                 elif str(type(object.__dict__[x])).startswith("<class"):
-                    self.add(object.__dict__[x], object)
+                    self.add(object.__dict__[x], object, first)
 
     def remove(self, object, parent):
         parentlist = [ elem for elem in self._eeindex[parent] if elem ==
