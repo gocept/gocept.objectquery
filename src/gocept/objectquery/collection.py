@@ -11,141 +11,215 @@ class RootObject:
     pass
 
 class ObjectCollection:
-    """ Holds objects and provides functionality on them. """
+    """Holds objects and provides functionality on them."""
     def __init__(self):
-        """ initialize the collection """
         root = RootObject()
+        # collection holds all elements once
         self.collection = [root]
+        # _namespace is a tupel for each element consisting of an
+        #  - order value which indicates the position in preorder
+        #  - size value which is a range of order values of the subsequent
+        #    elements
         self._namespace = {root: [(1, MAX_CHILD**MAX_HEIGHT-1)]}
+        # _eeindex is a dict which holds all direct childs of elements in a
+        # list. Used to compare direct relationships between elements.
         self._eeindex = {root: []}
+        # _eenumber is a counter which holds the number of equal elements
         self._eenumber = {root: 1}
 
-    def _get_sons(self, object, pns):
+    def _compare_namespace(self, object_namespace, parent_namespace):
+        """Return true if object_namespace is inside parent_namespace"""
+        if object_namespace[0] >= parent_namespace[0] \
+           and object_namespace[0] <= (parent_namespace[0] + \
+                                       parent_namespace[1]):
+            return True
+        return False
+
+    def _get_sons(self, object, parent_namespace):
+        """Returns a list of elements which are direct sons of object
+
+            object is the element for which sons should be returned.
+            parent_namespace is the namespace in which sons should be searched.
+            This is needed if objects exists more than once within your
+            Collection.
+
+        """
+
         sons = []
-        for elem in self._eeindex.get(object, self.collection[0]):
-            if elem not in sons:
-                for ons in self._namespace[elem]:
-                    if ons[0] >= pns[0] and ons[0] <= (pns[0] + pns[1]):
+        for elem in self._eeindex[object]:
+            if elem not in sons:    # prevent bi-insertion
+                for object_namespace in self._namespace[elem]:
+                    if self._compare_namespace(object_namespace,
+                                               parent_namespace):
                         sons.append(elem)
         return sons
 
     def _get_new_namespace(self, object):
-        newns = []
-        nslist = self._namespace.get(object, self.collection[0])
-        oldsons = 0
-        maxsons = 0
-        update = False
-        for namespace in nslist:
-            sons = len(self._get_sons(object, namespace))
-            if sons < oldsons:
-                update = True
-            if sons > maxsons:
-                maxsons = sons
-            oldsons = sons
+        """Return a list of new free namespace tupels under object
 
-        for namespace in nslist:
-            sons = len(self._get_sons(object, namespace))
+            The returned list consists of 1+ (order, size) tupels for each
+            object found in your Collection.
+
+        """
+
+        new_namespaces = []
+        # First we need to find out, if we need a namespace for a new amount
+        # of sons (e.g. add an object as successor to another object, which
+        # occurs more than once in your Collection) or if we just "subadd"
+        # objects within the add of another add (recursive) - so we don't want
+        # to add the subadds to perhaps existing objects.
+        object_namespaces = self._namespace[object]
+        old_sons = 0
+        max_sons = 0
+        namespace_update = False
+        for object_namespace in object_namespaces:
+            sons = len(self._get_sons(object, object_namespace))
+            if sons < old_sons:
+                namespace_update = True
+            if sons > max_sons:
+                max_sons = sons
+            old_sons = sons
+
+        # Now we are ready to get the new namespaces.
+        for object_namespace in object_namespaces:
+            sons = len(self._get_sons(object, object_namespace))
             if sons >= MAX_CHILD:
+                # TODO: if Maximum numer exeeded, get a sub-namespace-tupel
                 raise ValueError("Maximum number of childs exeeded (%i)"
                                  % MAX_CHILD)
-            elif not update or sons < maxsons:
-                block_value = namespace[1] / MAX_CHILD
-                order_value = namespace[0] + 1 + (block_value * sons)
+            elif not namespace_update or sons < max_sons:
+                # calculate new (order, size) tupel
+                block_value = object_namespace[1] / MAX_CHILD
+                order_value = object_namespace[0] + 1 + (block_value * sons)
                 size_value = block_value - 1
-                newns.append( (order_value, size_value) )
-        return newns
+                new_namespaces.append( (order_value, size_value) )
+        return new_namespaces
 
     def index(self, object):
-        #import pdb; pdb.set_trace() 
-        self.add(object, self.collection[0], first=True)
+        """Call this function from outside to recursivly index object"""
+        self.add(object, self.collection[0], index_call=True)
 
-    def add(self, object, parent, first=False):
+    def add(self, object, parent, index_call=False):
+        """Add object (and subobjects) to Collection under parent"""
+        # We only add instantiated classes
         if str(type(object)).startswith("<class"):
+            # Get a new namespace and add is to _namespace[object]
             if self._namespace.get(object, None) is None:
                 self._namespace[object] = []
-            newns = self._get_new_namespace(parent)
-            if first == True:
-                newns = [ newns[-1] ]
-            self._namespace[object].extend(newns)
+            new_namespaces = self._get_new_namespace(parent)
+            if index_call == True:      # bugfix
+                new_namespaces = [ new_namespaces[-1] ]
+            self._namespace[object].extend(new_namespaces)
+            # Add object to parent _eeindex and add object _eeindex
             self._eeindex[parent].append(object)
-            if self._eenumber.get(object, None) is None:
-                self._eenumber[object] = 0
-            self._eenumber[object] = self._eenumber[object] + len(newns)
             if self._eeindex.get(object, None) is None:
                 self._eeindex[object] = []
+            # Increment _eenumber
+            if self._eenumber.get(object, None) is None:
+                self._eenumber[object] = 0
+            self._eenumber[object] = self._eenumber[object] + \
+                                     len(new_namespaces)
+            # Add object to collection
             if not object in self.collection:
                 self.collection.append(object)
+        # Look through objects __dict__ for classes and tupels or the like.
         if hasattr(object, "__dict__"):
             for x in object.__dict__.keys():
+                # Is x a list or a tuple, then traverse it and add the
+                # content.
                 if isinstance(object.__dict__[x],
                               types.ListType) or isinstance(object.__dict__[x],
                                                             types.TupleType):
                     for y in object.__dict__[x]:
-                        self.add(y, object, first)
+                        self.add(y, object, index_call)
+                # Is x a dictionary, then traverse it and add the content.
                 elif isinstance(object.__dict__[x], types.DictType):
                     for y in object.__dict__[x].keys():
-                        self.add(object.__dict__[x][y], object, first)
+                        self.add(object.__dict__[x][y], object, index_call)
+                # Is x another class, then add it.
                 elif str(type(object.__dict__[x])).startswith("<class"):
-                    self.add(object.__dict__[x], object, first)
+                    self.add(object.__dict__[x], object, index_call)
 
     def remove(self, object, parent):
-        parentlist = [ elem for elem in self._eeindex[parent] if elem ==
-                      object ]
-        for elem in parentlist:
+        """Call this function from outside to remove object from parent
+
+        Calls unindex() for every object under parent.
+
+        """
+
+        # Get all objects under parent.
+        parents = [ elem for elem in self._eeindex[parent] if elem == object ]
+        # For each of these objects remove them recursive.
+        for elem in parents:
             self.unindex(elem, parent)
-            self._eeindex[parent].remove(elem)
+            self._eeindex[parent].remove(elem)  # remove "by hand"
 
     def unindex(self, object, parent):
+        """Removes object and subobjects from parent"""
+        # Check if the object exists under parent.
         if self._eeindex.get(object, None) is not None:
+            # Delete recursive all childs of object
             for elem in [ bla for bla in self._eeindex[object] ]:
                 self.unindex(elem, object)
-            for pns in self._namespace[parent]:
-                for ons in self._namespace[object]:
-                    if ons[0] >= pns[0] and ons[0] <= (pns[0] + pns[1]):
-                        self._namespace[object].remove(ons)
+            # If object under parent (by namespace) remove its namespace and
+            # decrement _eenumber
+            for parent_namespace in self._namespace[parent]:
+                for object_namespace in self._namespace[object]:
+                    if self._compare_namespace(object_namespace,
+                                               parent_namespace):
+                        self._namespace[object].remove(object_namespace)
                         self._eenumber[object] = self._eenumber[object] - 1
-            if self._eenumber[object] <= 0:
+            # If _eenumber is zero (object does not exist in Collection
+            # anymore), delete its _namespace, _eeindex and _eenumber and
+            # remove it from collection
+            if self._eenumber[object] == 0:
                 del self._namespace[object]
                 self.collection.remove(object)
                 del self._eenumber[object]
                 del self._eeindex[object]
 
     def all(self):
+        """Return all objects without the RootObject"""
         return self.collection[1:]  # suppress the RootObject
 
     def root(self):
+        """Return the RootObject"""
         return [ self.collection[0] ]
 
-    def _is_parent(self, nslist, parent):
-        for ons in nslist:
-            if ons[0] >= parent[0] and ons[0] <= (parent[0] + parent[1]):
-                return True
-        return False
-
-    def by_class(self, name, namespace=None):
-        if namespace is None:
-            namespace = self._namespace.get(self.collection[0])
-        returnlist = []
-        for ns in namespace:
-            returnlist.extend([ elem for elem in self.collection
-                        if elem.__class__.__name__ == name
-                        and self._is_parent(self._namespace.get(elem), ns)])
-        return returnlist
+    def by_class(self, search_phrase, namespace=None):
+        """Get all elements matching search_phrase in namespace"""
+        return_list = []
+        for elem in self.collection:
+            # All elements which match the search_phrase
+            if elem.__class__.__name__ == search_phrase:
+                if namespace is None:
+                    return_list.append(elem)
+                else:   # Filter elements with namespace
+                    for parent_namespace in namespace:
+                        for object_namespace in self._namespace[elem]:
+                            if self._compare_namespace(object_namespace,
+                                                       parent_namespace):
+                                return_list.append(elem)
+        return return_list
 
     def by_attr(self, id, value):
-        return [ elem for elem in self.collection
-                        if hasattr(elem, id) and (getattr(elem, id) == value) ]
+        """Get all elements with the attribute id and the value value"""
+        return [elem for elem in self.collection if hasattr(elem, id) and \
+                (getattr(elem, id) == value)]
 
     def is_direct_child(self, child, parent):
+        """Test if child is a direct child of parent"""
         for elem in self._eeindex.get(parent):
             if elem == child:
                 return True
         return False
 
-    def get_value(self, id):
-        return [ getattr(elem, id) for elem in self.collection
-                        if hasattr(elem, id) ]
-
     def get_namespace(self, object):
+        """Return the namespaces for a given object, else the root namespace"""
         return self._namespace.get(object,
                                    self._namespace.get(self.collection[0]))
+
+    def get_value(self, id):
+        """Returns the values for a given id"""
+        return [getattr(elem, id) for elem in self.collection if hasattr(elem,
+                                                                         id)]
