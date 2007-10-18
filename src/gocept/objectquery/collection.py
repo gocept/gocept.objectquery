@@ -5,7 +5,7 @@
 import types
 
 MAX_CHILD = 10
-MAX_HEIGHT = 5
+MAX_HEIGHT = 8
 
 class RootObject:
     pass
@@ -34,7 +34,13 @@ class ObjectCollection:
 
     def _compare_namespace(self, object_namespace, parent_namespace, level=0):
         """Return true if object_namespace is inside parent_namespace"""
-        if object_namespace[level][0] >= parent_namespace[level][0] \
+        # Test if we have to go deeper in extended namespace
+        if object_namespace[level] == parent_namespace[level] \
+           and len(parent_namespace)-1 > level:
+            return self._compare_namespace(object_namespace, parent_namespace,
+                                           level+1)
+        # Now test if the actual namespace level maches the object/parent
+        elif object_namespace[level][0] >= parent_namespace[level][0] \
            and object_namespace[level][0] <= (parent_namespace[level][0] + \
                                        parent_namespace[level][1]):
             return True

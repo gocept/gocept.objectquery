@@ -16,6 +16,54 @@ Get a ObjectCollection:
 Using the ObjectCollection
 ==========================
 
+How to add objects to the ObjectCollection
+------------------------------------------
+
+ObjectCollection is looking inside objects for other objects. You have the
+following possibilities to add preceding objects.
+
+    >>> class Child(object):
+    ...     pass
+
+Tupels:
+
+    >>> class Parent(object):
+    ...     def __init__(self):
+    ...         self.ref_tupel = (Child(), Child())
+    >>> obj = Parent()
+    >>> oc.index(obj)
+    >>> oc.remove(obj, oc.root()[0])
+
+Lists:
+
+    >>> class Parent(object):
+    ...     def __init__(self):
+    ...         self.ref_list = [Child(), Child()]
+    >>> obj = Parent()
+    >>> oc.index(obj)
+    >>> oc.remove(obj, oc.root()[0])
+
+Dictionaries:
+
+    >>> class Parent(object):
+    ...     def __init__(self):
+    ...         self.ref_dict = {"elem1": Child(), "elem2": Child()}
+    >>> obj = Parent()
+    >>> oc.index(obj)
+    >>> oc.remove(obj, oc.root()[0])
+
+Variables:
+
+    >>> class Parent(object):
+    ...     def __init__(self):
+    ...         self.ref_var = Child()
+    >>> obj = Parent()
+    >>> oc.index(obj)
+    >>> oc.remove(obj, oc.root()[0])
+
+Example usage of ObjectCollection
+---------------------------------
+
 First create some example classes. All have the attribute "__ns__" which is
 a namespace tupel which consists of (order, size) variables.
 
@@ -168,7 +216,10 @@ leaves:
     KeyError: <Telephone object at 0x...>
 
 Dynamic namespace expansion
----------------------------
+===========================
+
+Dynamic namespace expansion in height
+-------------------------------------
 
 To test the dynamic namespace expansion we first need a new ObjectCollection
 with a very minimal but senseful MAX_HEIGHT value:
@@ -216,3 +267,85 @@ Fourth() has a more extended namespace, Third() and Second():
 
     >>> oc3._namespace[fou]
     [[(3, 1), (3, 1), (1, 28)]]
+
+Now that the namespace is set correctly, lets test if the comparison works.
+First with unextended namespaces:
+
+    >>> oc3._compare_namespace(oc3._namespace[fir][0],
+    ...                        oc3._namespace[oc3.root()[0]][0])
+    True
+    >>> oc3._compare_namespace(oc3._namespace[oc3.root()[0]][0],
+    ...                        oc3._namespace[fir][0])
+    False
+
+And now with an unextended and an extended namespace:
+
+    >>> oc3._compare_namespace(oc3._namespace[sec][0],
+    ...                        oc3._namespace[fir][0])
+    True
+    >>> oc3._compare_namespace(oc3._namespace[fir][0],
+    ...                        oc3._namespace[sec][0])
+    False
+
+Last with two extended namespaces:
+
+    >>> oc3._compare_namespace(oc3._namespace[thi][0],
+    ...                        oc3._namespace[sec][0])
+    True
+    >>> oc3._compare_namespace(oc3._namespace[sec][0],
+    ...                        oc3._namespace[thi][0])
+    False
+
+Now test the extended namespace with another not matching node:
+
+    >>> fir2 = First()
+    >>> oc3.index(fir2)
+    >>> sec2 = Second()
+    >>> oc3.add(sec2, fir2)
+    >>> thi2 = Third()
+    >>> oc3.add(thi2, sec2)
+
+    >>> oc3._namespace[sec]
+    [[(3, 1), (1, 28)]]
+    >>> oc3._namespace[thi2]
+    [[(12, 1), (2, 8)]]
+
+    >>> oc3._compare_namespace(oc3._namespace[thi2][0],
+    ...                        oc3._namespace[sec][0])
+    False
+
+    >>> oc3.remove(fir2, oc3.root()[0])
+
+Dynamic namespace expansion in width
+------------------------------------
+
+The dynamic namespace expasion in width (adding more childs than initailly
+set) raises an Exception:
+
+    
+    >>> for i in range(0, oc3.MAX_CHILD+1):
+    ...     oc3.index(fir2)
+    Traceback (most recent call last):
+    ...
+    ValueError: Maximum number of childs exeeded (3)
+    >>> oc3.remove(fir2, oc3.root()[0])
+
+Dynamic namespace expansion with multi occurence of objects
+-----------------------------------------------------------
+
+We will now extend the ObjectCollection ``oc3`` from the chapter above and add
+for every object fir, sec, thi and fou another one:
+
+    >>> oc3.index(fir)
+    >>> oc3.add(sec, fir)
+    >>> oc3.add(thi, sec)
+    >>> oc3.add(fou, thi)
+
+Now test if the extended compare works:
+
+    >>> oc3._compare_namespace(oc3._namespace[thi][0],
+    ...                        oc3._namespace[sec][0])
+    True
+    >>> oc3._compare_namespace(oc3._namespace[sec][0],
+    ...                        oc3._namespace[thi][0])
+    False
