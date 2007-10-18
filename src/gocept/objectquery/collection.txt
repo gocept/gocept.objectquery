@@ -17,7 +17,7 @@ Using the ObjectCollection
 ==========================
 
 First create some example classes. All have the attribute "__ns__" which is
-a namespace tupel which consists oگ (order, size) variables.
+a namespace tupel which consists of (order, size) variables.
 
     >>> class Telephone(object):
     ...     def __init__(self, number="", ref=None):
@@ -167,3 +167,52 @@ leaves:
     ...
     KeyError: <Telephone object at 0x...>
 
+Dynamic namespace expansion
+---------------------------
+
+To test the dynamic namespace expansion we first need a new ObjectCollection
+with a very minimal but senseful MAX_HEIGHT value:
+
+    >>> oc3 = ObjectCollection(init_namespace=(3, 3))
+
+We now need four classes:
+
+    >>> class First(object):
+    ...     pass
+    >>> class Second(object):
+    ...     pass
+    >>> class Third(object):
+    ...     pass
+    >>> class Fourth(object):
+    ...     pass
+
+And will set them now in a hirachical order:
+
+    >>> fir = First()
+    >>> oc3.index(fir)
+    >>> sec = Second()
+    >>> oc3.add(sec, fir)
+    >>> thi = Third()
+    >>> oc3.add(thi, sec)
+    >>> fou = Fourth()
+    >>> oc3.add(fou, thi)
+
+The namespace of First is a normal namespace value:
+
+    >>> oc3._namespace[fir]
+    [[(2, 8)]]
+
+Second() has an extended namespace:
+
+    >>> oc3._namespace[sec]
+    [[(3, 1), (1, 28)]]
+
+Third() has an extended namespace, too, within the namespace of Second():
+
+    >>> oc3._namespace[thi]
+    [[(3, 1), (2, 8)]]
+
+Fourth() has a more extended namespace, Third() and Second():
+
+    >>> oc3._namespace[fou]
+    [[(3, 1), (3, 1), (1, 28)]]

@@ -12,7 +12,12 @@ class RootObject:
 
 class ObjectCollection:
     """Holds objects and provides functionality on them."""
-    def __init__(self):
+    def __init__(self, init_namespace=None):
+        # Set the namespace size
+        if init_namespace is None:
+            init_namespace = (MAX_CHILD, MAX_HEIGHT)
+        self.MAX_CHILD, self.MAX_HEIGHT = init_namespace
+        self.root_namespace = (1, self.MAX_CHILD**self.MAX_HEIGHT+1)
         root = RootObject()
         # collection holds all elements once
         self.collection = [root]
@@ -20,18 +25,18 @@ class ObjectCollection:
         #  - order value which indicates the position in preorder
         #  - size value which is a range of order values of the subsequent
         #    elements
-        self._namespace = {root: [(1, MAX_CHILD**MAX_HEIGHT-1)]}
+        self._namespace = {root: [[self.root_namespace]]}
         # _eeindex is a dict which holds all direct childs of elements in a
         # list. Used to compare direct relationships between elements.
         self._eeindex = {root: []}
         # _eenumber is a counter which holds the number of equal elements
         self._eenumber = {root: 1}
 
-    def _compare_namespace(self, object_namespace, parent_namespace):
+    def _compare_namespace(self, object_namespace, parent_namespace, level=0):
         """Return true if object_namespace is inside parent_namespace"""
-        if object_namespace[0] >= parent_namespace[0] \
-           and object_namespace[0] <= (parent_namespace[0] + \
-                                       parent_namespace[1]):
+        if object_namespace[level][0] >= parent_namespace[level][0] \
+           and object_namespace[level][0] <= (parent_namespace[level][0] + \
+                                       parent_namespace[level][1]):
             return True
         return False
 
@@ -61,7 +66,6 @@ class ObjectCollection:
             object found in your Collection.
 
         """
-
         new_namespaces = []
         # First we need to find out, if we need a namespace for a new amount
         # of sons (e.g. add an object as successor to another object, which
@@ -82,17 +86,26 @@ class ObjectCollection:
 
         # Now we are ready to get the new namespaces.
         for object_namespace in object_namespaces:
+            new_namespace = []
+            level = len(object_namespace)-1 # do something with the deepest ns
+            # copy the higher namespace to the new one
+            for bla in object_namespace[:-1]:
+                new_namespace.append(bla)
             sons = len(self._get_sons(object, object_namespace))
-            if sons >= MAX_CHILD:
-                # TODO: if Maximum numer exeeded, get a sub-namespace-tupel
+            if sons >= self.MAX_CHILD:
                 raise ValueError("Maximum number of childs exeeded (%i)"
-                                 % MAX_CHILD)
+                                 % self.MAX_CHILD)
             elif not namespace_update or sons < max_sons:
                 # calculate new (order, size) tupel
-                block_value = object_namespace[1] / MAX_CHILD
-                order_value = object_namespace[0] + 1 + (block_value * sons)
+                block_value = object_namespace[level][1] / self.MAX_CHILD
+                order_value = object_namespace[level][0] + 1 + \
+                                (block_value * sons)
                 size_value = block_value - 1
-                new_namespaces.append( (order_value, size_value) )
+                new_namespace.append((order_value, size_value))
+                # dynamic namespace expansion
+                if size_value < self.MAX_CHILD**2-1:
+                    new_namespace.append(self.root_namespace)
+                new_namespaces.append( new_namespace )
         return new_namespaces
 
     def index(self, object):
