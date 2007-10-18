@@ -93,7 +93,7 @@ Give the Telephones of Persons who live *alone* at Forsterstrasse:
 
 Handle Wildcards correctly:
 
-    >>> r = query('/Address/_*/Telephone')
+    >>> r = query('/Address/_+/Telephone')
     >>> len(r)
     3
 

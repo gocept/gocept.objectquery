@@ -68,9 +68,7 @@ class RPEQueryParser(object):
                 ]
         """
 
-        if result is None:
-            return None
-        elif isinstance(result[0], basestring):
+        if isinstance(result[0], basestring):
             if result[0] == "rpe":
                 return self._modify_result(result[3], expression, [])
             elif result[0] == "expr":
@@ -89,10 +87,7 @@ class RPEQueryParser(object):
                 if output == []:
                     output = rtemp
                 else:
-                    if rtemp == []:
-                        output.append(None)
-                    else:
-                        output.append(rtemp)
+                    output.append(rtemp)
             elif result[0] == "occurence":
                 rtemp = self._modify_result(result[3], expression, [])
                 output = ['KCJOIN', rtemp, output]
@@ -106,8 +101,6 @@ class RPEQueryParser(object):
                     output = None
                 output = ['EEJOIN', output]
             elif result[0] == "UNION":
-                if output == []:
-                    output = None
                 output = ['UNION', output]
             elif result[0] == "ELEM":
                 return ("ELEM", expression[result[1]:result[2]])
