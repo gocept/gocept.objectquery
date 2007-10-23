@@ -5,12 +5,47 @@
 import types
 
 MAX_CHILD = 10
-MAX_HEIGHT = 8
+MAX_HEIGHT = 5
+ROOT_NAMESPACE = (1, MAX_CHILD**MAX_HEIGHT+1)
 
-class RootObject:
+class RootObject(object):
     pass
 
-class ObjectCollection:
+class PathIndex(object):
+    def __init__(self, path=None):
+        if path is None:
+            path = []
+        self.path = path
+
+    def bear(self, handle):
+        new_path = []
+        new_path.extend(self.path)
+        new_path.append(handle)
+        return PathIndex(new_path)
+
+    def is_direct_parent(self, child):
+        if child in self:
+            if len(self.path)+1 == len(child.path):
+                return True
+        return False
+
+    def __contains__(self, child):
+        # PathIndex length child must be longer than self ones
+        if len(self.path) >= len(child.path):
+            return False
+        for index in xrange(len(self.path)):
+            if self.path[index] is not child.path[index]:
+                return False
+        return True
+
+    def __repr__(self):
+        return "<" + self.__module__ + ".PathIndex object with path '"\
+               + ', '.join( [str(x) for x in self.path] ) + "'>"
+
+class ElementIndex(object):
+    pass
+
+class ObjectCollection(object):
     """Holds objects and provides functionality on them."""
     def __init__(self, init_namespace=None):
         # Set the namespace size
