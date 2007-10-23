@@ -16,12 +16,26 @@ class PathIndex(object):
         if path is None:
             path = []
         self.path = path
+        self.childs = []
 
     def bear(self, handle):
         new_path = []
         new_path.extend(self.path)
         new_path.append(handle)
-        return PathIndex(new_path)
+        newchild = PathIndex(new_path)
+        self.childs.append(newchild)
+        return newchild
+
+    def _rearrange_index(self, replace):
+        self.path = replace[1] + self.path[replace[0]:]
+        for elem in self.childs:
+            elem._rearrange_index(replace)
+
+    def move(self, child, target):
+        replace = (len(self.path), target.path)
+        self.childs.remove(child)
+        target.childs.append(child)
+        child._rearrange_index(replace)
 
     def is_direct_parent(self, child):
         if child in self:
@@ -30,7 +44,7 @@ class PathIndex(object):
         return False
 
     def __contains__(self, child):
-        # PathIndex length child must be longer than self ones
+        # PathIndex length of child must be longer than self ones
         if len(self.path) >= len(child.path):
             return False
         for index in xrange(len(self.path)):
@@ -43,7 +57,43 @@ class PathIndex(object):
                + ', '.join( [str(x) for x in self.path] ) + "'>"
 
 class ElementIndex(object):
-    pass
+    def __init__(self):
+        self.__index = {}
+        self.__root = None
+
+    def add(self, object, parent=None):
+        if parent is None:
+            if self.__index != {}:
+                raise KeyError('There is already a root object defined: ' +\
+                              str(self.__root))
+            self.__index[object] = []
+            self.__root = object
+        else:
+            self.__index[parent].append(object)
+            if self.__index.get(object, None) is None:
+                self.__index[object] = []
+
+    def delete(self, object, parent):
+        self.__index[parent].remove(object)
+        if object not in self.rlist():
+            del self.__index[object]
+
+    def move(self, object, parent, target):
+        self.__index[target].append(object)
+        self.delete(object, parent)
+
+    def list(self, object=None):
+        if object is None:
+            object = self.__root
+        return self.__index[object]
+
+    def rlist(self, object=None):
+        if object is None:
+            object = self.__root
+        returnlist = [object]
+        for elem in self.__index[object]:
+            returnlist.extend(self.rlist(elem))
+        return returnlist
 
 class ObjectCollection(object):
     """Holds objects and provides functionality on them."""
