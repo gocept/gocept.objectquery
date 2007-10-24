@@ -34,6 +34,8 @@ Fill the collection with some examples:
     ...         self.ref = ref
     ...         self.street = street
     ...         self.etage = etage
+    >>> class AddressBook(object):
+    ...     pass
 
 Now fill the classes with some data:
 
@@ -46,10 +48,11 @@ Now fill the classes with some data:
     >>> a1 = Address(street="Meckelstrasse", etage="2")
     >>> a2 = Address(street="Forsterstrasse", etage="2", ref=[p1, p2])
     >>> a3 = Address(street="Forsterstrasse", etage="1", ref=[p3])
-    >>>
-    >>> objects.index(a1)
-    >>> objects.index(a2)
-    >>> objects.index(a3)
+    >>> ab = AddressBook()
+    >>> objects.add(ab)
+    >>> objects.add(a1, ab)
+    >>> objects.add(a2, ab)
+    >>> objects.add(a3, ab)
 
 Some example usecases
 ---------------------

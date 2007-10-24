@@ -11,15 +11,8 @@ class ObjectCollection(object):
         self.__element_index = ElementIndex()
         self.__path_index = {}
 
-    def add(self, object, parent=None):
-        if str(type(object)).startswith("<class"):
-            if parent is None:
-                self.__element_index.add(object)
-                self.__path_index[object] = PathIndex()
-            else:
-                self.__element_index.add(object, parent)
-                self.__path_index[object] = self.__path_index[parent].bear(
-                                                                        object)
+    def __get_descendant_objects(self, object):
+        returnlist = []
         # Look through objects __dict__ for classes and tupels or the like.
         if hasattr(object, "__dict__"):
             for x in object.__dict__.keys():
@@ -29,20 +22,42 @@ class ObjectCollection(object):
                               types.ListType) or isinstance(object.__dict__[x],
                                                             types.TupleType):
                     for y in object.__dict__[x]:
-                        self.add(y, object)
+                        returnlist.append(y)
                 # Is x a dictionary, then traverse it and add the content.
                 elif isinstance(object.__dict__[x], types.DictType):
                     for y in object.__dict__[x].keys():
-                        self.add(object.__dict__[x][y], object)
+                        returnlist.append(y)
                 # Is x another class, then add it.
                 elif str(type(object.__dict__[x])).startswith("<class"):
-                    self.add(object.__dict__[x], object)
+                    returnlist.append(object.__dict__[x])
+        return returnlist
+
+    def __add_object(self, object, parent):
+        if parent is None:
+            self.__element_index.add(object)
+            self.__path_index[object] = PathIndex()
+        else:
+            self.__element_index.add(object, parent)
+            self.__path_index[object] = self.__path_index[parent].bear(object)
+
+    def add(self, object, parent=None):
+        desclist = self.__get_descendant_objects(object)
+        if str(type(object)).startswith("<class"):
+            self.__add_object(object, parent)
+        for elem in desclist:
+            if elem not in self.__element_index.list(object):
+                self.add(elem, object)
+            elif len([e for e in desclist if e == elem]) !=\
+                    len([e for e in self.__element_index.list(object)\
+                         if e == elem]):
+                self.__add_object(elem, object)
 
     def __unindex(self, object, parent=None):
         remlist = self.__element_index.list(object)
         for elem in remlist:
             self.__unindex(elem, object)
-        del self.__path_index[object]
+        if object not in self.__element_index.rlist():
+            del self.__path_index[object]
 
     def remove(self, object, parent=None):
         self.__unindex(object, parent)

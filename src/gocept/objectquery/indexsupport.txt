@@ -166,7 +166,7 @@ You can also add one object multiple times under one root:
 
     >>> ei.delete(31, 3)
     >>> ei.list(3)
-    [32, 31, 31]
+    [32]
 
     >>> ei.delete(3, 0)
     >>> ei.list(0)

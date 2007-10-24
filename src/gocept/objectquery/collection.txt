@@ -116,3 +116,100 @@ Now search for some object attributes:
     [<Address object at 0x...>]
     >>> oc.by_attr("street", "")
     []
+
+Adding and removing equal objects multiple times
+------------------------------------------------
+
+First we need a new ObjectCollection and a RootObject:
+
+    >>> oc2 = ObjectCollection()
+    >>> class RootObject(object):
+    ...     pass
+    >>> root = RootObject()
+    >>> oc2.add(root)
+
+Then we generate a tree structure with one Address as root, followed by two
+equal Persons. Person is followed by two equal Telephones:
+
+    >>> tele = Telephone()
+    >>> pers = Person(ref=[tele, tele])
+    >>> addr = Address(ref=[pers, pers])
+    >>> oc2.add(addr, root)
+
+Now we have 4 Telephone objects as leaves:
+
+    >>> len(oc2.by_class("Telephone"))
+    4
+
+Add another Telephone (the same as added above) to Person:
+
+    >>> pers.ref.append(tele)
+    >>> oc2.add(tele, pers)
+
+Now we have 6 Telephone objects as leaves:
+
+    >>> len(oc2.by_class("Person"))
+    2
+    >>> len(oc2.by_class("Telephone"))
+    6
+
+Now add Address for a second time to the Collection:
+
+    >>> oc2.add(addr, root)
+
+Now we have 2 Address, 4 Person and 12 Telephone objects as leaves:
+
+    >>> len(oc2.by_class("Address"))
+    2
+    >>> len(oc2.by_class("Person"))
+    4
+    >>> len(oc2.by_class("Telephone"))
+    12
+
+Now add a third and fourth Person to Address:
+
+    >>> addr.ref.append(pers)
+    >>> oc2.add(pers, addr)
+    >>> addr.ref.append(pers)
+    >>> oc2.add(pers, addr)
+
+There are now 8 Person (every 4 under Address) and 24 Telephone objects:
+
+    >>> len(oc2.by_class("Person"))
+    8
+    >>> len(oc2.by_class("Telephone"))
+    24
+
+Last add a third Address into the Collection:
+
+    >>> oc2.add(addr, root)
+
+There are now 12 Person and 36 Telephone objects:
+
+    >>> len(oc2.by_class("Person"))
+    12
+    >>> len(oc2.by_class("Telephone"))
+    36
+
+Add another Telephone (the same as added above) to Person:
+
+    >>> pers.ref.append(tele)
+    >>> oc2.add(tele, pers)
+
+There are now 12 Person and 48 Telephone objects:
+
+    >>> len(oc2.by_class("Person"))
+    12
+    >>> len(oc2.by_class("Telephone"))
+    48
+
+Remove the Person from Address object:
+
+    >>> addr.ref.remove(pers)
+    >>> oc2.remove(pers, addr)
+
+As the Telephones are removed with the Persons, we now have no Telephone
+leaves:
+
+    >>> len(oc2.by_class("Telephone"))
+    0

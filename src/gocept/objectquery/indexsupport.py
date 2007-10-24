@@ -68,7 +68,8 @@ class ElementIndex(object):
         if (parent is None) and (object == self.__root):
             self.__init__()
         else:
-            self.__index[parent].remove(object)
+            while object in self.__index[parent]:
+                self.__index[parent].remove(object)
             if object not in self.rlist():
                 del self.__index[object]
 
