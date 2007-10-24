@@ -31,8 +31,10 @@ Tupels:
     ...     def __init__(self):
     ...         self.ref_tupel = (Child(), Child())
     >>> obj = Parent()
-    >>> oc.index(obj)
-    >>> oc.remove(obj, oc.root()[0])
+    >>> oc.add(obj)
+    >>> oc.root() == obj
+    True
+    >>> oc.remove(oc.root())
 
 Lists:
 
@@ -40,8 +42,8 @@ Lists:
     ...     def __init__(self):
     ...         self.ref_list = [Child(), Child()]
     >>> obj = Parent()
-    >>> oc.index(obj)
-    >>> oc.remove(obj, oc.root()[0])
+    >>> oc.add(obj)
+    >>> oc.remove(oc.root())
 
 Dictionaries:
 
@@ -49,8 +51,8 @@ Dictionaries:
     ...     def __init__(self):
     ...         self.ref_dict = {"elem1": Child(), "elem2": Child()}
     >>> obj = Parent()
-    >>> oc.index(obj)
-    >>> oc.remove(obj, oc.root()[0])
+    >>> oc.add(obj)
+    >>> oc.remove(oc.root())
 
 Variables:
 
@@ -58,8 +60,8 @@ Variables:
     ...     def __init__(self):
     ...         self.ref_var = Child()
     >>> obj = Parent()
-    >>> oc.index(obj)
-    >>> oc.remove(obj, oc.root()[0])
+    >>> oc.add(obj)
+    >>> oc.remove(oc.root())
 
 Example usage of ObjectCollection
 ---------------------------------
@@ -95,7 +97,7 @@ Add some objects to the collection:
     >>> p1.ref = [t1, t2]
     >>> a1 = Address(street="Meckelstrasse", city="Halle")
     >>> a1.ref = [p1]
-    >>> oc.index(a1)
+    >>> oc.add(a1)
     >>> oc.all()
     [<Address object at 0x...>, <Person object at 0x...>, <Telephone object at 0x...>, <Telephone object at 0x...>]
 
@@ -114,238 +116,3 @@ Now search for some object attributes:
     [<Address object at 0x...>]
     >>> oc.by_attr("street", "")
     []
-
-You may want to get some values:
-
-    >>> oc.get_value("street")
-    ['Meckelstrasse']
-    >>> oc.get_value("name")
-    ['Sebastian']
-
-Adding and removing equal objects multiple times
-------------------------------------------------
-
-First we need a new ObjectCollection:
-
-    >>> oc2 = ObjectCollection()
-
-Then we generate a tree structure with one Address as root, followed by two
-equal Persons. Person is followed by two equal Telephones:
-
-    >>> tele = Telephone()
-    >>> pers = Person(ref=[tele, tele])
-    >>> addr = Address(ref=[pers, pers])
-    >>> oc2.index(addr)
-
-Now we have 4 Telephone objects as leaves:
-
-    >>> len(oc2._namespace[tele])
-    4
-
-Add another Telephone (the same as added above) to Person:
-
-    >>> pers.ref.append(tele)
-    >>> oc2.add(tele, pers)
-
-Now we have 6 Telephone objects as leaves:
-
-    >>> len(oc2._namespace[tele])
-    6
-
-Now add Address for a second time to the Collection:
-
-    >>> oc2.index(addr)
-
-Now we have 2 Address, 4 Person and 12 Telephone objects as leaves:
-
-    >>> len(oc2._namespace[addr])
-    2
-    >>> len(oc2._namespace[pers])
-    4
-    >>> len(oc2._namespace[tele])
-    12
-
-Now add a third and fourth Person to Address:
-
-    >>> addr.ref.append(pers)
-    >>> oc2.add(pers, addr)
-    >>> addr.ref.append(pers)
-    >>> oc2.add(pers, addr)
-
-There are now 8 Person (every 4 under Address) and 24 Telephone objects:
-
-    >>> len(oc2._namespace[pers])
-    8
-    >>> len(oc2._namespace[tele])
-    24
-
-Last add a third Address into the Collection:
-
-    >>> oc2.index(addr)
-
-There are now 12 Person and 36 Telephone objects:
-
-    >>> len(oc2._namespace[pers])
-    12
-    >>> len(oc2._namespace[tele])
-    36
-
-Add another Telephone (the same as added above) to Person:
-
-    >>> pers.ref.append(tele)
-    >>> oc2.add(tele, pers)
-
-There are now 12 Person and 48 Telephone objects:
-
-    >>> len(oc2._namespace[pers])
-    12
-    >>> len(oc2._namespace[tele])
-    48
-
-Remove the Person from Address object:
-
-    >>> addr.ref.remove(pers)
-    >>> oc2.remove(pers, addr)
-
-As the Telephones are removed with the Persons, we now have no Telephone
-leaves:
-
-    >>> len(oc2._namespace[tele])
-    Traceback (most recent call last):
-    ...
-    KeyError: <Telephone object at 0x...>
-
-Dynamic namespace expansion
-===========================
-
-Dynamic namespace expansion in height
--------------------------------------
-
-To test the dynamic namespace expansion we first need a new ObjectCollection
-with a very minimal but senseful MAX_HEIGHT value:
-
-    >>> oc3 = ObjectCollection(init_namespace=(3, 3))
-
-We now need four classes:
-
-    >>> class First(object):
-    ...     pass
-    >>> class Second(object):
-    ...     pass
-    >>> class Third(object):
-    ...     pass
-    >>> class Fourth(object):
-    ...     pass
-
-And will set them now in a hirachical order:
-
-    >>> fir = First()
-    >>> oc3.index(fir)
-    >>> sec = Second()
-    >>> oc3.add(sec, fir)
-    >>> thi = Third()
-    >>> oc3.add(thi, sec)
-    >>> fou = Fourth()
-    >>> oc3.add(fou, thi)
-
-The namespace of First is a normal namespace value:
-
-    >>> oc3._namespace[fir]
-    [[(2, 8)]]
-
-Second() has an extended namespace:
-
-    >>> oc3._namespace[sec]
-    [[(3, 1), (1, 28)]]
-
-Third() has an extended namespace, too, within the namespace of Second():
-
-    >>> oc3._namespace[thi]
-    [[(3, 1), (2, 8)]]
-
-Fourth() has a more extended namespace, Third() and Second():
-
-    >>> oc3._namespace[fou]
-    [[(3, 1), (3, 1), (1, 28)]]
-
-Now that the namespace is set correctly, lets test if the comparison works.
-First with unextended namespaces:
-
-    >>> oc3._compare_namespace(oc3._namespace[fir][0],
-    ...                        oc3._namespace[oc3.root()[0]][0])
-    True
-    >>> oc3._compare_namespace(oc3._namespace[oc3.root()[0]][0],
-    ...                        oc3._namespace[fir][0])
-    False
-
-And now with an unextended and an extended namespace:
-
-    >>> oc3._compare_namespace(oc3._namespace[sec][0],
-    ...                        oc3._namespace[fir][0])
-    True
-    >>> oc3._compare_namespace(oc3._namespace[fir][0],
-    ...                        oc3._namespace[sec][0])
-    False
-
-Last with two extended namespaces:
-
-    >>> oc3._compare_namespace(oc3._namespace[thi][0],
-    ...                        oc3._namespace[sec][0])
-    True
-    >>> oc3._compare_namespace(oc3._namespace[sec][0],
-    ...                        oc3._namespace[thi][0])
-    False
-
-Now test the extended namespace with another not matching node:
-
-    >>> fir2 = First()
-    >>> oc3.index(fir2)
-    >>> sec2 = Second()
-    >>> oc3.add(sec2, fir2)
-    >>> thi2 = Third()
-    >>> oc3.add(thi2, sec2)
-
-    >>> oc3._namespace[sec]
-    [[(3, 1), (1, 28)]]
-    >>> oc3._namespace[thi2]
-    [[(12, 1), (2, 8)]]
-
-    >>> oc3._compare_namespace(oc3._namespace[thi2][0],
-    ...                        oc3._namespace[sec][0])
-    False
-
-    >>> oc3.remove(fir2, oc3.root()[0])
-
-Dynamic namespace expansion in width
-------------------------------------
-
-The dynamic namespace expasion in width (adding more childs than initailly
-set) raises an Exception:
-
-    
-    >>> for i in range(0, oc3.MAX_CHILD+1):
-    ...     oc3.index(fir2)
-    Traceback (most recent call last):
-    ...
-    ValueError: Maximum number of childs exeeded (3)
-    >>> oc3.remove(fir2, oc3.root()[0])
-
-Dynamic namespace expansion with multi occurence of objects
------------------------------------------------------------
-
-We will now extend the ObjectCollection ``oc3`` from the chapter above and add
-for every object fir, sec, thi and fou another one:
-
-    >>> oc3.index(fir)
-    >>> oc3.add(sec, fir)
-    >>> oc3.add(thi, sec)
-    >>> oc3.add(fou, thi)
-
-Now test if the extended compare works:
-
-    >>> oc3._compare_namespace(oc3._namespace[thi][0],
-    ...                        oc3._namespace[sec][0])
-    True
-    >>> oc3._compare_namespace(oc3._namespace[sec][0],
-    ...                        oc3._namespace[thi][0])
-    False

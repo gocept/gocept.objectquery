@@ -49,7 +49,7 @@ You can also move an index to another parent:
 You can test the relationship by using the contains method ``in``:
 
     >>> pi in pi
-    False
+    True
     >>> pi1 in pi
     True
     >>> pi11 in pi
@@ -157,8 +157,12 @@ You can also add one object multiple times under one root:
     >>> ei.add(32, 3)
     >>> ei.add(31, 3)
     >>> ei.add(31, 3)
-    >>> ei.list(3)
-    [31, 32, 31, 31]
+    >>> ei.rlist(3)
+    [3, 31, 32, 31, 31]
+
+    >>> ei.add(300, 31)
+    >>> ei.rlist(3)
+    [3, 31, 300, 32, 31, 300, 31, 300]
 
     >>> ei.delete(31, 3)
     >>> ei.list(3)

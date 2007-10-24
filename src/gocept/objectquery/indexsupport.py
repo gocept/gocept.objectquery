@@ -36,7 +36,7 @@ class PathIndex(object):
 
     def __contains__(self, child):
         # PathIndex length of child must be longer than self ones
-        if len(self.path) >= len(child.path):
+        if len(self.path) > len(child.path):
             return False
         for index in xrange(len(self.path)):
             if self.path[index] is not child.path[index]:
@@ -64,10 +64,13 @@ class ElementIndex(object):
             if self.__index.get(object, None) is None:
                 self.__index[object] = []
 
-    def delete(self, object, parent):
-        self.__index[parent].remove(object)
-        if object not in self.rlist():
-            del self.__index[object]
+    def delete(self, object, parent=None):
+        if (parent is None) and (object == self.__root):
+            self.__init__()
+        else:
+            self.__index[parent].remove(object)
+            if object not in self.rlist():
+                del self.__index[object]
 
     def move(self, object, parent, target):
         self.__index[target].append(object)
@@ -81,7 +84,12 @@ class ElementIndex(object):
     def rlist(self, object=None):
         if object is None:
             object = self.__root
+        if object is None:
+            return []
         returnlist = [object]
         for elem in self.__index[object]:
             returnlist.extend(self.rlist(elem))
         return returnlist
+
+    def root(self):
+        return self.__root
