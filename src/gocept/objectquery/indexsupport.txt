@@ -1,0 +1,192 @@
+==================
+Using IndexSupport
+==================
+PathIndex
+=========
+
+First get a PathIndex object:
+
+    >>> from gocept.objectquery.indexsupport import PathIndex
+    >>> pi = PathIndex()
+
+PathIndex has a list named path, which is empty for the root PathIndex:
+
+    >>> pi
+    <....PathIndex object with path ''>
+
+With the Method ``bear`` you can add a new PathIndex under your
+PathIndex-Object. The path can be any object you like:
+
+    >>> pi1 = pi.bear("foo")
+    >>> pi1
+    <... 'foo'>
+
+    >>> pi2 = pi.bear(1408)
+    >>> pi2
+    <... '1408'>
+
+    >>> class MyClass(object):
+    ...     pass
+    >>> pi11 = pi1.bear(MyClass())
+    >>> pi11
+    <... 'foo, <MyClass object at 0x...>'>
+
+You can also move an index to another parent:
+
+    >>> pi.move(pi1, pi2)
+    >>> pi1
+    <... '1408, foo'>
+    >>> pi11
+    <... '1408, foo, <MyClass object at 0x...>'>
+
+    >>> pi1.move(pi11, pi2)
+    >>> pi11
+    <... '1408, <MyClass object at 0x...>'>
+
+    >>> pi2.move(pi11, pi1)
+    >>> pi2.move(pi1, pi)
+
+You can test the relationship by using the contains method ``in``:
+
+    >>> pi in pi
+    False
+    >>> pi1 in pi
+    True
+    >>> pi11 in pi
+    True
+    >>> pi11 in pi2
+    False
+    >>> pi1 in pi2
+    False
+    >>> pi2 in pi
+    True
+
+You may also ask, if parent has a direct relationship to child (there are no
+other nodes between parent and child):
+
+    >>> pi.is_direct_parent(pi1)
+    True
+    >>> pi1.is_direct_parent(pi11)
+    True
+    >>> pi.is_direct_parent(pi11)
+    False
+
+ElementIndex
+=========
+
+First get a ElementIndex object:
+
+    >>> from gocept.objectquery.indexsupport import ElementIndex
+    >>> ei = ElementIndex()
+
+ElementIndex holds objects and their successors. If you add an object, you may
+transfer its parent object, too:
+
+    >>> ei.add(0)
+
+    >>> ei.add(1, 0)
+    >>> ei.add(2, 0)
+
+    >>> ei.add(11, 1)
+    >>> ei.add(12, 1)
+    >>> ei.add(13, 1)
+
+    >>> ei.add(21, 2)
+    >>> ei.add(22, 2)
+
+    >>> ei.add(111, 11)
+
+Transfering a parent object which does not exist results in an error:
+
+    >>> ei.add(500, 600)
+    Traceback (most recent call last):
+    ...
+    KeyError: 600
+
+Adding a second root is now allowed:
+
+    >>> ei.add(500)
+    Traceback (most recent call last):
+    ...
+    KeyError: 'There is already a root object defined: 0'
+
+You can list all direct childs of you object by using the list-function:
+
+    >>> ei.list()
+    [1, 2]
+    >>> ei.list(1)
+    [11, 12, 13]
+    >>> ei.list(500)
+    Traceback (most recent call last):
+    ...
+    KeyError: 500
+
+You can also list all childs of an object by using the rlist function:
+
+    >>> ei.rlist()
+    [0, 1, 11, 111, 12, 13, 2, 21, 22]
+    >>> ei.rlist(1)
+    [1, 11, 111, 12, 13]
+
+Removing objects is done by using the delete() method:
+
+    >>> ei.delete(11, 1)
+    >>> ei.list(1)
+    [12, 13]
+    >>> ei.rlist()
+    [0, 1, 12, 13, 2, 21, 22]
+
+You may add objects multiple times:
+
+    >>> ei.add(1, 2)
+    >>> ei.rlist(2)
+    [2, 21, 22, 1, 12, 13]
+    >>> ei.rlist()
+    [0, 1, 12, 13, 2, 21, 22, 1, 12, 13]
+
+If you delete an object, which was added multiple times, only one ƣs deleted:
+
+    >>> ei.delete(1, 0)
+    >>> ei.rlist()
+    [0, 2, 21, 22, 1, 12, 13]
+
+You can also add one object multiple times under one root:
+
+    >>> ei.add(3, 0)
+    >>> ei.add(31, 3)
+    >>> ei.add(32, 3)
+    >>> ei.add(31, 3)
+    >>> ei.add(31, 3)
+    >>> ei.list(3)
+    [31, 32, 31, 31]
+
+    >>> ei.delete(31, 3)
+    >>> ei.list(3)
+    [32, 31, 31]
+
+    >>> ei.delete(3, 0)
+    >>> ei.list(0)
+    [2]
+
+You may also move an object from one parent to another:
+
+    >>> ei.list(2)
+    [21, 22, 1]
+
+    >>> ei.move(12, 1, 2)
+
+    >>> ei.list(2)
+    [21, 22, 1, 12]
+    >>> ei.list(1)
+    [13]
+
+If you delete an element, all childs will be deleted, too, if they are no
+longer referenced within the index:
+
+    >>> ei.delete(2, 0)
+    >>> ei.rlist()
+    [0]
+    >>> ei.list(2)
+    Traceback (most recent call last):
+    ...
+    KeyError: 2
