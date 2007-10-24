@@ -9,7 +9,8 @@ from zope.testing import doctest
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTest(doctest.DocFileSuite("collection.txt",
+    suite.addTest(doctest.DocFileSuite("indexsupport.txt",
+                                       "collection.txt",
                                        "pathexpressions.txt",
                                        "processor.txt",
                                        optionflags=doctest.ELLIPSIS))
