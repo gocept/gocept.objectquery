@@ -2,6 +2,17 @@
 # See also LICENSE.txt
 # $Id$
 
+class ObjectToId(object):
+    def __init__(self):
+        self.__idlist = {}
+
+    def obj2id(self, obj):
+        self.__idlist[id(obj)] = obj
+        return id(obj)
+
+    def id2obj(self, id):
+        return self.__idlist[id]
+
 class PathIndex(object):
     def __init__(self, path=None):
         if path is None:
@@ -27,6 +38,10 @@ class PathIndex(object):
         self.childs.remove(child)
         target.childs.append(child)
         child._rearrange_index(replace)
+
+    def delete(self, child):
+        if child in self.childs:
+            self.childs.remove(child)
 
     def is_direct_parent(self, child):
         if child in self:

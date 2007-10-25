@@ -33,12 +33,15 @@ class ObjectCollection(object):
         return returnlist
 
     def __add_object(self, object, parent):
+        if self.__path_index.get(object, None) is None:
+            self.__path_index[object] = []
         if parent is None:
             self.__element_index.add(object)
-            self.__path_index[object] = PathIndex()
+            self.__path_index[object].append(PathIndex())
         else:
             self.__element_index.add(object, parent)
-            self.__path_index[object] = self.__path_index[parent].bear(object)
+            for par in self.__path_index[parent]:
+                self.__path_index[object].append(par.bear(object))
 
     def add(self, object, parent=None):
         desclist = self.__get_descendant_objects(object)
@@ -53,11 +56,21 @@ class ObjectCollection(object):
                 self.__add_object(elem, object)
 
     def __unindex(self, object, parent=None):
-        remlist = self.__element_index.list(object)
-        for elem in remlist:
+        if parent is None:
+            parent = self.root()
+        childs = self.__element_index.list(object)[:]
+        for elem in childs:
             self.__unindex(elem, object)
-        if object not in self.__element_index.rlist():
-            del self.__path_index[object]
+        if self.__path_index.get(parent, None) is not None:
+            for pi in self.__path_index[parent]:
+                if self.__path_index.get(object, None) is not None:
+                    objlist = self.__path_index[object][:]
+                    for obj in objlist:
+                        if pi.is_direct_parent(obj):
+                            pi.delete(obj)
+                            self.__path_index[object].remove(obj)
+                    if self.__path_index[object] == []:
+                        del self.__path_index[object]
 
     def remove(self, object, parent=None):
         self.__unindex(object, parent)
@@ -69,11 +82,17 @@ class ObjectCollection(object):
     def all(self):
         return self.__element_index.rlist()
 
+    def __check_path_index(self, pilist, pi):
+        for p in pilist:
+            if p in pi:
+                return True
+        return False
+
     def by_class(self, name, pathindex=None):
         if pathindex is None:
-            pathindex = self.__path_index[self.root()]
+            pathindex = self.__path_index[self.root()][0]
         return [e for e in self.all() if (e.__class__.__name__ == name) and \
-                                (self.__path_index[e] in pathindex)]
+                    self.__check_path_index(self.__path_index[e], pathindex)]
 
     def by_attr(self, id, value):
         return [elem for elem in self.all() if hasattr(elem, id) and \

@@ -117,6 +117,7 @@ Now search for some object attributes:
     >>> oc.by_attr("street", "")
     []
 
+
 Adding and removing equal objects multiple times
 ------------------------------------------------
 

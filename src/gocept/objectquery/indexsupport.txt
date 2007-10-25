@@ -1,6 +1,7 @@
 ==================
 Using IndexSupport
 ==================
+
 PathIndex
 =========
 
@@ -71,8 +72,16 @@ other nodes between parent and child):
     >>> pi.is_direct_parent(pi11)
     False
 
+Its also possible to delete childs. This is done recursive:
+
+    >>> pi.childs
+    [<... '1408'>, <... 'foo'>]
+    >>> pi.delete(pi1)
+    >>> pi.childs
+    [<... '1408'>]
+
 ElementIndex
-=========
+============
 
 First get a ElementIndex object:
 
@@ -194,3 +203,16 @@ longer referenced within the index:
     Traceback (most recent call last):
     ...
     KeyError: 2
+
+ObjectToId
+==========
+
+First get an ObjectToID object:
+
+    >>> from gocept.objectquery.indexsupport import ObjectToId
+    >>> oti = ObjectToId()
+
+    >>> strobj = "test"
+    >>> oti.id2obj(oti.obj2id(strobj)) == strobj
+    True
+
