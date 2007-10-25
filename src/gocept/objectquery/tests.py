@@ -11,6 +11,7 @@ def test_suite():
     suite = unittest.TestSuite()
     suite.addTest(doctest.DocFileSuite("indexsupport.txt",
                                        "collection.txt",
+                                       "processor.txt",
                                        "pathexpressions.txt",
                                        optionflags=doctest.ELLIPSIS))
     return suite

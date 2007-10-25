@@ -117,6 +117,53 @@ Now search for some object attributes:
     >>> oc.by_attr("street", "")
     []
 
+Adding and removing objects:
+----------------------------
+
+Adding some more objects to ``oc``:
+
+    >>> p2 = Person(name="Christian")
+    >>> a1.ref.append(p2)
+    >>> oc.add(p2, a1)
+    >>> oc.by_class("Person")
+    [<Person object at 0x...>, <Person object at 0x...>]
+
+    >>> t3 = Telephone(number="2298891")
+    >>> p2.ref.append(t3)
+    >>> oc.add(t3, p2)
+    >>> oc.by_class("Telephone")
+    [<Telephone object at 0x...>, <Telephone object at 0x...>, <Telephone object at 0x...>]
+
+    >>> oc.add(t3, p1)
+    >>> oc.by_class("Telephone")
+    [<Telephone object at 0x...>, <Telephone object at 0x...>, <Telephone object at 0x...>, <Telephone object at 0x...>]
+
+Successful removing:
+
+    >>> p1.ref.remove(t1)
+    >>> oc.remove(t1, p1)
+    >>> oc.by_class("Telephone")
+    [<Telephone object at 0x...>, <Telephone object at 0x...>]
+
+Removing objects which do not exist under parent (but under anoþher parent), is well ignored:
+
+    >>> oc.remove(t3, p1)
+    >>> oc.by_class("Telephone")
+    [<Telephone object at 0x...>, <Telephone object at 0x...>]
+
+Removing objects from parents, which do not exist, raises an error:
+
+    >>> oc.remove(t3, p3)
+    Traceback (most recent call last):
+    ...
+    NameError: name 'p3' is not defined
+
+Same with objects, which do not exist:
+
+    >>> oc.remove(t4, p1)
+    Traceback (most recent call last):
+    ...
+    NameError: name 't4' is not defined
 
 Adding and removing equal objects multiple times
 ------------------------------------------------

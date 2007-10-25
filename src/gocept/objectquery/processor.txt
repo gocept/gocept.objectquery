@@ -78,7 +78,7 @@ Give the Telephone of all Persons named "coco":
     >>> len(r)
     2
     >>> r[0].number
-    '2298890'
+    '2298891'
 
 Give all Persons, that live in "Forsterstrasse":
 
@@ -92,7 +92,7 @@ Give the Telephones of Persons who live *alone* at Forsterstrasse:
     >>> len(r)
     2
     >>> r[0].number
-    '2298890'
+    '2298891'
 
 Handle Wildcards correctly:
 
@@ -137,7 +137,7 @@ Unions:
 Advanced usecases
 -----------------
 
-Remove ``t2`` from ``p3`` and add it to ``p1``:
+Move ``t2`` from ``p3`` to ``p1``:
 
     >>> r = query('Person[@name="coco"]/Telephone')
     >>> len(r)
@@ -147,9 +147,8 @@ Remove ``t2`` from ``p3`` and add it to ``p1``:
     0
 
     >>> p3.ref.remove(t2)
-    >>> objects.remove(t2, p3)
     >>> p1.ref.append(t2)
-    >>> objects.add(t2, p1)
+    >>> objects.move(t2, p3, p1)
 
     >>> r = query('Person[@name="coco"]/Telephone')
     >>> len(r)
@@ -158,13 +157,26 @@ Remove ``t2`` from ``p3`` and add it to ``p1``:
     >>> len(r)
     1
 
+Remove ``a1``:
+
+    >>> objects.remove(a1, ab)
+    >>> r = query('Person[@name="coco"]/Telephone')
+    >>> len(r)
+    1
+    >>> r = query('Person/Telephone')
+    >>> len(r)
+    3
+
 Add same object more than once:
 
     >>> p3.ref.append(t2)
     >>> objects.add(t2, p3)
+    >>> r = query('Person[@name="coco"]/Telephone')
+    >>> len(r)
+    2
     >>> r = query('Person/Telephone')
-    >>> r
-    [<Telephone object at 0x...>, <Telephone object at 0x...>, <Telephone object at 0x...>, <Telephone object at 0x...>]
+    >>> len(r)
+    4
 
 ``r[0]`` and ``r[3]`` are now both t2 one and the same object:
 

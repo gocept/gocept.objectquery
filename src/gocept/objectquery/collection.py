@@ -76,21 +76,33 @@ class ObjectCollection(object):
         self.__unindex(object, parent)
         self.__element_index.delete(object, parent)
 
+    def move(self, object, parent, target):
+        self.__element_index.move(object, parent, target)
+        movelist = []
+        for child in self.__path_index[object]:
+            for par in self.__path_index[parent]:
+                if child in par:
+                    movelist.append((par, child))
+        for child in movelist:
+            for newpar in self.__path_index[target]:
+                child[0].move(child[1], newpar)
+
     def root(self):
         return self.__element_index.root()
 
     def all(self):
         return self.__element_index.rlist()
 
-    def __check_path_index(self, pilist, pi):
-        for p in pilist:
-            if p in pi:
-                return True
+    def __check_path_index(self, pi_child_list, pi_parent_list):
+        for child in pi_child_list:
+            for parent in pi_parent_list:
+                if child in parent:
+                    return True
         return False
 
     def by_class(self, name, pathindex=None):
         if pathindex is None:
-            pathindex = self.__path_index[self.root()][0]
+            pathindex = self.__path_index[self.root()]
         return [e for e in self.all() if (e.__class__.__name__ == name) and \
                     self.__check_path_index(self.__path_index[e], pathindex)]
 
@@ -98,7 +110,24 @@ class ObjectCollection(object):
         return [elem for elem in self.all() if hasattr(elem, id) and \
                                 (getattr(elem, id) == value)]
 
+    def get_namespace(self, object=None):
+        if object is None:
+            object = self.root()
+        return self.__path_index[object]
+
+    def is_direct_child(self, child, parent, pi=None):
+        if pi is None:
+            pi = self.__path_index[parent]
+        if child in self.__element_index.list(parent):
+            for cpi in self.__path_index[child]:
+                for ppi in pi:
+                    if cpi in ppi:
+                        return True
+        return False
 
     def debug(self):
-        print self.__element_index.rlist()
-        print self.__path_index
+        i = 0
+        for elem in self.__element_index.rlist():
+            print str(i) + ": " + str(elem)
+            print self.__path_index[elem]
+            i = i + 1
