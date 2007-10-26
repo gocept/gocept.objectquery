@@ -122,7 +122,7 @@ class RPEQueryParser(object):
         return output
 
     def parse(self, expression):
-        """ """
+        """ Parse the expression and return a query_plan. """
 
         if (expression is not None):
             succ, child, nextchar = self.parser.parse(expression, "rpe")
