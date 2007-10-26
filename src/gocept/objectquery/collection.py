@@ -196,10 +196,8 @@ class ObjectCollection(object):
         return [elem for elem in self.all() if hasattr(elem, id) and \
                                 (getattr(elem, id) == value)]
 
-    def get_namespace(self, object=None):
+    def get_pathindex(self, object=None):
         """ Return the list of PathIndexes for object. """
-
-        # TODO: - rename get_namespace to get_pathindex
 
         if object is None:
             object = self.root()
