@@ -95,22 +95,26 @@ class PathIndex(object):
 class ElementIndex(object):
     """ ElementIndex is a dict to handle parent-child relationships. """
     def __init__(self):
-        self.__index = {}
+        self._index = {}
         self.__root = None
+
+    def _add_root(self, object):
+        """ Add an element as root. """
+        # raise exception if we have already a root object
+        if self.__root is not None:
+            raise KeyError('There is already a root object defined: ' +\
+                           str(self.__root))
+        self._index[object] = []
+        self.__root = object
 
     def add(self, object, parent=None):
         """ Add an element under parent. """
         if parent is None: # no parent -> add as root
-            # raise exception if we have already a root object
-            if self.__root is not None:
-                raise KeyError('There is already a root object defined: ' +\
-                              str(self.__root))
-            self.__index[object] = []
-            self.__root = object
+            self._add_root(object)
         else:
-            self.__index[parent].append(object) # add object to parent list
-            if self.__index.get(object, None) is None:
-                self.__index[object] = [] # add objects parent list
+            self._index[parent].append(object) # add object to parent list
+            if self._index.get(object, None) is None:
+                self._index[object] = [] # add objects parent list
 
     def delete(self, object, parent=None):
         """ Delete object under parent. """
@@ -118,17 +122,17 @@ class ElementIndex(object):
             self.__init__()
         else:
             # delete every object under parent
-            while object in self.__index[parent]:
-                self.__index[parent].remove(object)
+            while object in self._index[parent]:
+                self._index[parent].remove(object)
             if object not in self.rlist(): # object does not exist anymore
-                del self.__index[object]
+                del self._index[object]
 
     def move(self, object, parent, target):
         """ Move object from parent to target. """
         # Get a list of objects to copy
-        copylist = [elem for elem in self.__index[parent] if elem == object]
+        copylist = [elem for elem in self._index[parent] if elem == object]
         for elem in copylist:
-            self.__index[target].append(elem) # copy every object under target
+            self._index[target].append(elem) # copy every object under target
         self.delete(object, parent) # delete them under parent
 
 
@@ -136,7 +140,7 @@ class ElementIndex(object):
         """ Return a list of direct childs under object. """
         if object is None:
             object = self.__root
-        return self.__index[object]
+        return self._index[object]
 
     def rlist(self, object=None):
         """ Return a list of all childs under object (preorder).
@@ -148,10 +152,54 @@ class ElementIndex(object):
         if object is None:
             return []
         returnlist = [object]
-        for elem in self.__index[object]:
+        for elem in self._index[object]:
             returnlist.extend(self.rlist(elem)) # recursion
         return returnlist
 
     def root(self):
         """ Return the root object. """
         return self.__root
+
+
+class CircleSupport(ElementIndex):
+    """ Prevent the ObjectCollection from running into circles.
+
+        This is done by saving to each object the parent object. Before adding
+        an object, CircleSupport looks through all parent objects until root,
+        if the object, which will be added, already exists. If so, return
+        False.
+    """
+
+    def add(self, object, parent=None):
+        """ Add parent for object. """
+        if parent is None: # no parent -> add as root
+            self._add_root(object)
+        else:
+            if self._index.get(object, None) is None:
+                self._index[object] = [parent]
+            else:
+                self._index[object].append(parent)
+
+    def check_for_circles(self, object, parent):
+        """ Checks, if adding object under parent results in a circle. """
+        for elem in self.rlist(parent):
+            if elem == object:
+                return False
+        return True
+
+    def delete(self, object, parent=None):
+        """ Delete parent from object. """
+        if (parent is None) and (object == self.__root): # delete root
+            self.__init__()
+        else:
+            # delete every parent from object
+            while parent in self._index[object]:
+                self._index[object].remove(parent)
+            if self._index[parent] == []:  # parent does not exist anymore
+                del self._index[parent]
+
+    def move(self, object, parent, target):
+        """ Move object from parent to target. """
+        for elem in [elem for elem in self._index[object] if elem == parent]:
+            self._index[object].remove(parent)
+        self._index[object].append(target)

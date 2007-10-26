@@ -204,6 +204,63 @@ longer referenced within the index:
     ...
     KeyError: 2
 
+CircleSupport
+=============
+
+Get an CircleSupport object:
+
+    >>> from gocept.objectquery.indexsupport import CircleSupport
+    >>> cs = CircleSupport()
+    >>> cs.add("root")
+    >>> cs.add("left", "root")
+    >>> cs.add("left2", "left")
+    >>> cs.add("right", "root")
+
+rlist now returns the "path" from object until root:
+
+    >>> cs.rlist("left2")
+    ['left2', 'left', 'root']
+    >>> cs.rlist("right")
+    ['right', 'root']
+
+If we now want to add left under left2, we would result in a cirle recursion.
+Therefore, check_for_circles chould return False:
+
+    >>> cs.check_for_circles('left', 'left2')
+    False
+
+On the other side, adding left under right is ok:
+
+    >>> cs.check_for_circles('left', 'right')
+    True
+
+Now suggest, we trust check_for_circles and add left under right. A secound
+test would now again return in True, but trying to add right under left2 now
+returns False:
+
+    >>> cs.add("left", "right")
+    >>> cs.rlist("left2")
+    ['left2', 'left', 'root', 'right', 'root']
+
+    >>> cs.check_for_circles('left', 'right')
+    True
+    >>> cs.check_for_circles('right', 'left2')
+    False
+
+Now delete right from left:
+
+    >>> cs.delete("left", "right")
+    >>> cs.rlist("left")
+    ['left', 'root']
+    >>> cs.rlist("right")
+    ['right', 'root']
+
+Test the move function:
+
+    >>> cs.move("left", "root", "right")
+    >>> cs.rlist("left")
+    ['left', 'right', 'root']
+
 ObjectToId
 ==========
 
