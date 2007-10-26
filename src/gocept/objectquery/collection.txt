@@ -66,8 +66,8 @@ Variables:
 Example usage of ObjectCollection
 ---------------------------------
 
-First create some example classes. All have the attribute "__ns__" which is
-a namespace tupel which consists of (order, size) variables.
+First create some classes. All have the attribute ``ref`` which holds more
+subclasses to add.
 
     >>> class Telephone(object):
     ...     def __init__(self, number="", ref=None):
