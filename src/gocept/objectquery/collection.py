@@ -10,6 +10,7 @@ class ObjectCollection(object):
         # define an Element- and PathIndex
         self.__element_index = ElementIndex()
         self.__path_index = {}
+        self.__counter = {}
 
     def __get_descendant_objects(self, object):
         returnlist = []
@@ -42,6 +43,9 @@ class ObjectCollection(object):
             self.__element_index.add(object, parent)
             for par in self.__path_index[parent]:
                 self.__path_index[object].append(par.bear(object))
+        if self.__counter.get(object, None) is None:
+            self.__counter[object] = 0
+        self.__counter[object] = self.__counter[object] + 1
 
     def add(self, object, parent=None):
         desclist = self.__get_descendant_objects(object)
@@ -104,7 +108,8 @@ class ObjectCollection(object):
         if pathindex is None:
             pathindex = self.__path_index[self.root()]
         return [e for e in self.all() if (e.__class__.__name__ == name) and \
-                    self.__check_path_index(self.__path_index[e], pathindex)]
+                    self.__check_path_index(self.__path_index.get(e, []),
+                                            pathindex)]
 
     def by_attr(self, id, value):
         return [elem for elem in self.all() if hasattr(elem, id) and \

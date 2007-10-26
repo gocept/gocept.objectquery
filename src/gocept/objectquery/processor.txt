@@ -185,14 +185,173 @@ Add same object more than once:
     >>> id(r[1]) == id(r[3])
     False
 
-Problems
---------
+Add and remove ``t1`` under ``p3``:
 
-Get Adresses with zero or one Person. This cannot be queries with RPE, because
-you cannot query for elements with conditions in subsequent elements. In the
-following example you *want* to get 2 address objects, but you *get* one
-person object:
+    >>> p3.ref.append(t1)
+    >>> objects.add(t1, p3)
+    >>> r = query('Person/Telephone')
+    >>> len(r)
+    5
+    >>> p3.ref.remove(t1)
+    >>> objects.remove(t1, p3)
+    >>> r = query('Person/Telephone')
+    >>> len(r)
+    4
 
-    >>> r = query('/Address/Person?')
+Now add ``p3`` under ``a2``:
+
+    >>> a2.ref.append(p3)
+    >>> objects.add(p3, a2)
+    >>> r = query('Person/Telephone')
+    >>> len(r)
+    6
+
+Testcase to verify a correct removing with duplicated entrieѕ
+-------------------------------------------------------------
+
+Make a new ObjectCollection with Parser:
+
+    >>> oc = ObjectCollection()
+    >>> q = QueryProcessor(parser, oc)
+
+Get new classes:
+
+    >>> class Root(object):
+    ...     pass
+    >>> class X(object):
+    ...     pass
+    >>> class Y(object):
+    ...     pass
+    >>> class Z(object):
+    ...     pass
+
+    >>> root = Root()
+    >>> x = X()
+    >>> y = Y()
+    >>> z = Z()
+
+Add them to ObjectCollection:
+
+    >>> oc.add(root)
+    >>> oc.add(x, root)
+    >>> oc.add(x, root)
+    >>> oc.add(z, root)
+    >>> oc.add(y, x)
+    >>> oc.add(y, z)
+    >>> oc.all()
+    [<Root...>, <X...>, <Y...>, <X...>, <Y...>, <Z...>, <Y...>]
+
+Now remove ``Y`` from ``X``:
+
+    >>> oc.remove(y, x)
+    >>> oc.all()
+    [<Root...>, <X...>, <X...>, <Z...>, <Y...>]
+    >>> r = q("_/Y")
+    >>> len(r)
+    1
+
+Add ``Z`` under ``X``:
+
+    >>> oc.add(z, x)
+    >>> oc.all()
+    [<Root...>, <X...>, <Z...>, <Y...>, <X...>, <Z...>, <Y...>, <Z...>, <Y...>]
+    >>> len(oc.all())
+    9
+    >>> r = q("_/Y")
+    >>> len(r)
+    3
+
+Create a fourth class ``A`` and move ``Y`` from ``Z`` under it:
+
+    >>> class A(object):
+    ...     pass
+    >>> a = A()
+    >>> oc.add(a, root)
+    >>> oc.move(y, z, a)
+    >>> oc.all()
+    [<Root...>, <X...>, <Z...>, <X...>, <Z...>, <Z...>, <A...>, <Y...>]
+    >>> len(oc.all())
+    8
+    >>> r = q("X/Z")
+    >>> len(r)
+    2
+
+Verify that querying multiple equal objects results in a correct count
+----------------------------------------------------------------------
+
+First set up the test environment:
+
+    >>> oc = ObjectCollection()
+    >>> q = QueryProcessor(parser, oc)
+    >>> oc.all()
+    []
+
+    >>> class Root(object):
+    ...     pass
+    >>> class X(object):
+    ...     pass
+    >>> class Y(object):
+    ...     id = ""
+    >>> class Z(object):
+    ...     id = ""
+
+    >>> root = Root()
+    >>> x1 = X()
+    >>> x2 = X()
+    >>> y1 = Y()
+    >>> y1.id = "1"
+    >>> y2 = Y()
+    >>> y2.id = "2"
+    >>> y3 = Y()
+    >>> y3.id = "3"
+    >>> z1 = Z()
+    >>> z1.id = "1"
+    >>> z2 = Z()
+    >>> z2.id = "2"
+    >>> z3 = Z()
+    >>> z3.id = "3"
+
+    >>> oc.add(root)
+    >>> oc.add(x1, root)
+    >>> oc.add(x2, root)
+    >>> oc.add(y1, x1)
+    >>> oc.add(y2, x1)
+    >>> oc.add(y3, x2)
+    >>> oc.add(z1, y1)
+    >>> oc.add(z2, y2)
+    >>> oc.add(z3, y3)
+    >>> oc.all()
+    [<Root...>, <X...>, <Y...>, <Z...>, <Y...>, <Z...>, <X...>, <Y...>, <Z...>]
+    >>> len(oc.all())
+    9
+
+Nothing really new until here, but now we link ``Z2`` under ``Y3``, so that it
+can be reached over ``Y2`` and ``Y3``:
+
+    >>> oc.add(z2, y3)
+    >>> oc.all()
+    [<Root...>, <X...>, <Y...>, <Z...>, <Y...>, <Z...>, <X...>, <Y...>, <Z...>, <Z...>]
+    >>> len(oc.all())
+    10
+
+If we now query for all ``Z``, we should receive 4 items:
+
+    >>> r = q("_/Z")
+    >>> len(r)
+    4
+
+If we query for all ``Z`` under ``Y3`` we should return 2 results (``Z2`` and
+``Z3``):
+
+    >>> r = q('Y[@id="3"]/Z')
+    >>> len(r)
+    2
+
+``Z`` under ``Y2`` and ``Y1`` should each return one result:
+
+    >>> r = q('Y[@id="2"]/Z')
+    >>> len(r)
+    1
+    >>> r = q('Y[@id="1"]/Z')
     >>> len(r)
     1
