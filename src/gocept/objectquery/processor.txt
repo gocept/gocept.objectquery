@@ -355,3 +355,20 @@ If we query for all ``Z`` under ``Y3`` we should return 2 results (``Z2`` and
     >>> r = q('Y[@id="1"]/Z')
     >>> len(r)
     1
+
+Test the correct recognition of cycles
+--------------------------------------
+
+Adding ``y3`` under ``z3`` will result in a cycle ``y3->z3->y3->...``:
+
+    >>> oc.add(y3, z3)
+    Traceback (most recent call last):
+    ...
+    ValueError: Cannot add object <Y object at 0x...>. Cycle detected.
+
+Adding an object under itself returns ever in a cycle:
+
+    >>> oc.add(y3, y3)
+    Traceback (most recent call last):
+    ...
+    ValueError: Cannot add object <Y object at 0x...>. Cycle detected.

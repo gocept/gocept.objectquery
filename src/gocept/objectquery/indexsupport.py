@@ -16,7 +16,7 @@ class ObjectToId(object):
 
 class PathIndex(object):
     """ PathIndex is used to quickly determine relationshops between objects.
-    
+
         The first PathIndex is created the regular way. (pi = PathIndex())
         All new child PathIndexes must be created using the method ``bear()``,
         which returns a new PathIndex object. (child_pi = pi.bear("foo"))

@@ -13,6 +13,7 @@ class ObjectCollection(object):
     """
 
     def __init__(self):
+        """ Initialize Indizes. """
         # ElementIndex is used the way as described within IndexSupport
         self.__element_index = gocept.objectquery.indexsupport.ElementIndex()
         # PathIndex objects are collected within a dictionary with objects as
