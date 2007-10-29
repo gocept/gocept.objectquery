@@ -285,3 +285,5 @@ Now adding a under p should raise an exception:
 But you can add a under root:
 
     >>> oc3.add(a, root)
+    >>> oc3.is_direct_child(a, root)
+    True

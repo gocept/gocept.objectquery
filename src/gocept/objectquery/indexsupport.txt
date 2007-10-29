@@ -61,6 +61,8 @@ You can test the relationship by using the contains method ``in``:
     False
     >>> pi2 in pi
     True
+    >>> pi in pi11
+    False
 
 You may also ask, if parent has a direct relationship to child (there are no
 other nodes between parent and child):

@@ -101,7 +101,7 @@ class ElementIndex(object):
     def _add_root(self, object):
         """ Add an element as root. """
         # raise exception if we have already a root object
-        if self.__root is not None:
+        if self.root() is not None:
             raise KeyError('There is already a root object defined: ' +\
                            str(self.__root))
         self._index[object] = []
@@ -118,7 +118,7 @@ class ElementIndex(object):
 
     def delete(self, object, parent=None):
         """ Delete object under parent. """
-        if (parent is None) and (object == self.__root): # delete root
+        if (parent is None) and (object == self.root()): # delete root
             self.__init__()
         else:
             # delete every object under parent
@@ -139,7 +139,7 @@ class ElementIndex(object):
     def list(self, object=None):
         """ Return a list of direct childs under object. """
         if object is None:
-            object = self.__root
+            object = self.root()
         return self._index[object]
 
     def rlist(self, object=None):
@@ -148,7 +148,7 @@ class ElementIndex(object):
             This includes the object as first element.
         """
         if object is None:
-            object = self.__root
+            object = self.root()
         if object is None:
             return []
         returnlist = [object]

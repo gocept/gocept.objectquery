@@ -213,7 +213,7 @@ class ObjectCollection(object):
         return self.__path_index[object]
 
     def is_direct_child(self, child, parent, pathindex=None):
-        """ Matches is child is a direct child of parent within a given
+        """ Matches if child is a direct child of parent within a given
         pathindex. """
         if pathindex is None:
             pathindex = self.__path_index[parent]
