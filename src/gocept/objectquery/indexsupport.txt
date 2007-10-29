@@ -224,14 +224,14 @@ rlist now returns the "path" from object until root:
     ['right', 'root']
 
 If we now want to add left under left2, we would result in a cirle recursion.
-Therefore, check_for_circles chould return False:
+Therefore, check_for_circles should return False:
 
-    >>> cs.check_for_circles('left', 'left2')
+    >>> cs.check_for_circles(['left', 'left2'], 'left2')
     False
 
 On the other side, adding left under right is ok:
 
-    >>> cs.check_for_circles('left', 'right')
+    >>> cs.check_for_circles(['left', 'left2'], 'right')
     True
 
 Now suggest, we trust check_for_circles and add left under right. A secound
@@ -242,9 +242,9 @@ returns False:
     >>> cs.rlist("left2")
     ['left2', 'left', 'root', 'right', 'root']
 
-    >>> cs.check_for_circles('left', 'right')
+    >>> cs.check_for_circles(['left', 'left2'], 'right')
     True
-    >>> cs.check_for_circles('right', 'left2')
+    >>> cs.check_for_circles(['right', 'left', 'left2'], 'left2')
     False
 
 Now delete right from left:

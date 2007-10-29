@@ -164,7 +164,7 @@ class ElementIndex(object):
 class CircleSupport(ElementIndex):
     """ Prevent the ObjectCollection from running into circles.
 
-        This is done by saving to each object the parent object. Before adding
+        This is done by saving for each object the parent object. Before adding
         an object, CircleSupport looks through all parent objects until root,
         if the object, which will be added, already exists. If so, return
         False.
@@ -180,10 +180,10 @@ class CircleSupport(ElementIndex):
             else:
                 self._index[object].append(parent)
 
-    def check_for_circles(self, object, parent):
+    def check_for_circles(self, objectlist, parent):
         """ Checks, if adding object under parent results in a circle. """
         for elem in self.rlist(parent):
-            if elem == object:
+            if elem in objectlist:
                 return False
         return True
 
