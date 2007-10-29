@@ -3,7 +3,7 @@
 # $Id$
 
 import types
-from gocept.objectquery.indexsupport import PathIndex, ElementIndex
+import gocept.objectquery.indexsupport
 
 class ObjectCollection(object):
     """ ObjectCollection provides functionallity to QueryProcessor.
@@ -14,17 +14,23 @@ class ObjectCollection(object):
 
     def __init__(self):
         # ElementIndex is used the way as described within IndexSupport
-        self.__element_index = ElementIndex()
+        self.__element_index = gocept.objectquery.indexsupport.ElementIndex()
         # PathIndex objects are collected within a dictionary with objects as
         # keys. Because objects may occur multiple times (and therefore need
         # more than one PathIndex), they are kept inside a list.
         # e.g. {<object...>: [<PathIndex ...with path '...'>, <PathIndex...>],
         #       <object...>: [<PathIndex ...with path '...'>]}
         self.__path_index = {}
+        self.__cycle_support = gocept.objectquery.indexsupport.CycleSupport()
 
     def __add_object(self, object, parent):
         """ Adds ``object`` to ObjectCollection under ``parent``. """
 
+        # Test if adding would result in object tree with *cycles*
+        if not self.__cycle_support.check_for_cycles(
+                                [object], parent):
+            raise ValueError("Cannot add object %s. Cycle detected." % object)
+        self.__cycle_support.add(object, parent)
         # If the object hasn't been added before, add the PathIndex tuple.
         if self.__path_index.get(object, None) is None:
             self.__path_index[object] = []
@@ -32,7 +38,8 @@ class ObjectCollection(object):
         # exists
         if parent is None:
             self.__element_index.add(object)
-            self.__path_index[object].append(PathIndex())
+            self.__path_index[object].append(
+                                gocept.objectquery.indexsupport.PathIndex())
         # Add the object under parent
         else:
             self.__element_index.add(object, parent)
@@ -124,7 +131,7 @@ class ObjectCollection(object):
             self.__add_object(object, parent)
         for elem in desclist:
             # ensure that multiple occurences of subtrees are not added
-            # multiple times (was a bug)
+            # multiple times
             # this is done by:
             #   - first not descending into objects, which are already added
             #     (because their sub-tree already exists in Collection)
@@ -150,6 +157,7 @@ class ObjectCollection(object):
         # Order is important! __unindex needs __element_index for removing
         self.__unindex(object, parent)
         self.__element_index.delete(object, parent)
+        self.__cycle_support.delete(object, parent)
 
     def move(self, object, parent, target):
         """ Main move method.
@@ -159,6 +167,7 @@ class ObjectCollection(object):
         """
 
         self.__element_index.move(object, parent, target)
+        self.__cycle_support.move(object, parent, target)
         # Generate a move list
         movelist = []
         for child in self.__path_index[object]:

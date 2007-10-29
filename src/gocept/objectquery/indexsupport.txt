@@ -204,13 +204,13 @@ longer referenced within the index:
     ...
     KeyError: 2
 
-CircleSupport
+CycleSupport
 =============
 
-Get an CircleSupport object:
+Get an CycleSupport object:
 
-    >>> from gocept.objectquery.indexsupport import CircleSupport
-    >>> cs = CircleSupport()
+    >>> from gocept.objectquery.indexsupport import CycleSupport
+    >>> cs = CycleSupport()
     >>> cs.add("root")
     >>> cs.add("left", "root")
     >>> cs.add("left2", "left")
@@ -224,17 +224,17 @@ rlist now returns the "path" from object until root:
     ['right', 'root']
 
 If we now want to add left under left2, we would result in a cirle recursion.
-Therefore, check_for_circles should return False:
+Therefore, check_for_cycles should return False:
 
-    >>> cs.check_for_circles(['left', 'left2'], 'left2')
+    >>> cs.check_for_cycles(['left', 'left2'], 'left2')
     False
 
 On the other side, adding left under right is ok:
 
-    >>> cs.check_for_circles(['left', 'left2'], 'right')
+    >>> cs.check_for_cycles(['left', 'left2'], 'right')
     True
 
-Now suggest, we trust check_for_circles and add left under right. A secound
+Now suggest, we trust check_for_cycles and add left under right. A secound
 test would now again return in True, but trying to add right under left2 now
 returns False:
 
@@ -242,12 +242,12 @@ returns False:
     >>> cs.rlist("left2")
     ['left2', 'left', 'root', 'right', 'root']
 
-    >>> cs.check_for_circles(['left', 'left2'], 'right')
+    >>> cs.check_for_cycles(['left', 'left2'], 'right')
     True
-    >>> cs.check_for_circles(['right', 'left', 'left2'], 'left2')
+    >>> cs.check_for_cycles(['right', 'left', 'left2'], 'left2')
     False
 
-Now delete right from left:
+Now delete left from right:
 
     >>> cs.delete("left", "right")
     >>> cs.rlist("left")
@@ -255,7 +255,7 @@ Now delete right from left:
     >>> cs.rlist("right")
     ['right', 'root']
 
-Test the move function:
+Test the move function. Move left from root to right:
 
     >>> cs.move("left", "root", "right")
     >>> cs.rlist("left")

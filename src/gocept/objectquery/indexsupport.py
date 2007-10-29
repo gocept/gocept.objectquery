@@ -161,11 +161,11 @@ class ElementIndex(object):
         return self.__root
 
 
-class CircleSupport(ElementIndex):
-    """ Prevent the ObjectCollection from running into circles.
+class CycleSupport(ElementIndex):
+    """ Prevent the ObjectCollection from running into cycles.
 
         This is done by saving for each object the parent object. Before adding
-        an object, CircleSupport looks through all parent objects until root,
+        an object, CycleSupport looks through all parent objects until root,
         if the object, which will be added, already exists. If so, return
         False.
     """
@@ -180,8 +180,8 @@ class CircleSupport(ElementIndex):
             else:
                 self._index[object].append(parent)
 
-    def check_for_circles(self, objectlist, parent):
-        """ Checks, if adding object under parent results in a circle. """
+    def check_for_cycles(self, objectlist, parent):
+        """ Checks, if adding object under parent results in a cycle. """
         for elem in self.rlist(parent):
             if elem in objectlist:
                 return False
@@ -189,14 +189,14 @@ class CircleSupport(ElementIndex):
 
     def delete(self, object, parent=None):
         """ Delete parent from object. """
-        if (parent is None) and (object == self.__root): # delete root
+        if (parent is None) and (object == self.root()): # delete root
             self.__init__()
         else:
             # delete every parent from object
             while parent in self._index[object]:
                 self._index[object].remove(parent)
-            if self._index[parent] == []:  # parent does not exist anymore
-                del self._index[parent]
+            if self._index[object] == []:  # object does not exist anymore
+                del self._index[object]
 
     def move(self, object, parent, target):
         """ Move object from parent to target. """

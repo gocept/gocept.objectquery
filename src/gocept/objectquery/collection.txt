@@ -261,3 +261,27 @@ leaves:
 
     >>> len(oc2.by_class("Telephone"))
     0
+
+Adding circles to collection
+----------------------------
+
+First we need a new ObjectCollection:
+
+    >>> oc3 = ObjectCollection()
+    >>> oc3.add(root)
+
+    >>> a = Address()
+    >>> p = Person()
+    >>> oc3.add(a, root)
+    >>> oc3.add(p, a)
+
+Now adding a under p should raise an exception:
+
+    >>> oc3.add(a, p)
+    Traceback (most recent call last):
+    ...
+    ValueError: Cannot add object <...>. Cycle detected.
+
+But you can add a under root:
+
+    >>> oc3.add(a, root)
