@@ -23,14 +23,19 @@ class ObjectCollection(object):
         #       <object...>: [<PathIndex ...with path '...'>]}
         self.__path_index = {}
         self.__cycle_support = gocept.objectquery.indexsupport.CycleSupport()
+        self.__oid = gocept.objectquery.indexsupport.ObjectToId()
 
     def __add_object(self, object, parent):
         """ Adds ``object`` to ObjectCollection under ``parent``. """
-
+        # make IDs
+        object = self.__oid.obj2id(object)
+        if parent is not None:
+            parent = self.__oid.obj2id(parent)
         # Test if adding would result in object tree with *cycles*
         if not self.__cycle_support.check_for_cycles(
                                 [object], parent):
-            raise ValueError("Cannot add object %s. Cycle detected." % object)
+            raise ValueError("Cannot add object %s. Cycle detected." %
+                             self.__oid.id2obj(object))
         self.__cycle_support.add(object, parent)
         # If the object hasn't been added before, add the PathIndex tuple.
         if self.__path_index.get(object, None) is None:
@@ -91,10 +96,13 @@ class ObjectCollection(object):
         """ Recurive deletion of PathIndex objects. """
         if parent is None:
             parent = self.root()
+        parent = self.__oid.obj2id(parent)
+        object = self.__oid.obj2id(object)
+
         # Get the childs in ObjectCollection
         childs = self.__element_index.list(object)[:]
         for elem in childs:
-            self.__unindex(elem, object)
+            self.__unindex(self.__oid.id2obj(elem), self.__oid.id2obj(object))
         # Deletion of PathIndex objects. It looks through all parent
         # PathIndexes and deletes all child PathIndexes, which are direct
         # childs of the parent ones.
@@ -140,11 +148,13 @@ class ObjectCollection(object):
             #   - secound only adding objects if their number in desclist is
             #     not equal to their number in ObjectCollection
             #     -> elif statement
-            if elem not in self.__element_index.list(object):
+            if self.__oid.obj2id(elem) not in self.__element_index.list(
+                                                    self.__oid.obj2id(object)):
                 self.add(elem, object)
             elif len([e for e in desclist if e == elem]) !=\
-                    len([e for e in self.__element_index.list(object)\
-                         if e == elem]):
+                    len([e for e in
+                         self.__element_index.list(self.__oid.obj2id(object))\
+                             if self.__oid.id2obj(e) == elem]):
                 self.__add_object(elem, object)
 
     def remove(self, object, parent=None):
@@ -157,8 +167,10 @@ class ObjectCollection(object):
 
         # Order is important! __unindex needs __element_index for removing
         self.__unindex(object, parent)
-        self.__element_index.delete(object, parent)
-        self.__cycle_support.delete(object, parent)
+        self.__element_index.delete(self.__oid.obj2id(object),
+                                    self.__oid.obj2id(parent))
+        self.__cycle_support.delete(self.__oid.obj2id(object),
+                                    self.__oid.obj2id(parent))
 
     def move(self, object, parent, target):
         """ Main move method.
@@ -167,6 +179,9 @@ class ObjectCollection(object):
             the PathIndex move method.
         """
 
+        object = self.__oid.obj2id(object)
+        parent = self.__oid.obj2id(parent)
+        target = self.__oid.obj2id(target)
         self.__element_index.move(object, parent, target)
         self.__cycle_support.move(object, parent, target)
         # Generate a move list
@@ -183,7 +198,8 @@ class ObjectCollection(object):
 
     def all(self):
         """ Return a list of all objects within the ObjectCollection. """
-        return self.__element_index.rlist()
+        return [self.__oid.id2obj(elem) for elem in\
+                self.__element_index.rlist()]
 
     def by_class(self, name, pathindex=None):
         """ Return a list of objects which match ``name`` under ``pathindex``.
@@ -195,10 +211,10 @@ class ObjectCollection(object):
         # TODO: - what matches name if we don't only add instantiates classes
 
         if pathindex is None:
-            pathindex = self.__path_index[self.root()]
+            pathindex = self.__path_index[self.__oid.obj2id(self.root())]
         return [e for e in self.all() if (e.__class__.__name__ == name) and \
-                    self.__check_path_index(self.__path_index.get(e, []),
-                                            pathindex)]
+                    self.__check_path_index(self.__path_index.get(
+                                        self.__oid.obj2id(e), []), pathindex)]
 
     def by_attr(self, id, value):
         """ Return a list of objects which match attribute id and value. """
@@ -211,11 +227,13 @@ class ObjectCollection(object):
 
         if object is None:
             object = self.root()
-        return self.__path_index[object]
+        return self.__path_index[self.__oid.obj2id(object)]
 
     def is_direct_child(self, child, parent, pathindex=None):
         """ Matches if child is a direct child of parent within a given
         pathindex. """
+        child = self.__oid.obj2id(child)
+        parent = self.__oid.obj2id(parent)
         if pathindex is None:
             pathindex = self.__path_index[parent]
         if child in self.__element_index.list(parent):
@@ -227,4 +245,4 @@ class ObjectCollection(object):
 
     def root(self):
         """ Return the root object. """
-        return self.__element_index.root()
+        return self.__oid.id2obj(self.__element_index.root())

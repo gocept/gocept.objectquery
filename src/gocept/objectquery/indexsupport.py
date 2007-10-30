@@ -7,11 +7,15 @@ class ObjectToId(object):
         self.__idlist = {}
 
     def obj2id(self, obj):
+        if obj is None:
+            return None
         self.__idlist[id(obj)] = obj
         return id(obj)
 
     def id2obj(self, id):
-        return self.__idlist[id]
+        if id is None:
+            return None
+        return self.__idlist.get(id, 0)
 
 
 class PathIndex(object):
