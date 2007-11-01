@@ -206,6 +206,49 @@ longer referenced within the index:
     ...
     KeyError: 2
 
+AttributeIndex
+==============
+
+First get an AttributeIndex object:
+
+    >>> from gocept.objectquery.indexsupport import AttributeIndex
+    >>> ai = AttributeIndex()
+
+You can add an attribute if you specify the starting and ending objects:
+
+    >>> ai.add("child", "parent", "next")
+    >>> ai.add("child2", "parent", "another_next")
+
+Test if child is reachable from parent over next:
+
+    >>> ai.is_reachable("child", "parent", "next")
+    True
+    >>> ai.is_reachable("child", "parent", "another_next")
+    False
+    >>> ai.is_reachable("child2", "parent", "another_next")
+    True
+
+List attributes from parent to child:
+
+    >>> ai.list_attributes("parent", "child")
+    ['next']
+    >>> ai.list_attributes("child", "parent")
+    []
+
+Move child from parent over next to newparent over newnext:
+
+    >>> ai.move("child", "parent", "next", "newparent", "newnext")
+    >>> ai.list_attributes("parent", "child")
+    []
+    >>> ai.list_attributes("newparent", "child")
+    ['newnext']
+
+Delete child over newnext from newparent:
+
+    >>> ai.delete("child", "newparent", "newnext")
+    >>> ai.list_attributes("newparent", "child")
+    []
+
 CycleSupport
 =============
 

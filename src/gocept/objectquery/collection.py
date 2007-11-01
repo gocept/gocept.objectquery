@@ -2,7 +2,6 @@
 # See also LICENSE.txt
 # $Id$
 
-import types
 import gocept.objectquery.indexsupport
 
 class ObjectCollection(object):
@@ -22,14 +21,19 @@ class ObjectCollection(object):
         # e.g. {<object...>: [<PathIndex ...with path '...'>, <PathIndex...>],
         #       <object...>: [<PathIndex ...with path '...'>]}
         self.__path_index = {}
+        # AttributeIndex is used to save all attributes which point to another
+        # object within the collection
         self.__attr_index = gocept.objectquery.indexsupport.AttributeIndex()
+        # CycleSupport is used to detect circles before adding an object
         self.__cycle_support = gocept.objectquery.indexsupport.CycleSupport()
+        # ObjectToId is used to get a numeric ID for an object and vice versa
         self.__oid = gocept.objectquery.indexsupport.ObjectToId()
+        # ObjectParser looks through an object for following objects
         self.__object_parser = gocept.objectquery.indexsupport.ObjectParser()
 
 
     def __add_attributes(self, object, parent):
-        attrlist = []
+        """ Add all attributes from parent to object to AttributeIndex. """
         oid = self.__oid.obj2id(object)
         pid = self.__oid.obj2id(parent)
         attrdict = self.__object_parser(parent)
@@ -129,10 +133,7 @@ class ObjectCollection(object):
             classes.
         """
 
-        # TODO: - add more objects than instantiated classes only
-
         desclist = self.__get_descendant_objects(object)
-        # add instantiated classes (see TODO)
         if str(type(object)).startswith("<class"):
             self.__add_element(object, parent)
         for elem in desclist:
@@ -168,6 +169,8 @@ class ObjectCollection(object):
                                     self.__oid.obj2id(parent))
         self.__cycle_support.delete(self.__oid.obj2id(object),
                                     self.__oid.obj2id(parent))
+        self.__attr_index.delete(self.__oid.obj2id(object),
+                                 self.__oid.obj2id(parent))
 
     def move(self, object, parent, target):
         """ Main move method.
@@ -205,8 +208,6 @@ class ObjectCollection(object):
             of PathIndex objects.
         """
 
-        # TODO: - what matches name if we don't only add instantiates classes
-
         if pathindex is None:
             pathindex = self.__path_index[self.__oid.obj2id(self.root())]
         return [e for e in self.all() if (e.__class__.__name__ == name) and \
@@ -218,6 +219,12 @@ class ObjectCollection(object):
 
         return [elem for elem in self.all() if hasattr(elem, id) and \
                                 (getattr(elem, id) == value)]
+
+    def by_attr_reach(self, object, parent, attr):
+        """ Return true is object can be reached from parent over attr. """
+        object = self.__oid.obj2id(object)
+        parent = self.__oid.obj2id(parent)
+        return self.__attr_index.is_reachable(object, parent, attr)
 
     def get_pathindex(self, object=None):
         """ Return the list of PathIndexes for object. """
@@ -243,6 +250,3 @@ class ObjectCollection(object):
     def root(self):
         """ Return the root object. """
         return self.__oid.id2obj(self.__element_index.root())
-
-    def get_attr_index(self):
-        return self.__attr_index.get()

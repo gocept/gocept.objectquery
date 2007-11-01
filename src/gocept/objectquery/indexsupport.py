@@ -215,10 +215,19 @@ class AttributeIndex(object):
             self._index[parent][object] = []
         self._index[parent][object].append(attribute)
 
-    def get(self, object=None):
-        if object is None:
-            return self._index
-        return self._index.get(object, [])
+    def delete(self, object, parent, attribute=None):
+        if attribute is None:
+            return      # TODO: do something more here
+        else:
+            self._index[parent][object].remove(attribute)
+        if self._index[parent][object] == []:
+            del self._index[parent][object]
+            if self._index[parent] == {}:
+                del self._index[parent]
+
+    def move(self, object, parent, attribute, newparent, newattribute):
+        self.delete(object, parent, attribute)
+        self.add(object, newparent, newattribute)
 
     def is_reachable(self, object, parent, attribute):
         if self._index.get(parent, None) is None:
@@ -229,6 +238,12 @@ class AttributeIndex(object):
             return False
         return True
 
+    def list_attributes(self, parent, object):
+        if self._index.get(parent, None) is None:
+            return []
+        if self._index[parent].get(object, None) is None:
+            return []
+        return self._index[parent][object]
 
 class CycleSupport(ElementIndex):
     """ Prevent the ObjectCollection from running into cycles.

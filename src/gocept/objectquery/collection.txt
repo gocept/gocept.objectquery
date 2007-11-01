@@ -16,33 +16,6 @@ Get a ObjectCollection:
 Using the ObjectCollection
 ==========================
 
-Testing Attribute Index
------------------------
-
-First we need a new ObjectCollection:
-
-    >>> oc4 = ObjectCollection()
-    >>> class Root(object):
-    ...     def __init__(self):
-    ...         self.link_tupel = ()
-    ...         self.link_list = []
-    ...         self.link_dict = {}
-    ...         self.direct_link = ""
-    >>> class Child(Root):
-    ...     pass
-    >>> ch1 = Child()
-    >>> ch2 = Child()
-    >>> ch3 = Child()
-    >>> root = Root()
-    >>> root.direct_link = ch2
-    >>> root.link_tupel = (ch1, ch3)
-    >>> oc4.add(root)
-    >>> r = oc4.get_attr_index()
-    >>> len(r)
-    1
-    >>> len(r[r.keys()[0]])
-    3
-
 How to add objects to the ObjectCollection
 ------------------------------------------
 
@@ -315,3 +288,36 @@ But you can add a under root:
     >>> oc3.is_direct_child(a, root)
     True
 
+Testing Attribute Index
+-----------------------
+
+First we need a new ObjectCollection:
+
+    >>> oc4 = ObjectCollection()
+
+Define some objects with attributes:
+
+    >>> class Root(object):
+    ...     def __init__(self):
+    ...         self.link_tuple = ()
+    ...         self.link_list = []
+    ...         self.link_dict = {}
+    ...         self.direct_link = ""
+    >>> class Child(Root):
+    ...     pass
+    >>> ch1 = Child()
+    >>> ch2 = Child()
+    >>> ch3 = Child()
+    >>> root = Root()
+    >>> root.direct_link = ch2
+    >>> root.link_tuple = (ch1, ch3)
+    >>> oc4.add(root)
+
+Test some reachabilities:
+
+    >>> oc4.by_attr_reach(ch1, root, "direct_link")
+    False
+    >>> oc4.by_attr_reach(ch1, root, "link_tuple")
+    True
+    >>> oc4.by_attr_reach(ch2, root, "link_tuple")
+    False
