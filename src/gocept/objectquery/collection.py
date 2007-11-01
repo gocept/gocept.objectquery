@@ -22,15 +22,28 @@ class ObjectCollection(object):
         # e.g. {<object...>: [<PathIndex ...with path '...'>, <PathIndex...>],
         #       <object...>: [<PathIndex ...with path '...'>]}
         self.__path_index = {}
+        self.__attr_index = gocept.objectquery.indexsupport.AttributeIndex()
         self.__cycle_support = gocept.objectquery.indexsupport.CycleSupport()
         self.__oid = gocept.objectquery.indexsupport.ObjectToId()
+        self.__object_parser = gocept.objectquery.indexsupport.ObjectParser()
 
-    def __add_object(self, object, parent):
+
+    def __add_attributes(self, object, parent):
+        attrlist = []
+        oid = self.__oid.obj2id(object)
+        pid = self.__oid.obj2id(parent)
+        attrdict = self.__object_parser(parent)
+        for elem in attrdict.keys():
+            if object in attrdict[elem]:
+                self.__attr_index.add(oid, pid, elem)
+
+    def __add_element(self, object, parent):
         """ Adds ``object`` to ObjectCollection under ``parent``. """
         # make IDs
-        object = self.__oid.obj2id(object)
         if parent is not None:
+            self.__add_attributes(object, parent)
             parent = self.__oid.obj2id(parent)
+        object = self.__oid.obj2id(object)
         # Test if adding would result in object tree with *cycles*
         if not self.__cycle_support.check_for_cycles(
                                 [object], parent):
@@ -70,26 +83,10 @@ class ObjectCollection(object):
     def __get_descendant_objects(self, object):
         """ Look through an object to find following objects. """
 
-        # TODO: - add the 'path' to a following object (e.g. list 'xy')
-
         returnlist = []
-        # Look through objects __dict__ for classes and tupels or the like.
-        if hasattr(object, "__dict__"):
-            for x in object.__dict__.keys():
-                # Is x a list or a tuple, then traverse it and add the
-                # content.
-                if isinstance(object.__dict__[x],
-                              types.ListType) or isinstance(object.__dict__[x],
-                                                            types.TupleType):
-                    for y in object.__dict__[x]:
-                        returnlist.append(y)
-                # Is x a dictionary, then traverse it and add the content.
-                elif isinstance(object.__dict__[x], types.DictType):
-                    for y in object.__dict__[x].keys():
-                        returnlist.append(y)
-                # Is x another class, then add it.
-                elif str(type(object.__dict__[x])).startswith("<class"):
-                    returnlist.append(object.__dict__[x])
+        attrdict = self.__object_parser(object)
+        for elem in attrdict.values():
+            returnlist.extend(elem)
         return returnlist
 
     def __unindex(self, object, parent=None):
@@ -128,7 +125,7 @@ class ObjectCollection(object):
     def add(self, object, parent=None):
         """ Main add method.
 
-            Calls itself to sub-objects and __add_object for instantiated
+            Calls itself to sub-objects and __add_element for instantiated
             classes.
         """
 
@@ -137,7 +134,7 @@ class ObjectCollection(object):
         desclist = self.__get_descendant_objects(object)
         # add instantiated classes (see TODO)
         if str(type(object)).startswith("<class"):
-            self.__add_object(object, parent)
+            self.__add_element(object, parent)
         for elem in desclist:
             # ensure that multiple occurences of subtrees are not added
             # multiple times
@@ -155,7 +152,7 @@ class ObjectCollection(object):
                     len([e for e in
                          self.__element_index.list(self.__oid.obj2id(object))\
                              if self.__oid.id2obj(e) == elem]):
-                self.__add_object(elem, object)
+                self.__add_element(elem, object)
 
     def remove(self, object, parent=None):
         """ Main remove method.
@@ -246,3 +243,6 @@ class ObjectCollection(object):
     def root(self):
         """ Return the root object. """
         return self.__oid.id2obj(self.__element_index.root())
+
+    def get_attr_index(self):
+        return self.__attr_index.get()

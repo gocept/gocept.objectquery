@@ -271,7 +271,64 @@ First get an ObjectToID object:
     >>> from gocept.objectquery.indexsupport import ObjectToId
     >>> oti = ObjectToId()
 
+id2obj gets the object to a given id, obj2id creates an id to a given object:
+
     >>> strobj = "test"
     >>> oti.id2obj(oti.obj2id(strobj)) == strobj
     True
 
+This works also for integers:
+
+    >>> intobj = 4711
+    >>> oti.id2obj(oti.obj2id(intobj)) == intobj
+    True
+
+Test the wrong case:
+
+    >>> oti.id2obj(oti.obj2id(intobj)) == strobj
+    False
+
+ObjectParser
+============
+
+First get an ObjectParser object:
+
+    >>> from gocept.objectquery.indexsupport import ObjectParser
+    >>> op = ObjectParser()
+
+Create a test class object:
+
+    >>> class Dummy(object):
+    ...     pass
+    >>> class Test(object):
+    ...     def __init__(self):
+    ...         self.bla = ""
+    ...         self.direct_link = Dummy()
+    ...         self.list_link = [Dummy(), Dummy()]
+    ...         self.tuple_link = (Dummy(), Dummy(), Dummy(), Dummy())
+    ...         self.dict_link = {"bla": Dummy(), "bla2": (Dummy(), Dummy())}
+
+Now parse the Test class object:
+
+    >>> r = op(Test())
+
+Result is a dictionary with attribute names as keys and a list of preceding
+objects as values:
+
+    >>> r
+    {'dict_link': [...], 'tuple_link': [...], 'list_link': [...], 'direct_link': [...]}
+    >>> len(r['dict_link'])
+    3
+    >>> len(r['tuple_link'])
+    4
+    >>> len(r['list_link'])
+    2
+    >>> len(r['direct_link'])
+    1
+    >>> r['direct_link']
+    [<Dummy object at 0x...>]
+
+ObjectParser returns an empty dict for non-class objects:
+
+    >>> op("Test")
+    {}

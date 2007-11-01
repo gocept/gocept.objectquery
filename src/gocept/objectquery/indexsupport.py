@@ -2,6 +2,8 @@
 # See also LICENSE.txt
 # $Id$
 
+import types
+
 class ObjectToId(object):
     def __init__(self):
         self.__idlist = {}
@@ -16,6 +18,42 @@ class ObjectToId(object):
         if id is None:
             return None
         return self.__idlist.get(id, 0)
+
+
+class ObjectParser(object):
+    """ Returns a dict of attributes which refer to another object. """
+    def __init__(self):
+        pass
+
+    def __call__(self, object):
+        return self._traverse(object)
+
+    def __dict2list(self, dict):
+        returnlist = []
+        for elem in dict.values():
+            if isinstance(elem, types.ListType):
+                returnlist.extend(elem)
+            elif isinstance(elem, types.TupleType):
+                returnlist.extend(list(elem))
+            elif isinstance(elem, types.DictType):
+                returnlist.extend(self.__dict2list(elem))
+            else:
+                returnlist.append(elem)
+        return returnlist
+
+    def _traverse(self, object):
+        attrlist = {}
+        if hasattr(object, "__dict__"):
+            for x in object.__dict__.keys():
+                if isinstance(object.__dict__[x], types.ListType):
+                    attrlist[x] = object.__dict__[x]
+                elif isinstance(object.__dict__[x], types.TupleType):
+                    attrlist[x] = list(object.__dict__[x])
+                elif isinstance(object.__dict__[x], types.DictType):
+                    attrlist[x] = self.__dict2list(object.__dict__[x])
+                elif str(type(object.__dict__[x])).startswith("<class"):
+                    attrlist[x] = [object.__dict__[x]]
+        return attrlist
 
 
 class PathIndex(object):
@@ -163,6 +201,33 @@ class ElementIndex(object):
     def root(self):
         """ Return the root object. """
         return self.__root
+
+
+class AttributeIndex(object):
+    """ AttributeIndex is a dict saving attributes between objects. """
+    def __init__(self):
+        self._index = {}
+
+    def add(self, object, parent, attribute):
+        if self._index.get(parent, None) is None:
+            self._index[parent] = {}
+        if self._index[parent].get(object, None) is None:
+            self._index[parent][object] = []
+        self._index[parent][object].append(attribute)
+
+    def get(self, object=None):
+        if object is None:
+            return self._index
+        return self._index.get(object, [])
+
+    def is_reachable(self, object, parent, attribute):
+        if self._index.get(parent, None) is None:
+            return False
+        if self._index[parent].get(object, None) is None:
+            return False
+        if attribute not in self._index[parent][object]:
+            return False
+        return True
 
 
 class CycleSupport(ElementIndex):
