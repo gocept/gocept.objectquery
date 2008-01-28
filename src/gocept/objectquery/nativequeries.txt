@@ -7,5 +7,113 @@ Importing Native Queries
 
 You import Native Queries as follows:
 
- >>> from gocept.objectquery.nativequeries import NativeQueries
- >>> nq = NativeQueries()
+  >>> from gocept.objectquery.nativequeries import NativeQueries
+  >>> nq = NativeQueries()
+  >>> nq
+  <gocept.objectquery.nativequeries.NativeQueries object at 0x...>
+
+Native Queries must be called with one parameter. (more about that later)
+
+  >>> nq()
+  Traceback (most recent call last):
+  ...
+  TypeError: __call__() takes exactly 2 arguments (1 given)
+
+Create a sample database:
+
+  >>> class Person(object):
+  ...     firstname = ""
+  ...     lastname = ""
+  ...     age = ""
+  >>> class Student(Person):
+  ...     registered = ""
+  >>> class Prof(Person):
+  ...     degree = ""
+  >>>
+  >>> class Lecture(object):
+  ...     title = ""
+  ...     prof = ""
+  ...     students = []
+
+  >>> theuni = Student()
+  >>> theuni.firstname = "Christian"
+  >>> theuni.lastname = "Theune"
+  >>> theuni.age = 26
+  >>> theuni.registered = 2001
+
+  >>> basti = Student()
+  >>> basti.firstname = "Sebastian"
+  >>> basti.lastname = "Wehrmann"
+  >>> basti.age = 24
+  >>> basti.registered = 2002
+
+  >>> professor = Prof()
+  >>> professor.firstname = "Michael"
+  >>> professor.lastname = "Neumann"
+  >>> professor.age = 34
+  >>> professor.degree = "Prof. Dr."
+
+  >>> ad = Lecture()
+  >>> ad.title = "Agil Development"
+  >>> ad.prof = professor
+  >>> ad.students = [theuni, basti]
+
+  >>> database = [theuni, basti, professor, ad]
+
+Querying for objects
+====================
+
+First we must register our database:
+
+  >>> nq.register_database(database)
+
+To query with NativeQueries, just write a method which expects one object.
+This will be one object from the database. Write the conditions your object
+should match within the function and make sure, that it only returns True or
+False or raises an exception (which will be handled as False by
+NativeQueries).
+
+  >>> def students_older_25(object):
+  ...     if not isinstance(object, Student):
+  ...         raise TypeError("We only want to query Student objects.")
+  ...     if object.age <= 25:
+  ...         return False
+  ...     return True
+
+Queries must return True, False or raise an exception:
+
+  >>> students_older_25(basti)
+  False
+  >>> students_older_25(theuni)
+  True
+  >>> students_older_25(professor)
+  Traceback (most recent call last):
+  ...
+  TypeError: We only want to query Student objects.
+
+Now we hand the function to NativeQueries which queries all database objects
+for us.
+
+  >>> res = nq(students_older_25)
+  >>> res[0] == theuni
+  True
+
+Lets see how a query for multiple object types would look like:
+
+  >>> def multiple_types(object):
+  ...     if not isinstance(object, Student) and\
+  ...       not isinstance(object, Lecture):
+  ...         raise TypeError("Either Student nor Lecture.")
+  ...     if isinstance(object, Student):
+  ...         if object.firstname.find("ian") >= 0:
+  ...             return True
+  ...     if isinstance(object, Lecture):
+  ...         if object.title == "Agil Development":
+  ...             return True
+  ...     return False
+
+  >>> res = nq(multiple_types)
+  >>> len(res)
+  3
+  >>> res[2] == ad
+  True
