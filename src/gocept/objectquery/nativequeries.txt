@@ -1,0 +1,11 @@
+==============
+Native Queries
+==============
+
+Importing Native Queries
+========================
+
+You import Native Queries as follows:
+
+ >>> from gocept.objectquery.nativequeries import NativeQueries
+ >>> nq = NativeQueries()
