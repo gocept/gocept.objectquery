@@ -2,376 +2,78 @@
 Using IndexSupport
 ==================
 
-PathIndex
-=========
+ClassIndex
+==========
 
-First get a PathIndex object:
+First init the ZODB:
 
-    >>> from gocept.objectquery.indexsupport import PathIndex
-    >>> pi = PathIndex()
+    >>> from ZODB import FileStorage, DB
+    >>> storage = FileStorage.FileStorage('/tmp/test-filestorage.fs')
+    >>> db = DB(storage)
+    >>> conn = db.open()
+    >>> from persistent import Persistent
+    >>> dbroot = conn.root()
 
-PathIndex has a list named path, which is empty for the root PathIndex:
+Then get a ClassIndex object:
 
-    >>> pi
-    <....PathIndex object with path ''>
+    >>> from gocept.objectquery.indexsupport import ClassIndex
+    >>> ci = ClassIndex(dbroot)
 
-With the Method ``bear`` you can add a new PathIndex under your
-PathIndex-Object. The path can be any object you like:
+ClassIndex's index is a BTrees.OOBTree object:
 
-    >>> pi1 = pi.bear("foo")
-    >>> pi1
-    <... 'foo'>
+    >>> ci.index
+    <BTrees.OOBTree.OOBTree object at 0x...>
 
-    >>> pi2 = pi.bear(1408)
-    >>> pi2
-    <... '1408'>
+Insert some data into the ClassIndex:
 
-    >>> class MyClass(object):
+    >>> class Student(object):
     ...     pass
-    >>> pi11 = pi1.bear(MyClass())
-    >>> pi11
-    <... 'foo, <MyClass object at 0x...>'>
+    >>> class Kurs(object):
+    ...     pass
 
-You can also move an index to another parent:
+    >>> stud1 = Student()
+    >>> stud1._p_oid = 1
+    >>> ci.insert("Student", stud1)
+    >>> stud2 = Student()
+    >>> stud2._p_oid = 2
+    >>> ci.insert("Student", stud2)
+    >>> kurs1 = Kurs()
+    >>> kurs1._p_oid = 3
+    >>> ci.insert("Kurs", kurs1)
 
-    >>> pi.move(pi1, pi2)
-    >>> pi1
-    <... '1408, foo'>
-    >>> pi11
-    <... '1408, foo, <MyClass object at 0x...>'>
+Validate, that the data has been correct stored:
 
-    >>> pi1.move(pi11, pi2)
-    >>> pi11
-    <... '1408, <MyClass object at 0x...>'>
-
-    >>> pi2.move(pi11, pi1)
-    >>> pi2.move(pi1, pi)
-
-You can test the relationship by using the contains method ``in``:
-
-    >>> pi in pi
-    True
-    >>> pi1 in pi
-    True
-    >>> pi11 in pi
-    True
-    >>> pi11 in pi2
-    False
-    >>> pi1 in pi2
-    False
-    >>> pi2 in pi
-    True
-    >>> pi in pi11
-    False
-
-You may also ask, if parent has a direct relationship to child (there are no
-other nodes between parent and child):
-
-    >>> pi.is_direct_parent(pi1)
-    True
-    >>> pi1.is_direct_parent(pi11)
-    True
-    >>> pi.is_direct_parent(pi11)
-    False
-
-Its also possible to delete childs. This is done recursive:
-
-    >>> pi.childs
-    [<... '1408'>, <... 'foo'>]
-    >>> pi.delete(pi1)
-    >>> pi.childs
-    [<... '1408'>]
-
-ElementIndex
-============
-
-First get a ElementIndex object:
-
-    >>> from gocept.objectquery.indexsupport import ElementIndex
-    >>> ei = ElementIndex()
-
-ElementIndex holds objects and their successors. If you add an object, you may
-transfer its parent object, too:
-
-    >>> ei.add(0)
-
-    >>> ei.add(1, 0)
-    >>> ei.add(2, 0)
-
-    >>> ei.add(11, 1)
-    >>> ei.add(12, 1)
-    >>> ei.add(13, 1)
-
-    >>> ei.add(21, 2)
-    >>> ei.add(22, 2)
-
-    >>> ei.add(111, 11)
-
-Transfering a parent object which does not exist results in an error:
-
-    >>> ei.add(500, 600)
-    Traceback (most recent call last):
-    ...
-    KeyError: 600
-
-Adding a second root is now allowed:
-
-    >>> ei.add(500)
-    Traceback (most recent call last):
-    ...
-    KeyError: 'There is already a root object defined: 0'
-
-You can list all direct childs of you object by using the list-function:
-
-    >>> ei.list()
+    >>> ci.index.has_key('Student')
+    2
+    >>> list(ci.index['Student'])
     [1, 2]
-    >>> ei.list(1)
-    [11, 12, 13]
-    >>> ei.list(500)
-    Traceback (most recent call last):
-    ...
-    KeyError: 500
+    >>> ci.index.has_key('Kurs')
+    2
+    >>> list(ci.index['Kurs'])
+    [3]
 
-You can also list all childs of an object by using the rlist function:
+Delete some items from the index:
 
-    >>> ei.rlist()
-    [0, 1, 11, 111, 12, 13, 2, 21, 22]
-    >>> ei.rlist(1)
-    [1, 11, 111, 12, 13]
-
-Removing objects is done by using the delete() method:
-
-    >>> ei.delete(11, 1)
-    >>> ei.list(1)
-    [12, 13]
-    >>> ei.rlist()
-    [0, 1, 12, 13, 2, 21, 22]
-
-You may add objects multiple times:
-
-    >>> ei.add(1, 2)
-    >>> ei.rlist(2)
-    [2, 21, 22, 1, 12, 13]
-    >>> ei.rlist()
-    [0, 1, 12, 13, 2, 21, 22, 1, 12, 13]
-
-If you delete an object, which was added multiple times, only one ƣs deleted:
-
-    >>> ei.delete(1, 0)
-    >>> ei.rlist()
-    [0, 2, 21, 22, 1, 12, 13]
-
-You can also add one object multiple times under one root:
-
-    >>> ei.add(3, 0)
-    >>> ei.add(31, 3)
-    >>> ei.add(32, 3)
-    >>> ei.add(31, 3)
-    >>> ei.add(31, 3)
-    >>> ei.rlist(3)
-    [3, 31, 32, 31, 31]
-
-    >>> ei.add(300, 31)
-    >>> ei.rlist(3)
-    [3, 31, 300, 32, 31, 300, 31, 300]
-
-    >>> ei.delete(31, 3)
-    >>> ei.list(3)
-    [32]
-
-    >>> ei.delete(3, 0)
-    >>> ei.list(0)
+    >>> ci.delete("Student", stud1)
+    >>> list(ci.index['Student'])
     [2]
-
-You may also move an object from one parent to another:
-
-    >>> ei.list(2)
-    [21, 22, 1]
-
-    >>> ei.move(12, 1, 2)
-
-    >>> ei.list(2)
-    [21, 22, 1, 12]
-    >>> ei.list(1)
-    [13]
-
-If you delete an element, all childs will be deleted, too, if they are no
-longer referenced within the index:
-
-    >>> ei.delete(2, 0)
-    >>> ei.rlist()
-    [0]
-    >>> ei.list(2)
+    >>> ci.delete("Student", stud1)
     Traceback (most recent call last):
     ...
-    KeyError: 2
+    KeyError: 1
 
 AttributeIndex
 ==============
 
-First get an AttributeIndex object:
+AttributeIndex works the same as the ClassIndex, so it is ok to only test if
+we can get it:
 
     >>> from gocept.objectquery.indexsupport import AttributeIndex
-    >>> ai = AttributeIndex()
+    >>> ai = AttributeIndex(dbroot)
 
-You can add an attribute if you specify the starting and ending objects:
+Lets have a look on our dbroot object:
 
-    >>> ai.add("child", "parent", "next")
-    >>> ai.add("child2", "parent", "another_next")
-
-Test if child is reachable from parent over next:
-
-    >>> ai.is_reachable("child", "parent", "next")
+    >>> dbroot.has_key('AttributeIndex')
     True
-    >>> ai.is_reachable("child", "parent", "another_next")
-    False
-    >>> ai.is_reachable("child2", "parent", "another_next")
+    >>> dbroot.has_key('ClassIndex')
     True
-
-List attributes from parent to child:
-
-    >>> ai.list_attributes("parent", "child")
-    ['next']
-    >>> ai.list_attributes("child", "parent")
-    []
-
-Move child from parent over next to newparent over newnext:
-
-    >>> ai.move("child", "parent", "next", "newparent", "newnext")
-    >>> ai.list_attributes("parent", "child")
-    []
-    >>> ai.list_attributes("newparent", "child")
-    ['newnext']
-
-Delete child over newnext from newparent:
-
-    >>> ai.delete("child", "newparent", "newnext")
-    >>> ai.list_attributes("newparent", "child")
-    []
-
-CycleSupport
-=============
-
-Get an CycleSupport object:
-
-    >>> from gocept.objectquery.indexsupport import CycleSupport
-    >>> cs = CycleSupport()
-    >>> cs.add("root")
-    >>> cs.add("left", "root")
-    >>> cs.add("left2", "left")
-    >>> cs.add("right", "root")
-
-rlist now returns the "path" from object until root:
-
-    >>> cs.rlist("left2")
-    ['left2', 'left', 'root']
-    >>> cs.rlist("right")
-    ['right', 'root']
-
-If we now want to add left under left2, we would result in a cirle recursion.
-Therefore, check_for_cycles should return False:
-
-    >>> cs.check_for_cycles(['left', 'left2'], 'left2')
-    False
-
-On the other side, adding left under right is ok:
-
-    >>> cs.check_for_cycles(['left', 'left2'], 'right')
-    True
-
-Now suggest, we trust check_for_cycles and add left under right. A secound
-test would now again return in True, but trying to add right under left2 now
-returns False:
-
-    >>> cs.add("left", "right")
-    >>> cs.rlist("left2")
-    ['left2', 'left', 'root', 'right', 'root']
-
-    >>> cs.check_for_cycles(['left', 'left2'], 'right')
-    True
-    >>> cs.check_for_cycles(['right', 'left', 'left2'], 'left2')
-    False
-
-Now delete left from right:
-
-    >>> cs.delete("left", "right")
-    >>> cs.rlist("left")
-    ['left', 'root']
-    >>> cs.rlist("right")
-    ['right', 'root']
-
-Test the move function. Move left from root to right:
-
-    >>> cs.move("left", "root", "right")
-    >>> cs.rlist("left")
-    ['left', 'right', 'root']
-
-ObjectToId
-==========
-
-First get an ObjectToID object:
-
-    >>> from gocept.objectquery.indexsupport import ObjectToId
-    >>> oti = ObjectToId()
-
-id2obj gets the object to a given id, obj2id creates an id to a given object:
-
-    >>> strobj = "test"
-    >>> oti.id2obj(oti.obj2id(strobj)) == strobj
-    True
-
-This works also for integers:
-
-    >>> intobj = 4711
-    >>> oti.id2obj(oti.obj2id(intobj)) == intobj
-    True
-
-Test the wrong case:
-
-    >>> oti.id2obj(oti.obj2id(intobj)) == strobj
-    False
-
-ObjectParser
-============
-
-First get an ObjectParser object:
-
-    >>> from gocept.objectquery.indexsupport import ObjectParser
-    >>> op = ObjectParser()
-
-Create a test class object:
-
-    >>> class Dummy(object):
-    ...     pass
-    >>> class Test(object):
-    ...     def __init__(self):
-    ...         self.bla = ""
-    ...         self.direct_link = Dummy()
-    ...         self.list_link = [Dummy(), Dummy()]
-    ...         self.tuple_link = (Dummy(), Dummy(), Dummy(), Dummy())
-    ...         self.dict_link = {"bla": Dummy(), "bla2": (Dummy(), Dummy())}
-
-Now parse the Test class object:
-
-    >>> r = op(Test())
-
-Result is a dictionary with attribute names as keys and a list of preceding
-objects as values:
-
-    >>> r
-    {'dict_link': [...], 'tuple_link': [...], 'list_link': [...], 'direct_link': [...]}
-    >>> len(r['dict_link'])
-    3
-    >>> len(r['tuple_link'])
-    4
-    >>> len(r['list_link'])
-    2
-    >>> len(r['direct_link'])
-    1
-    >>> r['direct_link']
-    [<Dummy object at 0x...>]
-
-ObjectParser returns an empty dict for non-class objects:
-
-    >>> op("Test")
-    {}

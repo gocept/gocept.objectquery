@@ -21,7 +21,8 @@ setup(
     include_package_data=True,
     install_requires=[
         'setuptools',
-        'SimpleParse'
+        'SimpleParse',
+        'ZODB3'
     ],
     zip_safe=False,
     )
