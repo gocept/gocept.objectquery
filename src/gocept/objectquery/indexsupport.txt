@@ -2,19 +2,24 @@
 Using IndexSupport
 ==================
 
-ClassIndex
-==========
 
-First init the ZODB:
+Initialization
+==============
+
+Import and create a ZODB to store the indexes:
 
     >>> from ZODB import FileStorage, DB
+    >>> from persistent import Persistent
+    >>> import transaction
     >>> storage = FileStorage.FileStorage('/tmp/test-filestorage.fs')
     >>> db = DB(storage)
     >>> conn = db.open()
-    >>> from persistent import Persistent
     >>> dbroot = conn.root()
 
-Then get a ClassIndex object:
+ClassIndex
+==========
+
+Get a ClassIndex object:
 
     >>> from gocept.objectquery.indexsupport import ClassIndex
     >>> ci = ClassIndex(dbroot)
@@ -24,43 +29,37 @@ ClassIndex's index is a BTrees.OOBTree object:
     >>> ci.index
     <BTrees.OOBTree.OOBTree object at 0x...>
 
-Insert some data into the ClassIndex:
+ClassIndex holds integer values (like Object Identifiers from ZODB):
 
-    >>> class Student(object):
-    ...     pass
-    >>> class Kurs(object):
-    ...     pass
+    >>> ci.insert("Course", 1)
+    >>> ci.insert("Student", 2)
+    >>> ci.insert("Student", 3)
 
-    >>> stud1 = Student()
-    >>> stud1._p_oid = 1
-    >>> ci.insert("Student", stud1)
-    >>> stud2 = Student()
-    >>> stud2._p_oid = 2
-    >>> ci.insert("Student", stud2)
-    >>> kurs1 = Kurs()
-    >>> kurs1._p_oid = 3
-    >>> ci.insert("Kurs", kurs1)
+Validate the stored data:
 
-Validate, that the data has been correct stored:
-
-    >>> ci.index.has_key('Student')
-    2
-    >>> list(ci.index['Student'])
-    [1, 2]
-    >>> ci.index.has_key('Kurs')
-    2
-    >>> list(ci.index['Kurs'])
-    [3]
+    >>> ci.has_key('Student')
+    True
+    >>> ci.get('Student')
+    [2, 3]
+    >>> ci.has_key('Foo')
+    False
+    >>> ci.get('Course')
+    [1]
 
 Delete some items from the index:
 
-    >>> ci.delete("Student", stud1)
-    >>> list(ci.index['Student'])
-    [2]
-    >>> ci.delete("Student", stud1)
+    >>> ci.delete("Student", 2)
+    >>> ci.get('Student')
+    [3]
+    >>> ci.delete("Student", 2)
     Traceback (most recent call last):
     ...
-    KeyError: 1
+    KeyError: 2
+    >>> ci.delete("Course", 1)
+    >>> ci.get("Course")
+    Traceback (most recent call last):
+    ...
+    KeyError: 'Course'
 
 AttributeIndex
 ==============
@@ -77,3 +76,68 @@ Lets have a look on our dbroot object:
     True
     >>> dbroot.has_key('ClassIndex')
     True
+
+StructureIndex
+==============
+
+
+First, get a StructureIndex:
+
+    >>> from gocept.objectquery.indexsupport import StructureIndex
+    >>> si = StructureIndex(dbroot)
+
+Insert some values:
+
+    >>> si.insert(1, 0)
+    >>> si.insert(2, 1)
+    >>> si.insert(3, 1)
+    >>> si.insert(4, 3)
+
+Show if the paths were stored correct:
+
+    >>> si.get(1)
+    (1,)
+    >>> si.get(3)
+    (1, 3)
+
+Check the parent-child-relationship:
+
+    >>> si.is_parent(1,2)     # is 1 the parent of 2
+    True
+    >>> si.is_parent(2,3)
+    False
+    >>> si.is_child(1,2)      # is 1 the child of 2
+    False
+    >>> si.is_parent(2,3)
+    False
+    >>> si.is_child(1,2) is not si.is_parent(1,2)
+    True
+
+    >>> si.is_predecessor(1,4) # is 1 the predecessor of 4
+    True
+    >>> si.is_predecessor(2,4)
+    False
+    >>> si.is_successor(4,1)   # is 4 a successor of 1
+    True
+    >>> si.is_successor(4,2)
+    False
+    >>> si.is_predecessor(1,4) is not si.is_successor(1,4)
+    True
+
+You delete keys as follows:
+
+    >>> si.delete(3)
+    >>> si.get(3)
+    Traceback (most recent call last):
+    ...
+    KeyError: 3
+    >>> si.get(4)
+    Traceback (most recent call last):
+    ...
+    KeyError: 4
+
+Purge
+=====
+
+    >>> dbroot.clear()
+    >>> transaction.commit()
