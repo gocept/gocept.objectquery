@@ -63,15 +63,31 @@ class StructureIndex(OOIndex):
 
     def insert(self, key, parent):
         """ Insert key under parent. """
-        path = (key, )
-        if self.has_key(parent):
-            path = self.get(parent)[:] + path
-        self.index[key] = path
+        tail = (key, )
+        new_path = []
+        if self.index.has_key(parent):
+            for elem in self.get(parent)[:]:
+                new_path.append(elem + tail)
+        else:
+            new_path.append(tail)
+        if not self.has_key(key):
+            self.index[key] = []
+        self.index[key].extend(new_path)
         transaction.commit()
 
-    def delete(self, key):
+    def delete(self, key, parent=None):
         """ Delete the key from the index. """
-        del self.index[key]
+        if parent is None:
+            del self.index[key]
+        else:
+            path = self.index[key][:]
+            for elem in path:
+                if elem[-2] == parent:
+                    path.remove(elem)
+            if len(path) == 0:
+                del self.index[key]
+            else:
+                self.index[key] = path
         transaction.commit()
 
     def get(self, key):
@@ -79,42 +95,58 @@ class StructureIndex(OOIndex):
         path = self.index[key]
         # Purge, if a predecessor has been deleted
         for elem in path:
-            if not self.has_key(elem):
-                self.delete(key)
+            for i in range(len(elem)-1):
+                if not self._check_path(elem[i], elem[i+1]):
+                    self.delete(key, elem[-2])
         return self.index[key]
 
     def is_parent(self, key1, key2):
         """ Check if key1 is a direct predecessor of key2. """
-        if len(self.get(key1)) + 1 == len(self.get(key2)):
-            return True
+        for elem1 in self.get(key1):
+            for elem2 in self.get(key2):
+                if len(elem1) + 1 == len(elem2):
+                    return True
         return False
 
     def is_child(self, key1, key2):
         """ Check if key1 is a direct successor of key2. """
-        if len(self.get(key1)) == len(self.get(key2)) + 1:
-            return True
+        for elem1 in self.get(key1):
+            for elem2 in self.get(key2):
+                if len(elem1) == len(elem2) + 1:
+                    return True
         return False
 
     def is_predecessor(self, key1, key2):
         """ Check is key1 is a predecessor of key2. """
-        path1 = self.get(key1)
-        path2 = self.get(key2)
-        size_of_key1 = len(path1)
-        if size_of_key1 >= len(path2):
-            return False
-        for i in range(size_of_key1):
-            if path1[i] != path2[i]:
-                return False
+        for elem1 in self.get(key1):
+            for elem2 in self.get(key2):
+                size_of_elem1 = len(elem1)
+                if size_of_elem1 >= len(elem2):
+                    return False
+                for i in range(size_of_elem1):
+                    if elem1[i] != elem2[i]:
+                        return False
         return True
 
     def is_successor(self, key1, key2):
         """ Check is key1 is a successor of key2. """
-        path1 = self.get(key1)
-        path2 = self.get(key2)
-        size_of_key2 = len(path2)
-        if len(path1) <= size_of_key2:
-            return False
-        for i in range(size_of_key2):
-            if path1[i] != path2[i]:
-                return False
+        for elem1 in self.get(key1):
+            for elem2 in self.get(key2):
+                size_of_elem2 = len(elem2)
+                if len(elem1) <= size_of_elem2:
+                    return False
+                for i in range(size_of_elem2):
+                    if elem1[i] != elem2[i]:
+                        return False
         return True
+
+    def _check_path(self, key1, key2):
+        """ Check if key1 and key2 are directly connected. """
+        if not self.has_key(key2):
+            return False
+        for elem in self.index[key2]:
+            if key1 in elem:
+                if elem[-2] == key1:
+                    return True
+        return False
+
