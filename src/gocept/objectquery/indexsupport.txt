@@ -96,7 +96,14 @@ Insert some values:
     >>> si.insert(5, 1)
     >>> si.insert(4, 5)
 
-Show if the paths were stored correct:
+StructureIndex stores the childs of a key for internal tasks:
+
+    >>> si.index['childs'][1]
+    [2, 3, 5]
+    >>> si.index['childs'][4]
+    []
+
+The method get lists all paths to the given element:
 
     >>> si.get(2)
     [(1, 2), (1, 3, 2)]
@@ -135,7 +142,7 @@ You delete keys as follows:
     >>> si.get(2)
     [(1, 2)]
     >>> si.get(4)
-    [(1, 3, 2, 4), (1, 5, 4)]
+    [(1, 2, 4), (1, 5, 4)]
     >>> si.delete(2)
     >>> si.get(4)
     [(1, 5, 4)]
@@ -147,6 +154,41 @@ You delete keys as follows:
     >>> si.get(3)
     [(1, 3)]
 
+Lets look at the childs index:
+
+    >>> list(si.index['childs'])
+    [0, 1, 3]
+    >>> si.index['childs'][1]
+    [3]
+    >>> si.index['childs'][2]
+    Traceback (most recent call last):
+    ...
+    KeyError: 2
+    >>> si.index['childs'][3]
+    []
+
+Delete the first node (special case):
+
+    >>> si.delete(1, 0)
+    >>> si.get(1)
+    Traceback (most recent call last):
+    ...
+    KeyError: 1
+    >>> list(si.index['childs'])
+    [0]
+
+Cycles are supported as well:
+
+    >>> si.insert(1, 0)
+    >>> si.insert(2, 1)
+    >>> si.insert(0, 2)
+
+But when reading the path, cycles are *not* evaluated:
+
+    >>> [(1, 2, 0, 1, 2)] in si.get(2)
+    False
+    >>> si.get(2)
+    [(1, 2)]
 
 Purge
 =====

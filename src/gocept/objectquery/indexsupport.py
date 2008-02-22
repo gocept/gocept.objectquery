@@ -10,7 +10,10 @@ import transaction
 
 class IndexItem(IITreeSet):
     """ Holds any number of integer values. """
-    pass
+
+    def __repr__(self):
+        return str(list(self))
+
 
 class OOIndex(Persistent):
     """ A dummy object to IndexItem mapping index structure. """
@@ -61,6 +64,11 @@ class StructureIndex(OOIndex):
     objects without having to touch the objects in the ZODB.
     """
 
+    def __init__(self, dbroot):
+        """ """
+        super(self.__class__, self).__init__(dbroot)
+        self.index['childs'] = OOBTree()    # Childindex, needed for deletion
+
     def insert(self, key, parent):
         """ Insert key under parent. """
         tail = (key, )
@@ -73,31 +81,41 @@ class StructureIndex(OOIndex):
         if not self.has_key(key):
             self.index[key] = []
         self.index[key].extend(new_path)
+        if not self.index['childs'].has_key(parent):
+            self.index['childs'][parent] = IndexItem()
+        self.index['childs'][parent].insert(key)
+        if not self.index['childs'].has_key(key):
+            self.index['childs'][key] = IndexItem()
         transaction.commit()
+
+    def _purge(self, key, tupel):
+        """ Purge the child nodes of key with tupel. """
+        for child in self.index['childs'][key]:
+            if self.index.has_key(child):
+                for elem in self.index[child][:]:
+                    if elem[:-1] == tupel:
+                        self.index[child].remove(elem)
+                        self._purge(child, elem)
+                if len(self.index[child]) == 0:
+                    self.delete(child, key)
 
     def delete(self, key, parent=None):
         """ Delete the key from the index. """
-        if parent is None:
+        if parent == 0:
+            parent = None
+        for elem in self.index[key][:]:
+            if parent is None or elem[-2] == parent:
+                if len(elem) > 1:
+                    self.index['childs'][elem[-2]].remove(key)
+                self.index[key].remove(elem)
+                self._purge(key, elem)
+        if len(self.index[key]) == 0:
             del self.index[key]
-        else:
-            path = self.index[key][:]
-            for elem in path:
-                if elem[-2] == parent:
-                    path.remove(elem)
-            if len(path) == 0:
-                del self.index[key]
-            else:
-                self.index[key] = path
+            del self.index['childs'][key]
         transaction.commit()
 
     def get(self, key):
         """ Return the path for a given key. """
-        path = self.index[key]
-        # Purge, if a predecessor has been deleted
-        for elem in path:
-            for i in range(len(elem)-1):
-                if not self._check_path(elem[i], elem[i+1]):
-                    self.delete(key, elem[-2])
         return self.index[key]
 
     def is_parent(self, key1, key2):
@@ -139,14 +157,3 @@ class StructureIndex(OOIndex):
                     if elem1[i] != elem2[i]:
                         return False
         return True
-
-    def _check_path(self, key1, key2):
-        """ Check if key1 and key2 are directly connected. """
-        if not self.has_key(key2):
-            return False
-        for elem in self.index[key2]:
-            if key1 in elem:
-                if elem[-2] == key1:
-                    return True
-        return False
-
