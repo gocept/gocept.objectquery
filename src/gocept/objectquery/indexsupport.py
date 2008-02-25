@@ -20,10 +20,10 @@ class OOIndex(Persistent):
 
     def __init__(self, dbroot):
         """ """
-        classname = self.__class__.__name__
-        if not dbroot.has_key(classname):
-            dbroot[classname] = OOBTree()
-        self.index = dbroot[classname]
+        keyname = "_is_" + self.__class__.__name__
+        if not dbroot.has_key(keyname):
+            dbroot[keyname] = OOBTree()
+        self.index = dbroot[keyname]
 
     def insert(self, key, value):
         """ Insert value under key into the index. """

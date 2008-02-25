@@ -2,7 +2,9 @@
 # See also LICENSE.txt
 # $Id$
 
-import gocept.objectquery.indexsupport
+from gocept.objectquery.indexsupport import ClassIndex, AttributeIndex,\
+    StructureIndex
+from gocept.objectquery.querysupport import ObjectParser
 
 class ObjectCollection(object):
     """ ObjectCollection provides functionallity to QueryProcessor.
@@ -11,26 +13,14 @@ class ObjectCollection(object):
         IndexSupport.
     """
 
-    def __init__(self):
-        """ Initialize Indizes. """
-        # ElementIndex is used the way as described within IndexSupport
-        self.__element_index = gocept.objectquery.indexsupport.ElementIndex()
-        # PathIndex objects are collected within a dictionary with objects as
-        # keys. Because objects may occur multiple times (and therefore need
-        # more than one PathIndex), they are kept inside a list.
-        # e.g. {<object...>: [<PathIndex ...with path '...'>, <PathIndex...>],
-        #       <object...>: [<PathIndex ...with path '...'>]}
-        self.__path_index = {}
-        # AttributeIndex is used to save all attributes which point to another
-        # object within the collection
-        self.__attr_index = gocept.objectquery.indexsupport.AttributeIndex()
-        # CycleSupport is used to detect circles before adding an object
-        self.__cycle_support = gocept.objectquery.indexsupport.CycleSupport()
-        # ObjectToId is used to get a numeric ID for an object and vice versa
-        self.__oid = gocept.objectquery.indexsupport.ObjectToId()
-        # ObjectParser looks through an object for following objects
-        self.__object_parser = gocept.objectquery.indexsupport.ObjectParser()
-
+    def __init__(self, dbroot):
+        """ Initialize Objectcollection. """
+        # init IndexSupport
+        self._classindex = ClassIndex(dbroot)
+        self._attributeindex = AttributeIndex(dbroot)
+        self._structureindex = StructureIndex(dbroot)
+        # init QuerySupport
+        self._objectparser = ObjectParser()
 
     def __add_attributes(self, object, parent):
         """ Add all attributes from parent to object to AttributeIndex. """
@@ -133,27 +123,13 @@ class ObjectCollection(object):
             classes.
         """
 
-        desclist = self.__get_descendant_objects(object)
+        self._objectparser.parse(object)
+        attributes = self._objectparser.result("attributes")[:]
+        descendands = self._objectparser.result("descendants")
         if str(type(object)).startswith("<class"):
-            self.__add_element(object, parent)
+            self._add_class(object, parent)
         for elem in desclist:
-            # ensure that multiple occurences of subtrees are not added
-            # multiple times
-            # this is done by:
-            #   - first not descending into objects, which are already added
-            #     (because their sub-tree already exists in Collection)
-            #     -> if statement
-            #   - secound only adding objects if their number in desclist is
-            #     not equal to their number in ObjectCollection
-            #     -> elif statement
-            if self.__oid.obj2id(elem) not in self.__element_index.list(
-                                                    self.__oid.obj2id(object)):
-                self.add(elem, object)
-            elif len([e for e in desclist if e == elem]) !=\
-                    len([e for e in
-                         self.__element_index.list(self.__oid.obj2id(object))\
-                             if self.__oid.id2obj(e) == elem]):
-                self.__add_element(elem, object)
+            self.add(elem)
 
     def remove(self, object, parent=None):
         """ Main remove method.

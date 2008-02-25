@@ -2,6 +2,19 @@
 Using ObjectCollection
 ======================
 
+Initialization
+==============
+
+First we need a ZODB for the IndexSupport used by ObjectCollection:
+
+    >>> from ZODB import FileStorage, DB
+    >>> from persistent import Persistent
+    >>> import transaction
+    >>> storage = FileStorage.FileStorage('/tmp/test-collection.fs')
+    >>> db = DB(storage)
+    >>> conn = db.open()
+    >>> dbroot = conn.root()
+
 Imporing the ObjectCollection
 =============================
 
@@ -11,7 +24,7 @@ You can import the QueryParser as follow:
 
 Get a ObjectCollection:
 
-    >>> oc = ObjectCollection()
+    >>> oc = ObjectCollection(dbroot)
 
 Using the ObjectCollection
 ==========================
@@ -19,17 +32,19 @@ Using the ObjectCollection
 How to add objects to the ObjectCollection
 ------------------------------------------
 
-ObjectCollection is looking inside objects for other objects. You have the
-following possibilities to add preceding objects.
+ObjectCollection is looking inside persistent objects for other objects. You
+have the following possibilities to add preceding objects.
 
-    >>> class Child(object):
-    ...     pass
+    >>> class Child(Persistent):
+    ...     def __init__(self, oid):
+    ...         self._p_oid = oid
 
 Tupels:
 
-    >>> class Parent(object):
+    >>> class Parent(Persistent):
     ...     def __init__(self):
-    ...         self.ref_tupel = (Child(), Child())
+    ...         self.oid = 1
+    ...         self.ref_tupel = (Child(2), Child(3))
     >>> obj = Parent()
     >>> oc.add(obj)
     >>> oc.root() == obj

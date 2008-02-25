@@ -1,0 +1,48 @@
+==================
+Using QuerySupport
+==================
+
+ObjectParser
+===========
+
+Initialization
+--------------
+
+ObjectParser looks inside objects for attributes and following objects. First
+we create such an object:
+
+    >>> class Child(object):
+    ...     pass
+
+    >>> class ToParse(object):
+    ...     def __init__(self):
+    ...         self.some_var = ["some tupel", Child()]
+    ...         self._private_var = 10
+    ...         self.desc = Child()
+    ...
+    ...     def some_method(self):
+    ...         pass
+
+    >>> obj = ToParse()
+
+You get an ObjectParser like this:
+
+    >>> from gocept.objectquery.querysupport import ObjectParser
+    >>> op = ObjectParser()
+    >>> op
+    <gocept.objectquery.querysupport.ObjectParser object at 0x...>
+
+To parse an object, use the parse method:
+
+    >>> op.parse(obj)
+
+To get all found attributes, use the result() method:
+
+    >>> op.result("attributes")
+    ['some_var', '_private_var', 'desc']
+
+    >>> descendants = op.result("descendants")
+    >>> descendants
+    [<Child object at 0x...>, <Child object at 0x...>]
+    >>> len(descendants)
+    2

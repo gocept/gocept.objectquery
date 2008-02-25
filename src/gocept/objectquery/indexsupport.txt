@@ -71,9 +71,9 @@ we can get it:
 
 Lets have a look on our dbroot object:
 
-    >>> dbroot.has_key('AttributeIndex')
+    >>> dbroot.has_key('_is_AttributeIndex')
     True
-    >>> dbroot.has_key('ClassIndex')
+    >>> dbroot.has_key('_is_ClassIndex')
     True
 
 StructureIndex
