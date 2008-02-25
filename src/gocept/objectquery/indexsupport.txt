@@ -2,7 +2,6 @@
 Using IndexSupport
 ==================
 
-
 Initialization
 ==============
 
@@ -11,7 +10,7 @@ Import and create a ZODB to store the indexes:
     >>> from ZODB import FileStorage, DB
     >>> from persistent import Persistent
     >>> import transaction
-    >>> storage = FileStorage.FileStorage('/tmp/test-filestorage.fs')
+    >>> storage = FileStorage.FileStorage('/tmp/test-indexsupport.fs')
     >>> db = DB(storage)
     >>> conn = db.open()
     >>> dbroot = conn.root()
@@ -103,7 +102,7 @@ StructureIndex stores the childs of a key for internal tasks:
     >>> si.index['childs'][4]
     []
 
-The method get lists all paths to the given element:
+The private method get lists all paths to the given element:
 
     >>> si.get(2)
     [(1, 2), (1, 3, 2)]
@@ -114,26 +113,26 @@ The method get lists all paths to the given element:
 
 Check the parent-child-relationship:
 
-    >>> si.is_parent(1,2)     # is 1 the parent of 2
+    >>> si.is_parent(1, 2)     # is 1 the parent of 2
     True
-    >>> si.is_parent(2,3)
+    >>> si.is_parent(2, 3)
     False
-    >>> si.is_child(1,2)      # is 1 the child of 2
+    >>> si.is_child(1, 2)      # is 1 the child of 2
     False
-    >>> si.is_parent(2,3)
+    >>> si.is_parent(2, 3)
     False
-    >>> si.is_child(1,2) is not si.is_parent(1,2)
+    >>> si.is_child(1, 2) is not si.is_parent(1,2)
     True
 
-    >>> si.is_predecessor(1,4) # is 1 the predecessor of 4
+    >>> si.is_predecessor(1, 4) # is 1 the predecessor of 4
     True
-    >>> si.is_predecessor(2,4)
+    >>> si.is_predecessor(4, 2)
     False
-    >>> si.is_successor(4,1)   # is 4 a successor of 1
+    >>> si.is_successor(4, 1)   # is 4 a successor of 1
     True
-    >>> si.is_successor(4,2)
+    >>> si.is_successor(1, 4)
     False
-    >>> si.is_predecessor(1,4) is not si.is_successor(1,4)
+    >>> si.is_predecessor(1, 4) is not si.is_successor(1, 4)
     True
 
 You delete keys as follows:
@@ -167,7 +166,10 @@ Lets look at the childs index:
     >>> si.index['childs'][3]
     []
 
-Delete the first node (special case):
+Special cases
+=============
+
+Delete the first node:
 
     >>> si.delete(1, 0)
     >>> si.get(1)
@@ -177,18 +179,46 @@ Delete the first node (special case):
     >>> list(si.index['childs'])
     [0]
 
-Cycles are supported as well:
+Cycles are supportet as well:
 
     >>> si.insert(1, 0)
     >>> si.insert(2, 1)
-    >>> si.insert(0, 2)
+    >>> si.insert(3, 2)
+    >>> si.insert(1, 3)
 
-But when reading the path, cycles are *not* evaluated:
+    >>> si.get(3)
+    [(1, 2, 3), (1, 2, 3, 1, 2, 3)]
+    >>> si.get(1)
+    [(1,), (1, 2, 3, 1)]
 
-    >>> [(1, 2, 0, 1, 2)] in si.get(2)
-    False
+    >>> si.is_predecessor(3, 1)
+    True
+    >>> si.is_successor(3, 1)
+    True
+
+Delete the cycle:
+
+    >>> si.delete(1, 3)
+    >>> si.get(3)
+    [(1, 2, 3)]
+    >>> si.get(1)
+    [(1,)]
+
+Adding a ``second way'' (2, 4)  within an existing tree must replicate to all
+childs (node 3):
+
+    >>> si.insert(4, 1)
+    >>> si.get(3)
+    [(1, 2, 3)]
+
+    >>> si.insert(2, 4)
     >>> si.get(2)
-    [(1, 2)]
+    [(1, 2), (1, 4, 2)]
+    >>> si.get(3)
+    [(1, 2, 3), (1, 4, 2, 3)]
+
+    >>> dbroot.clear()
+    >>> transaction.commit()
 
 Purge
 =====
