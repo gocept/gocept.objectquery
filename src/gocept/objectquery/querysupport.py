@@ -14,33 +14,61 @@ class ObjectParser(object):
         if hasattr(object, "__dict__"):
             for x in object.__dict__.keys():
                 self.attributes.append(x)
-                if isinstance(object.__dict__[x], types.ListType):
-                    self._traverse(object.__dict__[x])
-                elif isinstance(object.__dict__[x], types.TupleType):
-                    self._traverse(object.__dict__[x])
-                elif isinstance(object.__dict__[x], types.DictType):
-                    self._traverse(self._dict2list(object.__dict__[x]))
-                elif str(type(object.__dict__[x])).startswith("<class"):
-                    self.descendants.append(object.__dict__[x])
+                elem = object.__dict__[x]
+                if self._is_list(elem) or self._is_tuple(elem):
+                    self._traverse(elem)
+                elif self._is_dict(elem):
+                    self._traverse(self._dict2list(elem))
+                elif self._is_class(elem):
+                    self.descendants.append(elem)
 
     def result(self, filter=None):
         if filter is not None:
             return getattr(self, filter)
 
+    def _traverse(self, object):
+        for elem in object:
+            if self._is_list(elem) or self._is_tuple(elem) or\
+                  self._is_dict(elem):
+                self.parse(elem)
+            elif self._is_class(elem):
+                self.descendants.append(elem)
+
+    def _is_list(self, object):
+        if isinstance(object, types.ListType) or\
+              str(type(object)).startswith("<class 'persistent"):
+            return True
+        return False
+
+    def _is_tuple(self, object):
+        if isinstance(object, types.TupleType):
+            return True
+        return False
+
+    def _is_dict(self, object):
+        if isinstance(object, types.DictType) or\
+              str(type(object)).startswith("<class 'persistent"):
+            return True
+        return False
+
+    def _is_class(self, object):
+        classstring = str(type(object))
+        if classstring.startswith("<class"):
+            if classstring.startswith("<class 'persistent"):
+                return False
+            return True
+        return False
+
     def _dict2list(self, dict):
         returnlist = []
         for elem in dict.values():
-            if isinstance(elem, types.ListType):
+            if self._is_list(elem):
                 returnlist.extend(elem)
-            elif isinstance(elem, types.TupleType):
+            elif self._is_tuple(elem):
                 returnlist.extend(list(elem))
-            elif isinstance(elem, types.DictType):
+            elif self._is_dict(elem):
                 returnlist.extend(self._dict2list(elem))
             else:
                 returnlist.append(elem)
         return returnlist
 
-    def _traverse(self, object):
-        for elem in object:
-            if str(type(elem)).startswith("<class"):
-                self.descendants.append(elem)

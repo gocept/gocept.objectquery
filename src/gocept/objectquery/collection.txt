@@ -15,6 +15,15 @@ First we need a ZODB for the IndexSupport used by ObjectCollection:
     >>> conn = db.open()
     >>> dbroot = conn.root()
 
+Purge old data:
+
+    >>> dbroot.clear()
+    >>> transaction.commit()
+
+Then we need some testobjects, which we will store into the ObjectCollection:
+
+    >>> import gocept.objectquery.testobjects as testobject
+
 Imporing the ObjectCollection
 =============================
 
@@ -24,111 +33,63 @@ You can import the QueryParser as follow:
 
 Get a ObjectCollection:
 
-    >>> oc = ObjectCollection(dbroot)
+    >>> oc = ObjectCollection(conn)
 
 Using the ObjectCollection
 ==========================
 
-How to add objects to the ObjectCollection
-------------------------------------------
-
-ObjectCollection is looking inside persistent objects for other objects. You
-have the following possibilities to add preceding objects.
-
-    >>> class Child(Persistent):
-    ...     def __init__(self, oid):
-    ...         self._p_oid = oid
-
-Tupels:
-
-    >>> class Parent(Persistent):
-    ...     def __init__(self):
-    ...         self.oid = 1
-    ...         self.ref_tupel = (Child(2), Child(3))
-    >>> obj = Parent()
-    >>> oc.add(obj)
-    >>> oc.root() == obj
-    True
-    >>> oc.remove(oc.root())
-
-Lists:
-
-    >>> class Parent(object):
-    ...     def __init__(self):
-    ...         self.ref_list = [Child(), Child()]
-    >>> obj = Parent()
-    >>> oc.add(obj)
-    >>> oc.remove(oc.root())
-
-Dictionaries:
-
-    >>> class Parent(object):
-    ...     def __init__(self):
-    ...         self.ref_dict = {"elem1": Child(), "elem2": Child()}
-    >>> obj = Parent()
-    >>> oc.add(obj)
-    >>> oc.remove(oc.root())
-
-Variables:
-
-    >>> class Parent(object):
-    ...     def __init__(self):
-    ...         self.ref_var = Child()
-    >>> obj = Parent()
-    >>> oc.add(obj)
-    >>> oc.remove(oc.root())
-
 Example usage of ObjectCollection
 ---------------------------------
 
-First create some classes. All have the attribute ``ref`` which holds more
-subclasses to add.
-
-    >>> class Telephone(object):
-    ...     def __init__(self, number="", ref=None):
-    ...         if ref is None:
-    ...           ref = []
-    ...         self.ref = ref
-    ...         self.number = number
-    >>> class Person(object):
-    ...     def __init__(self, name="", ref=None):
-    ...         if ref is None:
-    ...           ref = []
-    ...         self.ref = ref
-    ...         self.name = name
-    >>> class Address(object):
-    ...     def __init__(self, street="", city="", ref=None):
-    ...         if ref is None:
-    ...           ref = []
-    ...         self.ref = ref
-    ...         self.street = street
-    ...         self.city = city
-
 Add some objects to the collection:
 
-    >>> t1 = Telephone(number="22988912")
-    >>> t2 = Telephone(number="22988913")
-    >>> p1 = Person(name="Sebastian")
-    >>> p1.ref = [t1, t2]
-    >>> a1 = Address(street="Meckelstrasse", city="Halle")
-    >>> a1.ref = [p1]
-    >>> oc.add(a1)
-    >>> oc.all()
-    [<Address object at 0x...>, <Person object at 0x...>, <Telephone object at 0x...>, <Telephone object at 0x...>]
+    >>> t1 = testobject.Telephone(number="22988912")
+    >>> t2 = testobject.Telephone(number="22988913")
+    >>> p1 = testobject.Person(name="Sebastian", ref=[t1, t2])
+    >>> a1 = testobject.Address(street="Meckelstrasse", city="Halle", ref=[p1])
+    >>> dbroot['test'] = a1
+    >>> transaction.commit()
+
+    >>> oc.add(a1._p_oid)
+    >>> oc.root() == a1
+    True
+
+Verify the indexes:
+
+    >>> result = oc._classindex.get("Telephone")
+    >>> conn.get(result[0])
+    <gocept.objectquery.testobjects.Telephone object at 0x...>
+    >>> conn.get(result[1])
+    <gocept.objectquery.testobjects.Telephone object at 0x...>
+    >>> result = oc._attributeindex.get("name")
+    >>> conn.get(result[0])
+    <gocept.objectquery.testobjects.Person object at 0x...>
+    >>> conn.get(result[1])
+    Traceback (most recent call last):
+    ...
+    IndexError: list index out of range
+    >>> result = oc._structureindex.get(t1._p_oid)[0]
+    >>> conn.get(result[0])
+    <gocept.objectquery.testobjects.Address object at 0x...>
+    >>> conn.get(result[1])
+    <gocept.objectquery.testobjects.Person object at 0x...>
+    >>> conn.get(result[2])
+    <gocept.objectquery.testobjects.Telephone object at 0x...>
+
 
 Search by classname:
 
     >>> oc.by_class("Telephone")
-    [<Telephone object at 0x...>, <Telephone object at 0x...>]
+    [<gocept.objectquery.testobjects.Telephone object at 0x...>, <gocept.objectquery.testobjects.Telephone object at 0x...>]
     >>> oc.by_class("Address")
-    [<Address object at 0x...>]
+    [<gocept.objectquery.testobjects.Address object at 0x...>]
 
 Now search for some object attributes:
 
     >>> oc.by_attr("number", "22988912")
-    [<Telephone object at 0x...>]
+    [<gocept.objectquery.testobjects.Telephone object at 0x...>]
     >>> oc.by_attr("city", "Halle")
-    [<Address object at 0x...>]
+    [<gocept.objectquery.testobjects.Address object at 0x...>]
     >>> oc.by_attr("street", "")
     []
 
@@ -137,202 +98,85 @@ Adding and removing objects:
 
 Adding some more objects to ``oc``:
 
-    >>> p2 = Person(name="Christian")
+    >>> p2 = testobject.Person(name="Christian")
     >>> a1.ref.append(p2)
-    >>> oc.add(p2, a1)
-    >>> oc.by_class("Person")
-    [<Person object at 0x...>, <Person object at 0x...>]
+    >>> transaction.commit()
 
-    >>> t3 = Telephone(number="2298891")
+    >>> oc.add(p2._p_oid, a1._p_oid)
+    >>> result = oc.by_class("Person")
+    >>> result
+    [<gocept.objectquery.testobjects.Person object at 0x...>, <gocept.objectquery.testobjects.Person object at 0x...>]
+    >>> len(result)
+    2
+
+    >>> t3 = testobject.Telephone(number="2298891")
     >>> p2.ref.append(t3)
-    >>> oc.add(t3, p2)
-    >>> oc.by_class("Telephone")
-    [<Telephone object at 0x...>, <Telephone object at 0x...>, <Telephone object at 0x...>]
+    >>> transaction.commit()
 
-    >>> oc.add(t3, p1)
-    >>> oc.by_class("Telephone")
-    [<Telephone object at 0x...>, <Telephone object at 0x...>, <Telephone object at 0x...>, <Telephone object at 0x...>]
+    >>> oc.add(t3._p_oid, p2._p_oid)
+    >>> len(oc.by_class("Telephone"))
+    3
+
+    >>> p1.ref.append(t3)
+    >>> transaction.commit()
+
+    >>> oc.add(t3._p_oid, p1._p_oid)
+    >>> len(oc.by_class("Telephone"))
+    3
+    >>> oc.is_child(t3._p_oid, p1._p_oid)
+    True
+    >>> oc.is_child(t3._p_oid, p2._p_oid)
+    True
 
 Successful removing:
 
+    >>> oc.delete(t1._p_oid, p1._p_oid)
     >>> p1.ref.remove(t1)
-    >>> oc.remove(t1, p1)
-    >>> oc.by_class("Telephone")
-    [<Telephone object at 0x...>, <Telephone object at 0x...>]
-
-Removing objects which do not exist under parent (but under anoþher parent), is well ignored:
-
-    >>> oc.remove(t3, p1)
-    >>> oc.by_class("Telephone")
-    [<Telephone object at 0x...>, <Telephone object at 0x...>]
-
-Removing objects from parents, which do not exist, raises an error:
-
-    >>> oc.remove(t3, p3)
-    Traceback (most recent call last):
-    ...
-    NameError: name 'p3' is not defined
-
-Same with objects, which do not exist:
-
-    >>> oc.remove(t4, p1)
-    Traceback (most recent call last):
-    ...
-    NameError: name 't4' is not defined
-
-Adding and removing equal objects multiple times
-------------------------------------------------
-
-First we need a new ObjectCollection and a RootObject:
-
-    >>> oc2 = ObjectCollection()
-    >>> class RootObject(object):
-    ...     pass
-    >>> root = RootObject()
-    >>> oc2.add(root)
-
-Then we generate a tree structure with one Address as root, followed by two
-equal Persons. Person is followed by two equal Telephones:
-
-    >>> tele = Telephone()
-    >>> pers = Person(ref=[tele, tele])
-    >>> addr = Address(ref=[pers, pers])
-    >>> oc2.add(addr, root)
-
-Now we have 4 Telephone objects as leaves:
-
-    >>> len(oc2.by_class("Telephone"))
-    4
-
-Add another Telephone (the same as added above) to Person:
-
-    >>> pers.ref.append(tele)
-    >>> oc2.add(tele, pers)
-
-Now we have 6 Telephone objects as leaves:
-
-    >>> len(oc2.by_class("Person"))
+    >>> transaction.commit()
+    >>> len(oc.by_class("Telephone"))
     2
-    >>> len(oc2.by_class("Telephone"))
-    6
 
-Now add Address for a second time to the Collection:
+Removing objects which do exist under two or more parents does not result in
+deletion of the object, if you specify one parent, under which the object
+should be removed:
 
-    >>> oc2.add(addr, root)
-
-Now we have 2 Address, 4 Person and 12 Telephone objects as leaves:
-
-    >>> len(oc2.by_class("Address"))
+    >>> oc.delete(t3._p_oid, p1._p_oid)
+    >>> p1.ref.remove(t3)
+    >>> transaction.commit()
+    >>> len(oc.by_class("Telephone"))
     2
-    >>> len(oc2.by_class("Person"))
-    4
-    >>> len(oc2.by_class("Telephone"))
-    12
-
-Now add a third and fourth Person to Address:
-
-    >>> addr.ref.append(pers)
-    >>> oc2.add(pers, addr)
-    >>> addr.ref.append(pers)
-    >>> oc2.add(pers, addr)
-
-There are now 8 Person (every 4 under Address) and 24 Telephone objects:
-
-    >>> len(oc2.by_class("Person"))
-    8
-    >>> len(oc2.by_class("Telephone"))
-    24
-
-Last add a third Address into the Collection:
-
-    >>> oc2.add(addr, root)
-
-There are now 12 Person and 36 Telephone objects:
-
-    >>> len(oc2.by_class("Person"))
-    12
-    >>> len(oc2.by_class("Telephone"))
-    36
-
-Add another Telephone (the same as added above) to Person:
-
-    >>> pers.ref.append(tele)
-    >>> oc2.add(tele, pers)
-
-There are now 12 Person and 48 Telephone objects:
-
-    >>> len(oc2.by_class("Person"))
-    12
-    >>> len(oc2.by_class("Telephone"))
-    48
-
-Remove the Person from Address object:
-
-    >>> addr.ref.remove(pers)
-    >>> oc2.remove(pers, addr)
-
-As the Telephones are removed with the Persons, we now have no Telephone
-leaves:
-
-    >>> len(oc2.by_class("Telephone"))
-    0
 
 Adding circles to collection
 ----------------------------
 
 First we need a new ObjectCollection:
 
-    >>> oc3 = ObjectCollection()
-    >>> oc3.add(root)
+    >>> dbroot.clear()
+    >>> transaction.commit()
+    >>> oc3 = ObjectCollection(conn)
 
-    >>> a = Address()
-    >>> p = Person()
-    >>> oc3.add(a, root)
-    >>> oc3.add(p, a)
+Then create two objects and add one under the other:
 
-Now adding a under p should raise an exception:
+    >>> add = testobject.Address()
+    >>> per = testobject.Person()
 
-    >>> oc3.add(a, p)
-    Traceback (most recent call last):
-    ...
-    ValueError: Cannot add object <...>. Cycle detected.
+    >>> dbroot['test'] = add
+    >>> transaction.commit()
+    >>> oc3.add(add._p_oid)
 
-But you can add a under root:
+    >>> add.ref.append(per)
+    >>> transaction.commit()
+    >>> oc3.add(per._p_oid, add._p_oid)
 
-    >>> oc3.add(a, root)
-    >>> oc3.is_direct_child(a, root)
+Adding add unter per will create a cycle, which is possible at all:
+
+    >>> per.ref.append(add)
+    >>> transaction.commit()
+    >>> oc3.add(per._p_oid, add._p_oid)
+
+To test the cycle, per should be a child of add and vice versa:
+
+    >>> oc3.is_child(per._p_oid, add._p_oid)
     True
-
-Testing Attribute Index
------------------------
-
-First we need a new ObjectCollection:
-
-    >>> oc4 = ObjectCollection()
-
-Define some objects with attributes:
-
-    >>> class Root(object):
-    ...     def __init__(self):
-    ...         self.link_tuple = ()
-    ...         self.link_list = []
-    ...         self.link_dict = {}
-    ...         self.direct_link = ""
-    >>> class Child(Root):
-    ...     pass
-    >>> ch1 = Child()
-    >>> ch2 = Child()
-    >>> ch3 = Child()
-    >>> root = Root()
-    >>> root.direct_link = ch2
-    >>> root.link_tuple = (ch1, ch3)
-    >>> oc4.add(root)
-
-Test some reachabilities:
-
-    >>> oc4.by_attr_reach(ch1, root, "direct_link")
-    False
-    >>> oc4.by_attr_reach(ch1, root, "link_tuple")
+    >>> oc3.is_child(add._p_oid, per._p_oid)
     True
-    >>> oc4.by_attr_reach(ch2, root, "link_tuple")
-    False

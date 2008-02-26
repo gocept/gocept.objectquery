@@ -13,216 +13,85 @@ class ObjectCollection(object):
         IndexSupport.
     """
 
-    def __init__(self, dbroot):
+    def __init__(self, connection):
         """ Initialize Objectcollection. """
         # init IndexSupport
+        dbroot = connection.root()
         self._classindex = ClassIndex(dbroot)
         self._attributeindex = AttributeIndex(dbroot)
         self._structureindex = StructureIndex(dbroot)
         # init QuerySupport
         self._objectparser = ObjectParser()
+        self.conn = connection
 
-    def __add_attributes(self, object, parent):
-        """ Add all attributes from parent to object to AttributeIndex. """
-        oid = self.__oid.obj2id(object)
-        pid = self.__oid.obj2id(parent)
-        attrdict = self.__object_parser(parent)
-        for elem in attrdict.keys():
-            if object in attrdict[elem]:
-                self.__attr_index.add(oid, pid, elem)
-
-    def __add_element(self, object, parent):
-        """ Adds ``object`` to ObjectCollection under ``parent``. """
-        # make IDs
-        if parent is not None:
-            self.__add_attributes(object, parent)
-            parent = self.__oid.obj2id(parent)
-        object = self.__oid.obj2id(object)
-        # Test if adding would result in object tree with *cycles*
-        if not self.__cycle_support.check_for_cycles(
-                                [object], parent):
-            raise ValueError("Cannot add object %s. Cycle detected." %
-                             self.__oid.id2obj(object))
-        self.__cycle_support.add(object, parent)
-        # If the object hasn't been added before, add the PathIndex tuple.
-        if self.__path_index.get(object, None) is None:
-            self.__path_index[object] = []
-        # Here we add the object as root (raises exception if root already
-        # exists
-        if parent is None:
-            self.__element_index.add(object)
-            self.__path_index[object].append(
-                                gocept.objectquery.indexsupport.PathIndex())
-        # Add the object under parent
-        else:
-            self.__element_index.add(object, parent)
-            # There can be more than one parent PathIndex, so we have to add
-            # object under each one
-            for par in self.__path_index[parent]:
-                self.__path_index[object].append(par.bear(object))
-
-    def __check_path_index(self, pi_child_list, pi_parent_list):
-        """ Checks if child is in parent. No direct child match!
-
-            We get lists here because objects may occur under different
-            parents. Returns False if there is no child in list which is under
-            one of the parents in list.
-        """
-        for child in pi_child_list:
-            for parent in pi_parent_list:
-                if child in parent:
-                    return True
-        return False
-
-    def __get_descendant_objects(self, object):
-        """ Look through an object to find following objects. """
-
-        returnlist = []
-        attrdict = self.__object_parser(object)
-        for elem in attrdict.values():
-            returnlist.extend(elem)
-        return returnlist
-
-    def __unindex(self, object, parent=None):
-        """ Recurive deletion of PathIndex objects. """
-        if parent is None:
-            parent = self.root()
-        parent = self.__oid.obj2id(parent)
-        object = self.__oid.obj2id(object)
-
-        # Get the childs in ObjectCollection
-        childs = self.__element_index.list(object)[:]
-        for elem in childs:
-            self.__unindex(self.__oid.id2obj(elem), self.__oid.id2obj(object))
-        # Deletion of PathIndex objects. It looks through all parent
-        # PathIndexes and deletes all child PathIndexes, which are direct
-        # childs of the parent ones.
-        # It is possible, that PathIndexes are already removed but do exist in
-        # __element_index, so we have to test, if __path__index[object] does
-        # exist.
-        if self.__path_index.get(parent, None) is not None:
-            # pi is one parent PathIndex object
-            for pi in self.__path_index[parent]:
-                if self.__path_index.get(object, None) is not None:
-                    objlist = self.__path_index[object][:]
-                    # obj is one child PathIndex object
-                    for obj in objlist:
-                        if pi.is_direct_parent(obj):
-                            pi.delete(obj)  # PathIndex method
-                            # remove it from the dict-list
-                            self.__path_index[object].remove(obj)
-                    # if the dict-list is empty, remove it from dict
-                    if self.__path_index[object] == []:
-                        del self.__path_index[object]
-
-
-    def add(self, object, parent=None):
-        """ Main add method.
-
-            Calls itself to sub-objects and __add_element for instantiated
-            classes.
-        """
-
+    def add(self, object_oid, parent_oid=None, cycle_prev=None):
+        """ Index the object to the ObjectCollection. """
+        if cycle_prev is None:
+            cycle_prev = []
+        if object_oid in cycle_prev:
+            return
+        object = self.conn.get(object_oid)
+        classname = self._get_classname(object)
+        self._classindex.insert(classname, object_oid)
         self._objectparser.parse(object)
-        attributes = self._objectparser.result("attributes")[:]
-        descendands = self._objectparser.result("descendants")
-        if str(type(object)).startswith("<class"):
-            self._add_class(object, parent)
-        for elem in desclist:
-            self.add(elem)
-
-    def remove(self, object, parent=None):
-        """ Main remove method.
-
-            Calls ``__unindex`` to recursive remove the PathIndex objects from
-            dictionary. The calls ``__element_index.delete()`` which deletes
-            the element_indexes.
-        """
-
-        # Order is important! __unindex needs __element_index for removing
-        self.__unindex(object, parent)
-        self.__element_index.delete(self.__oid.obj2id(object),
-                                    self.__oid.obj2id(parent))
-        self.__cycle_support.delete(self.__oid.obj2id(object),
-                                    self.__oid.obj2id(parent))
-        self.__attr_index.delete(self.__oid.obj2id(object),
-                                 self.__oid.obj2id(parent))
-
-    def move(self, object, parent, target):
-        """ Main move method.
-
-            Calls the ElementIndex move method and for each child and parent
-            the PathIndex move method.
-        """
-
-        object = self.__oid.obj2id(object)
-        parent = self.__oid.obj2id(parent)
-        target = self.__oid.obj2id(target)
-        self.__element_index.move(object, parent, target)
-        self.__cycle_support.move(object, parent, target)
-        # Generate a move list
-        movelist = []
-        for child in self.__path_index[object]:
-            for par in self.__path_index[parent]:
-                if child in par:
-                    movelist.append((par, child))
-        # move every object in movelist under each target object
-        for child in movelist:
-            for newpar in self.__path_index[target]:
-                child[0].move(child[1], newpar)
-
-
-    def all(self):
-        """ Return a list of all objects within the ObjectCollection. """
-        return [self.__oid.id2obj(elem) for elem in\
-                self.__element_index.rlist()]
-
-    def by_class(self, name, pathindex=None):
-        """ Return a list of objects which match ``name`` under ``pathindex``.
-
-            name is a string which matches the classname. pathindex is a list
-            of PathIndex objects.
-        """
-
-        if pathindex is None:
-            pathindex = self.__path_index[self.__oid.obj2id(self.root())]
-        return [e for e in self.all() if (e.__class__.__name__ == name) and \
-                    self.__check_path_index(self.__path_index.get(
-                                        self.__oid.obj2id(e), []), pathindex)]
-
-    def by_attr(self, id, value):
-        """ Return a list of objects which match attribute id and value. """
-
-        return [elem for elem in self.all() if hasattr(elem, id) and \
-                                (getattr(elem, id) == value)]
-
-    def by_attr_reach(self, object, parent, attr):
-        """ Return true is object can be reached from parent over attr. """
-        object = self.__oid.obj2id(object)
-        parent = self.__oid.obj2id(parent)
-        return self.__attr_index.is_reachable(object, parent, attr)
-
-    def get_pathindex(self, object=None):
-        """ Return the list of PathIndexes for object. """
-
-        if object is None:
-            object = self.root()
-        return self.__path_index[self.__oid.obj2id(object)]
-
-    def is_direct_child(self, child, parent, pathindex=None):
-        """ Matches if child is a direct child of parent within a given
-        pathindex. """
-        child = self.__oid.obj2id(child)
-        parent = self.__oid.obj2id(parent)
-        if pathindex is None:
-            pathindex = self.__path_index[parent]
-        if child in self.__element_index.list(parent):
-            for child_pathindex in self.__path_index[child]:
-                for parent_pathindex in pathindex:
-                    if child_pathindex in parent_pathindex:
-                        return True
-        return False
+        for attr in self._objectparser.result("attributes"):
+            self._attributeindex.insert(attr, object_oid)
+        self._structureindex.insert(object_oid, parent_oid)
+        descendants = self._objectparser.result("descendants")[:]
+        cycle_prev.append(object_oid)
+        for desc in descendants:
+            self.add(desc._p_oid, object_oid, cycle_prev)
 
     def root(self):
         """ Return the root object. """
-        return self.__oid.id2obj(self.__element_index.root())
+        return self.conn.get(self._structureindex.root())
+
+    def by_class(self, name):
+        """ Return a list of objects which match ``name``. """
+        classlist = []
+        for elem in self._classindex.get(name):
+             classlist.append(self.conn.get(elem))
+        return classlist
+
+    def by_attr(self, name, value=None):
+        """ Return a list of objects which have an attribute ``name``. """
+        classlist = []
+        for elem_oid in self._attributeindex.get(name):
+            elem = self.conn.get(elem_oid)
+            if value is None or getattr(elem, name) == value:
+                classlist.append(elem)
+        return classlist
+
+    def is_child(self, key1_oid, key2_oid):
+        return self._structureindex.is_child(key1_oid, key2_oid)
+
+    def is_parent(self, key1_oid, key2_oid):
+        return self._structureindex.is_parent(key1_oid, key2_oid)
+
+    def is_successor(self, key1_oid, key2_oid):
+        return self._structureindex.is_successor(key1_oid, key2_oid)
+
+    def is_predecessor(self, key1_oid, key2_oid):
+        return self._structureindex.is_predecessodecessor(key1_oid, key2_oid)
+
+    def _get_classname(self, object):
+        """ Return the classname of object. """
+        if not str(type(object)).startswith("<class"):
+            raise ValueError("%s is not an instantiated class." % object)
+        return object.__class__.__name__
+
+    def delete(self, object_oid, parent_oid=None, pdb=None):
+        """ Main remove method. """
+        if pdb is not None:
+            import pdb; pdb.set_trace() 
+        object = self.conn.get(object_oid)
+        classname = self._get_classname(object)
+        self._structureindex.delete(object_oid, parent_oid)
+        if not self._structureindex.has_key(object_oid):
+            self._classindex.delete(classname, object_oid)
+            self._objectparser.parse(object)
+            for attr in self._objectparser.result("attributes"):
+                self._attributeindex.delete(attr, object_oid)
+            descendants = self._objectparser.result("descendants")[:]
+            for desc in descendants:
+                self.delete(desc._p_oid, object_oid)

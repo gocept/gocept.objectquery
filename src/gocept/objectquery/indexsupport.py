@@ -4,11 +4,10 @@
 
 import types
 from persistent import Persistent
-from BTrees.OOBTree import OOBTree
-from BTrees.IIBTree import IITreeSet
+from BTrees.OOBTree import OOBTree, OOTreeSet
 import transaction
 
-class IndexItem(IITreeSet):
+class IndexItem(OOTreeSet):
     """ Holds any number of integer values. """
 
     def __repr__(self):
@@ -79,7 +78,8 @@ class StructureIndex(OOIndex):
         new_path = []
         if self.index.has_key(parent):
             for elem in self.get(parent)[:]:
-                new_path.append(elem + tail)
+                if not elem + tail in new_path:
+                    new_path.append(elem + tail)
         else:
             new_path.append(tail)
         if not self.has_key(key):
@@ -98,12 +98,15 @@ class StructureIndex(OOIndex):
         """ Delete the key from the index. """
         if parent == 0:
             parent = None
+        deleted = []
         for elem in self.index[key][:]:
-            if parent is None or ( len(elem) > 1 and elem[-2] == parent ):
-                if len(elem) > 1 and key in self.index['childs'][elem[-2]]:
-                    self.index['childs'][elem[-2]].remove(key)
-                self.index[key].remove(elem)
-                self._purge(key, elem)
+            if elem not in deleted:
+                if parent is None or ( len(elem) > 1 and elem[-2] == parent ):
+                    if len(elem) > 1 and key in self.index['childs'][elem[-2]]:
+                        self.index['childs'][elem[-2]].remove(key)
+                    self.index[key].remove(elem)
+                    self._purge(key, elem)
+                    deleted.append(elem)
         if len(self.index[key]) == 0:
             del self.index[key]
             del self.index['childs'][key]
@@ -143,13 +146,19 @@ class StructureIndex(OOIndex):
                     return True
         return False
 
+    def root(self):
+        """ Return the root object. """
+        return list(self.index['childs'][0])[0]
+
     def _update_childs(self, key, path_dict, cycle_prevention):
         """ Update childs of inserted nodes with the new path. """
         tail = (key, )
         new_path = []
         for elem in path_dict:
             new_path.append(elem + tail)
-        self.index[key].extend(new_path)
+        for path in new_path:
+            if path not in self.index[key]:
+                self.index[key].append(path)
         for child in self.index['childs'][key]:
             if child not in cycle_prevention:
                 cycle_prevention.append(child)

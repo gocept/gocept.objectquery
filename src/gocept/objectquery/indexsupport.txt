@@ -87,7 +87,7 @@ First, get a StructureIndex:
 
 Insert some values:
 
-    >>> si.insert(1, 0)
+    >>> si.insert(1)
     >>> si.insert(2, 1)
     >>> si.insert(3, 1)
     >>> si.insert(2, 3)
@@ -181,7 +181,7 @@ Delete the first node:
 
 Cycles are supportet as well:
 
-    >>> si.insert(1, 0)
+    >>> si.insert(1)
     >>> si.insert(2, 1)
     >>> si.insert(3, 2)
     >>> si.insert(1, 3)
