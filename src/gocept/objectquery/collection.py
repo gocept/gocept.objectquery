@@ -4,7 +4,7 @@
 
 from gocept.objectquery.indexsupport import ClassIndex, AttributeIndex,\
     StructureIndex
-from gocept.objectquery.querysupport import ObjectParser
+from gocept.objectquery.querysupport import ObjectParser, EEJoin
 
 class ObjectCollection(object):
     """ ObjectCollection provides functionallity to QueryProcessor.
@@ -23,6 +23,7 @@ class ObjectCollection(object):
         self._structureindex = StructureIndex(dbroot)
         # init QuerySupport
         self._objectparser = ObjectParser()
+        self._eejoin = EEJoin(self._structureindex)
 
     def add(self, object_oid, parent_oid=None, cycle_prev=None):
         """ Index the object to the ObjectCollection. """
@@ -73,6 +74,9 @@ class ObjectCollection(object):
 
     def is_predecessor(self, key1_oid, key2_oid):
         return self._structureindex.is_predecessor(key1_oid, key2_oid)
+
+    def eejoin(self, elemlist1, elemlist2, direct=False, subindex=None):
+        return self._eejoin(elemlist1, elemlist2, direct, subindex)
 
     def _get_classname(self, object):
         """ Return the classname of object. """
