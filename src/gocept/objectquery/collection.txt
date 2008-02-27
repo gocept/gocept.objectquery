@@ -68,7 +68,10 @@ Verify the indexes:
     Traceback (most recent call last):
     ...
     IndexError: list index out of range
-    >>> result = oc._structureindex.get(t1._p_oid)[0]
+
+The method get_structureindex returns the StructureIndex for a given key:
+
+    >>> result = oc.get_structureindex(t1._p_oid)[0]
     >>> conn.get(result[0])
     <gocept.objectquery.testobjects.Address object at 0x...>
     >>> conn.get(result[1])
@@ -121,10 +124,6 @@ Verify the correct insertions:
     >>> oc.is_child(t3._p_oid, p1._p_oid)
     False
     >>> oc.is_child(t3._p_oid, p2._p_oid)
-    True
-    >>> oc.is_predecessor(a1._p_oid, t3._p_oid)
-    True
-    >>> oc.is_predecessor(a1._p_oid, t2._p_oid)
     True
     >>> oc.is_successor(a1._p_oid, t3._p_oid)
     False
