@@ -145,6 +145,20 @@ class StructureIndex(OOIndex):
                     return True
         return False
 
+    def get(self, key):
+        """ Return the path for a given key. """
+        if key == 0:
+            raise ValueError("Key must be > 0.")
+        return self.index[key]
+
+    def validate(self, key, indexlist):
+        """ Return True if keys index is a part of indexlist. """
+        for elem in self.get(key):
+            for index in indexlist:
+                if elem[:len(index)] == index:
+                    return True
+        return False
+
     def root(self):
         """ Return the root object. """
         return list(self.index['childs'][0])[0]
@@ -174,15 +188,11 @@ class StructureIndex(OOIndex):
                 if len(self.index[child]) == 0:
                     self.delete(child, key)
 
-    def get(self, key):
-        """ Return the path for a given key. """
-        if key == 0:
-            raise ValueError("Key must be > 0.")
-        return self.index[key]
-
     def _check_path(self, path1, path2):
         """ Check if path1 is reachable by path2. """
         if len(path1) > len(path2):
+            return False
+        if path1 == path2:
             return False
         for i in range(len(path1)):
             if path1[i] != path2[i]:
