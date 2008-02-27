@@ -31,7 +31,7 @@ class ObjectCollection(object):
             cycle_prev = []
         if object_oid in cycle_prev:
             return
-        object = self.conn.get(object_oid)
+        object = self._get_object(object_oid)
         classname = self._get_classname(object)
         self._classindex.insert(classname, object_oid)
         self._objectparser.parse(object)
@@ -41,24 +41,24 @@ class ObjectCollection(object):
         descendants = self._objectparser.result("descendants")[:]
         cycle_prev.append(object_oid)
         for desc in descendants:
-            self.add(desc._p_oid, object_oid, cycle_prev[:])
+            self.add(self._get_oid(desc), object_oid, cycle_prev[:])
 
     def root(self):
         """ Return the root object. """
-        return self.conn.get(self._structureindex.root())
+        return self._get_object(self._structureindex.root())
 
     def by_class(self, name):
         """ Return a list of objects which match ``name``. """
         classlist = []
         for elem in self._classindex.get(name):
-             classlist.append(self.conn.get(elem))
+             classlist.append(self._get_object(elem))
         return classlist
 
     def by_attr(self, name, value=None):
         """ Return a list of objects which have an attribute ``name``. """
         classlist = []
         for elem_oid in self._attributeindex.get(name):
-            elem = self.conn.get(elem_oid)
+            elem = self._get_object(elem_oid)
             if value is None or getattr(elem, name) == value:
                 classlist.append(elem)
         return classlist
@@ -66,14 +66,8 @@ class ObjectCollection(object):
     def is_child(self, key1_oid, key2_oid):
         return self._structureindex.is_child(key1_oid, key2_oid)
 
-    def is_parent(self, key1_oid, key2_oid):
-        return self._structureindex.is_parent(key1_oid, key2_oid)
-
     def is_successor(self, key1_oid, key2_oid):
         return self._structureindex.is_successor(key1_oid, key2_oid)
-
-    def is_predecessor(self, key1_oid, key2_oid):
-        return self._structureindex.is_predecessor(key1_oid, key2_oid)
 
     def eejoin(self, elemlist1, elemlist2, direct=False, subindex=None):
         return self._eejoin(elemlist1, elemlist2, direct, subindex)
@@ -84,9 +78,23 @@ class ObjectCollection(object):
             raise ValueError("%s is not an instantiated class." % object)
         return object.__class__.__name__
 
+    def _get_oid(self, object):
+        """ Return the oid of object. """
+        return object._p_oid
+
+    def _get_object(self, oid):
+        """ Return the object corresponding to oid. """
+        return self.conn.get(oid)
+
+    def get_structureindex(self, key=None):
+        """ Return the StructureIndex for a given key (or the root). """
+        if key is None:
+             key = self._structureindex.root()
+        return self._structureindex.get(key)
+
     def delete(self, object_oid, parent_oid=None):
         """ Main remove method. """
-        object = self.conn.get(object_oid)
+        object = self._get_object(object_oid)
         classname = self._get_classname(object)
         self._structureindex.delete(object_oid, parent_oid)
         if not self._structureindex.has_key(object_oid):
@@ -96,4 +104,4 @@ class ObjectCollection(object):
                 self._attributeindex.delete(attr, object_oid)
             descendants = self._objectparser.result("descendants")[:]
             for desc in descendants:
-                self.delete(desc._p_oid, object_oid)
+                self.delete(self._get_oid(desc), object_oid)
