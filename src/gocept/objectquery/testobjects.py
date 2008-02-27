@@ -25,7 +25,11 @@ class Person(Dummy):
         self.name = name
 
 class Address(Dummy):
-    def __init__(self, street="", city="", ref=None):
+    def __init__(self, street="", city="", etage="", ref=None):
         super(self.__class__, self).__init__(ref)
         self.street = street
         self.city = city
+        self.etage = etage
+
+class AddressBook(Dummy):
+    pass
