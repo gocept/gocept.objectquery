@@ -4,7 +4,7 @@
 
 from gocept.objectquery.indexsupport import ClassIndex, AttributeIndex,\
     StructureIndex
-from gocept.objectquery.querysupport import ObjectParser, EEJoin
+from gocept.objectquery.querysupport import ObjectParser, EEJoin, EAJoin
 
 class ObjectCollection(object):
     """ ObjectCollection provides functionallity to QueryProcessor.
@@ -24,6 +24,7 @@ class ObjectCollection(object):
         # init QuerySupport
         self._objectparser = ObjectParser()
         self._eejoin = EEJoin(self._structureindex)
+        self._eajoin = EAJoin()
 
     def add(self, object_oid, parent_oid=None, cycle_prev=None):
         """ Index the object to the ObjectCollection. """
@@ -45,13 +46,13 @@ class ObjectCollection(object):
 
     def root(self):
         """ Return the root object. """
-        return self._get_object(self._structureindex.root())
+        return self._structureindex.root()
 
     def by_class(self, name):
         """ Return a list of objects which match ``name``. """
         classlist = []
         for elem in self._classindex.get(name):
-             classlist.append(self._get_object(elem))
+             classlist.append(elem)
         return classlist
 
     def by_attr(self, name, value=None):
@@ -60,7 +61,7 @@ class ObjectCollection(object):
         for elem_oid in self._attributeindex.get(name):
             elem = self._get_object(elem_oid)
             if value is None or getattr(elem, name) == value:
-                classlist.append(elem)
+                classlist.append(elem_oid)
         return classlist
 
     def is_child(self, key1_oid, key2_oid):
@@ -71,6 +72,9 @@ class ObjectCollection(object):
 
     def eejoin(self, elemlist1, elemlist2, direct=False, subindex=None):
         return self._eejoin(elemlist1, elemlist2, direct, subindex)
+
+    def eajoin(self, elemlist1, elemlist2):
+        return self._eajoin(elemlist1, elemlist2)
 
     def _get_classname(self, object):
         """ Return the classname of object. """

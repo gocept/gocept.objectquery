@@ -51,7 +51,7 @@ Add some objects to the collection:
     >>> transaction.commit()
 
     >>> oc.add(a1._p_oid)
-    >>> oc.root() == a1
+    >>> oc.root() == a1._p_oid
     True
 
 Verify the indexes:
@@ -81,18 +81,22 @@ The method get_structureindex returns the StructureIndex for a given key:
 
 Search by classname:
 
-    >>> oc.by_class("Telephone")
-    [<gocept.objectquery.testobjects.Telephone object at 0x...>, <gocept.objectquery.testobjects.Telephone object at 0x...>]
-    >>> oc.by_class("Address")
-    [<gocept.objectquery.testobjects.Address object at 0x...>]
+    >>> r = oc.by_class("Telephone")
+    >>> conn.get(r[0])
+    <gocept.objectquery.testobjects.Telephone object at 0x...>
+    >>> conn.get(r[1])
+    <gocept.objectquery.testobjects.Telephone object at 0x...>
+    >>> r = oc.by_class("Address")
+    >>> conn.get(r[0])
+    <gocept.objectquery.testobjects.Address object at 0x...>
 
 Now search for some object attributes:
 
-    >>> oc.by_attr("number", "22988912")
-    [<gocept.objectquery.testobjects.Telephone object at 0x...>]
-    >>> oc.by_attr("city", "Halle")
-    [<gocept.objectquery.testobjects.Address object at 0x...>]
-    >>> oc.by_attr("street", "")
+    >>> r = oc.by_attr("number", "22988912")
+    >>> conn.get(r[0])
+    <gocept.objectquery.testobjects.Telephone object at 0x...>
+    >>> r = oc.by_attr("street", "")
+    >>> r
     []
 
 Adding and removing objects:
@@ -105,10 +109,7 @@ Adding some more objects to ``oc``:
     >>> transaction.commit()
 
     >>> oc.add(p2._p_oid, a1._p_oid)
-    >>> result = oc.by_class("Person")
-    >>> result
-    [<gocept.objectquery.testobjects.Person object at 0x...>, <gocept.objectquery.testobjects.Person object at 0x...>]
-    >>> len(result)
+    >>> len(oc.by_class("Person"))
     2
 
     >>> t3 = testobject.Telephone(number="2298891")

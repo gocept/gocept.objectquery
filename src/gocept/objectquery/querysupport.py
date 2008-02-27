@@ -103,3 +103,18 @@ class EEJoin(DummyJoin):
             if self._structindex.validate(elem, subindex):
                 filteredlist.append(elem)
         return filteredlist
+
+class EAJoin(object):
+    """ Element-Attribute-Join. """
+    def __call__(self, elemlist1, elemlist2):
+        """ Merge the two element lists.
+
+            elemlist1 holds all objects which match the element condition.
+            elemlist2 holds all objects which match the predicate condition.
+        """
+        resultlist = []
+        for elem1 in elemlist1:
+            for elem2 in elemlist2:
+                if elem1 == elem2 and elem1 not in resultlist:
+                    resultlist.append(elem1)
+        return resultlist

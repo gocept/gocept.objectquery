@@ -13,6 +13,6 @@ def test_suite():
                                         "indexsupport.txt",
                                         "querysupport.txt",
                                         "collection.txt",
-     #                                  "processor.txt",
+                                        "processor.txt",
                                         optionflags=doctest.ELLIPSIS))
     return suite
