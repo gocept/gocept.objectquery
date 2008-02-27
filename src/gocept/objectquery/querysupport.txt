@@ -3,7 +3,7 @@ Using QuerySupport
 ==================
 
 ObjectParser
-===========
+============
 
 Initialization
 --------------
@@ -46,3 +46,77 @@ To get all found attributes, use the result() method:
     [<Child object at 0x...>, <Child object at 0x...>]
     >>> len(descendants)
     2
+
+EEJoin
+======
+
+Initialization
+--------------
+
+Import and create a ZODB to store the indexes:
+
+    >>> from ZODB import FileStorage, DB
+    >>> from persistent import Persistent
+    >>> import transaction
+    >>> storage = FileStorage.FileStorage('/tmp/test-querysupport.fs')
+    >>> db = DB(storage)
+    >>> conn = db.open()
+    >>> dbroot = conn.root()
+    >>> dbroot.clear()
+    >>> transaction.commit()
+
+EEJoin (Element-Element-Join) joins two lists with the help of the
+StructureIndex. First we need a StructureIndex and the EEJoin:
+
+    >>> from gocept.objectquery.indexsupport import StructureIndex
+    >>> from gocept.objectquery.querysupport import EEJoin
+    >>> si = StructureIndex(dbroot)
+    >>> eejoin = EEJoin(si)
+
+Fill the StructureIndex with data:
+
+    >>> si.insert(1)
+    >>> si.insert(2, 1)
+    >>> si.insert(3, 1)
+    >>> si.insert(2, 3)
+    >>> si.insert(4, 2)
+    >>> si.insert(5, 1)
+    >>> si.insert(4, 5)
+
+A simple query. Which out of 2, 3 and 4 is reachable by 5:
+
+    >>> eejoin([2, 3, 4], [5])
+    [4]
+
+Some related queries:
+
+    >>> eejoin([1], [1])
+    []
+    >>> eejoin([1], [5])
+    []
+    >>> eejoin([1, 2, 3, 4, 5], [1])
+    [2, 3, 4, 5]
+
+You may also find all x, which are directly reachable (without any steps
+between x and y) by providing the ``direct'' flag:
+
+    >>> eejoin([1, 2, 3, 4, 5], [1], direct=True)
+    [2, 3, 5]
+
+Duplicate results are well ignored:
+
+    >>> eejoin([1, 2, 3, 4, 5], [1, 2], direct=True)
+    [2, 3, 4, 5]
+
+Furthermore it is possible to specify a subindex. Then only those elements
+reachable within this subindex are returned:
+
+    >>> eejoin([1, 2, 3, 4, 5], [1], subindex=[(1, 5)])
+    [4, 5]
+    >>> eejoin([1, 2, 3, 4, 5], [1], subindex=[(1, 5), (1, 3)])
+    [2, 3, 4, 5]
+
+Of course, duplicates are ignored as well:
+
+    >>> eejoin([1, 2, 3, 4, 5], [1], subindex=[(1, 5), (1, 3), (1, 3, 2)])
+    [2, 3, 4, 5]

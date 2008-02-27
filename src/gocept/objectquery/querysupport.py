@@ -72,3 +72,34 @@ class ObjectParser(object):
                 returnlist.append(elem)
         return returnlist
 
+class DummyJoin(object):
+    """ Join two lists of objects by considering their structure index. """
+    def __init__(self, structindex):
+        self._structindex = structindex
+
+    def __call__(self):
+        pass
+
+class EEJoin(DummyJoin):
+    """ Element-Element Join. """
+    def __call__(self, elemlist1, elemlist2, direct=False, subindex=None):
+        """ Return all elements which are (direct) childs of elem2.
+
+            If a subindex is provided, then only thoses elements under these
+            are returned.
+        """
+        resultlist = []
+        comparer = getattr(self._structindex, "is_successor")
+        if direct:
+            comparer = getattr(self._structindex, "is_child")
+        for elem1 in elemlist1:
+            for elem2 in elemlist2:
+                if elem1 not in resultlist and comparer(elem1, elem2):
+                    resultlist.append(elem1)
+        if subindex is None:
+            return resultlist
+        filteredlist = []
+        for elem in resultlist:
+            if self._structindex.validate(elem, subindex):
+                filteredlist.append(elem)
+        return filteredlist
