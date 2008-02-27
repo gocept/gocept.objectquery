@@ -76,7 +76,6 @@ Verify the indexes:
     >>> conn.get(result[2])
     <gocept.objectquery.testobjects.Telephone object at 0x...>
 
-
 Search by classname:
 
     >>> oc.by_class("Telephone")
@@ -117,15 +116,19 @@ Adding some more objects to ``oc``:
     >>> len(oc.by_class("Telephone"))
     3
 
-    >>> p1.ref.append(t3)
-    >>> transaction.commit()
+Verify the correct insertions:
 
-    >>> oc.add(t3._p_oid, p1._p_oid)
-    >>> len(oc.by_class("Telephone"))
-    3
     >>> oc.is_child(t3._p_oid, p1._p_oid)
-    True
+    False
     >>> oc.is_child(t3._p_oid, p2._p_oid)
+    True
+    >>> oc.is_predecessor(a1._p_oid, t3._p_oid)
+    True
+    >>> oc.is_predecessor(a1._p_oid, t2._p_oid)
+    True
+    >>> oc.is_successor(a1._p_oid, t3._p_oid)
+    False
+    >>> oc.is_successor(t1._p_oid, a1._p_oid)
     True
 
 Successful removing:
@@ -136,15 +139,13 @@ Successful removing:
     >>> len(oc.by_class("Telephone"))
     2
 
-Removing objects which do exist under two or more parents does not result in
-deletion of the object, if you specify one parent, under which the object
-should be removed:
-
-    >>> oc.delete(t3._p_oid, p1._p_oid)
-    >>> p1.ref.remove(t3)
+    >>> oc.delete(p2._p_oid)
+    >>> a1.ref.remove(p2)
     >>> transaction.commit()
     >>> len(oc.by_class("Telephone"))
-    2
+    1
+    >>> len(oc.by_class("Person"))
+    1
 
 Adding circles to collection
 ----------------------------
@@ -153,7 +154,7 @@ First we need a new ObjectCollection:
 
     >>> dbroot.clear()
     >>> transaction.commit()
-    >>> oc3 = ObjectCollection(conn)
+    >>> oc = ObjectCollection(conn)
 
 Then create two objects and add one under the other:
 
@@ -162,21 +163,76 @@ Then create two objects and add one under the other:
 
     >>> dbroot['test'] = add
     >>> transaction.commit()
-    >>> oc3.add(add._p_oid)
+    >>> oc.add(add._p_oid)
 
     >>> add.ref.append(per)
     >>> transaction.commit()
-    >>> oc3.add(per._p_oid, add._p_oid)
+    >>> oc.add(per._p_oid, add._p_oid)
 
 Adding add unter per will create a cycle, which is possible at all:
 
     >>> per.ref.append(add)
     >>> transaction.commit()
-    >>> oc3.add(per._p_oid, add._p_oid)
+    >>> oc.add(per._p_oid, add._p_oid)
 
 To test the cycle, per should be a child of add and vice versa:
 
-    >>> oc3.is_child(per._p_oid, add._p_oid)
+    >>> oc.is_child(per._p_oid, add._p_oid)
     True
-    >>> oc3.is_child(add._p_oid, per._p_oid)
+    >>> oc.is_child(add._p_oid, per._p_oid)
     True
+
+Adding and Removing multiple objects
+------------------------------------
+
+First we need a new ObjectCollection:
+
+    >>> dbroot.clear()
+    >>> transaction.commit()
+    >>> oc = ObjectCollection(conn)
+
+Then create some objects and add them:
+
+    >>> add = testobject.Address()
+    >>> per1 = testobject.Person()
+    >>> per2 = testobject.Person()
+    >>> tel = testobject.Telephone()
+
+Telephone now ``hangs'' under two objects, Person1 and Person2:
+
+    >>> add.ref.append(per1)
+    >>> add.ref.append(per2)
+    >>> per1.ref.append(tel)
+    >>> per2.ref.append(tel)
+
+    >>> dbroot['test'] = add
+    >>> transaction.commit()
+    >>> oc.add(add._p_oid)
+
+Now there are 2 Person and 1 Telephone object:
+
+    >>> len(oc.by_class("Person"))
+    2
+    >>> len(oc.by_class("Telephone"))
+    1
+
+But Telephone is the child of Person1 *and* Person2:
+
+    >>> oc.is_child(tel._p_oid, per1._p_oid)
+    True
+    >>> oc.is_child(tel._p_oid, per2._p_oid)
+    True
+
+Removing Person1 will not cause the deletion of Telephone (because it still
+does exist under Person2):
+
+    >>> oc.delete(per1._p_oid)
+    >>> add.ref.remove(per1)
+    >>> transaction.commit()
+
+Now there is only one Person object, but still one Telephone:
+
+    >>> len(oc.by_class("Person"))
+    1
+    >>> len(oc.by_class("Telephone"))
+    1

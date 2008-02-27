@@ -14,15 +14,15 @@ class ObjectCollection(object):
     """
 
     def __init__(self, connection):
-        """ Initialize Objectcollection. """
+        """ Initialize ObjectCollection. """
+        self.conn = connection
+        dbroot = self.conn.root()
         # init IndexSupport
-        dbroot = connection.root()
         self._classindex = ClassIndex(dbroot)
         self._attributeindex = AttributeIndex(dbroot)
         self._structureindex = StructureIndex(dbroot)
         # init QuerySupport
         self._objectparser = ObjectParser()
-        self.conn = connection
 
     def add(self, object_oid, parent_oid=None, cycle_prev=None):
         """ Index the object to the ObjectCollection. """
@@ -40,7 +40,7 @@ class ObjectCollection(object):
         descendants = self._objectparser.result("descendants")[:]
         cycle_prev.append(object_oid)
         for desc in descendants:
-            self.add(desc._p_oid, object_oid, cycle_prev)
+            self.add(desc._p_oid, object_oid, cycle_prev[:])
 
     def root(self):
         """ Return the root object. """
@@ -72,7 +72,7 @@ class ObjectCollection(object):
         return self._structureindex.is_successor(key1_oid, key2_oid)
 
     def is_predecessor(self, key1_oid, key2_oid):
-        return self._structureindex.is_predecessodecessor(key1_oid, key2_oid)
+        return self._structureindex.is_predecessor(key1_oid, key2_oid)
 
     def _get_classname(self, object):
         """ Return the classname of object. """
@@ -80,10 +80,8 @@ class ObjectCollection(object):
             raise ValueError("%s is not an instantiated class." % object)
         return object.__class__.__name__
 
-    def delete(self, object_oid, parent_oid=None, pdb=None):
+    def delete(self, object_oid, parent_oid=None):
         """ Main remove method. """
-        if pdb is not None:
-            import pdb; pdb.set_trace() 
         object = self.conn.get(object_oid)
         classname = self._get_classname(object)
         self._structureindex.delete(object_oid, parent_oid)
