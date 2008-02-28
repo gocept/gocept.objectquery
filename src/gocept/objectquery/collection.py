@@ -48,11 +48,16 @@ class ObjectCollection(object):
         """ Return the root object. """
         return self._structureindex.root()
 
-    def by_class(self, name):
+    def all(self):
+        """ Return all objects. """
+        return self._classindex.all()
+
+    def by_class(self, name, si=None):
         """ Return a list of objects which match ``name``. """
         classlist = []
         for elem in self._classindex.get(name):
-             classlist.append(elem)
+            if si is None or self._structureindex.validate(elem, si):
+                classlist.append(elem)
         return classlist
 
     def by_attr(self, name, value=None):

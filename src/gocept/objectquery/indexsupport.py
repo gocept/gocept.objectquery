@@ -47,6 +47,15 @@ class OOIndex(Persistent):
             return True
         return False
 
+    def all(self):
+        """ Return all objects from the index. """
+        allitems = []
+        for indexitem in list(self.index.keys()):
+            for elem in self.get(indexitem):
+                if elem not in allitems:
+                    allitems.append(elem)
+        return allitems
+
 class ClassIndex(OOIndex):
     """ Maps strings (classnames) to an IndexItem object. """
     pass

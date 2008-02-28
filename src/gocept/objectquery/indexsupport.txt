@@ -46,6 +46,8 @@ Validate the stored data:
     False
     >>> ci.get('Course')
     [1]
+    >>> ci.all()
+    [1, 2, 3]
 
 Delete some items from the index:
 

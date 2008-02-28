@@ -21,8 +21,7 @@ class QueryProcessor(object):
         if pdb:
             import pdb; pdb.set_trace() 
         qp = self.parser.parse(expression)
-        structindex = self.collection.get_structureindex()
-        result = self._process_queryplan(qp, structindex)
+        result = self._process_queryplan(qp)
         return self._oids2objects(result)
 
     def _oids2objects(self, oidlist):
@@ -39,27 +38,29 @@ class QueryProcessor(object):
             mydict[elem] = ""
         return [elem[0] for elem in mydict.items()]
 
-    def _eajoin(self, elem1, elem2, structindex):
+    def _eajoin(self, elem1, elem2):
         """ Element-Attribute-Join. """
-        elem1 = self._get_elem(elem1, structindex)
-        elem2 = self._get_elem(elem2, structindex)
+        elem1 = self._get_elem(elem1)
+        elem2 = self._get_elem(elem2)
         return self.collection.eajoin(elem2, elem1)
 
-    def _eejoin(self, elem1, elem2, structindex):
+    def _eejoin(self, elem1, elem2):
         """ Element-Element-Join. """
-        elem1 = self._get_elem(elem1, structindex)
+        elem1 = self._get_elem(elem1)
         if not elem1: # root join
             elem1 = [ self.collection.root() ]
-        elem2 = self._get_elem(elem2, structindex)
-        return self.collection.eejoin(elem2, elem1, direct=True,
-                                        subindex=structindex)
+        follow = []
+        for elem in elem1:
+            follow.extend(self._get_elem(elem2,
+                        self.collection.get_structureindex(elem)))
+        return self.collection.eejoin(follow, elem1, direct=True)
 
-    def _get_elem(self, elem, structindex):
+    def _get_elem(self, elem, structindex=None):
         """ Decide what to do with elem. """
         if not elem:                # elem is None
             return None
         elif elem[0] == "ELEM":     # elem is ("ELEM", "...")
-            return self.collection.by_class(elem[1])
+            return self.collection.by_class(elem[1], structindex)
         elif elem[0] == "WILDCARD": # elem is ("WILDCARD", "_")
             return self.collection.all()
         elif elem[0] == "ATTR":     # elem is ["ATTR", (ID, VALUE)]
@@ -67,9 +68,9 @@ class QueryProcessor(object):
         else:                       # elem is [function, ...]
             return self._process_queryplan(elem, structindex)
 
-    def _kcjoin(self, occ, elem, pathindex):
+    def _kcjoin(self, occ, elem, structindex):
         """ Element-Occurence-Join. """
-        elem = self._get_elem(elem, pathindex)
+        elem = self._get_elem(elem, structindex)
         if (occ == "?" and len(elem) < 2):
             return elem
         elif (occ == "+" and len(elem) > 0):
@@ -78,28 +79,20 @@ class QueryProcessor(object):
             return elem
         return []
 
-    def _update_structindex(self, elemlist, structindex):
-        """ """
-        new_index = []
-        for elem in elemlist:
-            new_index.extend(self.collection.get_structureindex(elem))
-        structindex = new_index
-
-    def _process_queryplan(self, qp, structindex):
+    def _process_queryplan(self, qp, structindex=None):
         """ Recursive process of query plan ``qp``. """
         if qp[0] == "EEJOIN":
-            result = self._eejoin(qp[1], qp[2], structindex)
+            result = self._eejoin(qp[1], qp[2])
         elif qp[0] == "EAJOIN":
-            result = self._eajoin(qp[1], qp[2], structindex)
+            result = self._eajoin(qp[1], qp[2])
         elif qp[0] == "KCJOIN":
             result = self._kcjoin(qp[1], qp[2], structindex)
         elif qp[0] == "UNION":
-            result = self._union(qp[1], qp[2], structindex)
-        self._update_structindex(result, structindex)
+            result = self._union(qp[1], qp[2])
         return result
 
-    def _union(self, elem1, elem2, pathindex):
+    def _union(self, elem1, elem2):
         """ Union if two results. """
-        elem1 = self._get_elem(elem1, pathindex)
-        elem1.extend(self._get_elem(elem2, pathindex))
+        elem1 = self._get_elem(elem1)
+        elem1.extend(self._get_elem(elem2))
         return elem1
