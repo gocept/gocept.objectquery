@@ -45,7 +45,7 @@ Add some objects to the collection:
 
     >>> t1 = testobject.Telephone(number="22988912")
     >>> t2 = testobject.Telephone(number="22988913")
-    >>> p1 = testobject.Person(name="Sebastian", ref=[t1, t2])
+    >>> p1 = testobject.Person(name="Sebastian", work=[t1, t2])
     >>> a1 = testobject.Address(street="Meckelstrasse", city="Halle", ref=[p1])
     >>> dbroot['test'] = a1
     >>> transaction.commit()
@@ -113,7 +113,7 @@ Adding some more objects to ``oc``:
     2
 
     >>> t3 = testobject.Telephone(number="2298891")
-    >>> p2.ref.append(t3)
+    >>> p2.work.append(t3)
     >>> transaction.commit()
 
     >>> oc.add(t3._p_oid, p2._p_oid)
@@ -134,7 +134,7 @@ Verify the correct insertions:
 Successful removing:
 
     >>> oc.delete(t1._p_oid, p1._p_oid)
-    >>> p1.ref.remove(t1)
+    >>> p1.work.remove(t1)
     >>> transaction.commit()
     >>> len(oc.by_class("Telephone"))
     2

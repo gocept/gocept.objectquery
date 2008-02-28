@@ -20,8 +20,11 @@ class Telephone(Dummy):
         self.number = number
 
 class Person(Dummy):
-    def __init__(self, name="", ref=None):
-        super(self.__class__, self).__init__(ref)
+    def __init__(self, name="", private=None, work=None):
+        super(self.__class__, self).__init__(private)
+        self.private = self.ref[:]
+        super(self.__class__, self).__init__(work)
+        self.work = self.ref[:]
         self.name = name
 
 class Address(Dummy):
