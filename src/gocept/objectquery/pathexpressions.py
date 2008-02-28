@@ -13,16 +13,20 @@ class RPEQueryParser(object):
         bracket         := open_bracket, rpe+, close_bracket
         normal          := PATH_SEPARATOR?, pathelem,
                            (PATH_SEPARATOR, pathelem)*
-        pathelem        := (WILDCARD / ELEM), occurence?, predicate?
-        predicate       := (PREDICATE_BEGIN, ID, '=', '"', ATTRVALUE, '"',
-                            PREDICATE_END)
+        pathelem        := (WILDCARD / ELEM), pathway?, occurence?, predicate?
+        predicate       := (PREDICATE_BEGIN, ID, COMPARER, '"', ATTRVALUE,
+                           '"', PREDICATE_END)
         occurence       := OCC_NONE_OR_ONE / OCC_ONE_OR_MORE / OCC_MULTI
+        pathway         := '.', WAY
+        WAY             := ELEM
         ID              := ELEM
-        ELEM            := [a-zA-Z0-9]+
+        ELEM            := [a-zA-Z0-9_]+
         ATTRVALUE       := text / quoted_text
         text            := [a-zA-Z0-9 ]*, quoted_text*
         quoted_text     := [a-zA-Z0-9 ]*, '\"', [a-zA-Z0-9 ]+, '\"',
                            [a-zA-Z0-9 ]*
+        COMPARER        := COM_EQ / COM_LO_EQ / COM_GR_EQ / COM_GR / COM_LO /
+                           COM_NOT_EQ
         PATH_SEPARATOR  := '/'
         WILDCARD        := '_'
         UNION           := '|'
@@ -33,6 +37,13 @@ class RPEQueryParser(object):
         OCC_NONE_OR_ONE := '?'
         OCC_ONE_OR_MORE := '+'
         OCC_MULTI       := '*'
+        COM_EQ          := '==' / '='
+        COM_LO          := '<'
+        COM_GR          := '>'
+        COM_LO_EQ       := '<='
+        COM_GR_EQ       := '>='
+        COM_NOT_EQ      := '!='
+
         '''
         self.parser = simpleparse.parser.Parser(declaration)
 
@@ -93,9 +104,12 @@ class RPEQueryParser(object):
                 output = ['KCJOIN', rtemp, output]
             elif result[0] == "predicate":
                 rtemp = self._modify_result(result[3], expression, [])
-                rtemp = (rtemp[0], rtemp[1])
+                rtemp = (rtemp[0], rtemp[2], rtemp[1])
                 rtemp = ["ATTR", rtemp]
                 output = ['EAJOIN', rtemp, output]
+            elif result[0] == "pathway":
+                rtemp = self._modify_result(result[3], expression, [])
+                output = ['PWJOIN', output, rtemp]
             elif result[0] == "PATH_SEPARATOR":
                 if output == []:
                     output = None
@@ -104,6 +118,8 @@ class RPEQueryParser(object):
                 output = ['UNION', output]
             elif result[0] == "ELEM":
                 return ("ELEM", expression[result[1]:result[2]])
+            elif result[0] == "WAY":
+                return ("WAY", expression[result[1]:result[2]])
             elif result[0] == "WILDCARD":
                 return ("WILDCARD", expression[result[1]:result[2]])
             elif result[0] == "OCC_NONE_OR_ONE":
@@ -115,6 +131,8 @@ class RPEQueryParser(object):
             elif result[0] == "ID":
                 output.append(expression[result[1]:result[2]])
             elif result[0] == "ATTRVALUE":
+                output.append(expression[result[1]:result[2]])
+            elif result[0] == "COMPARER":
                 output.append(expression[result[1]:result[2]])
         else:
             for i in result:

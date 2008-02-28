@@ -52,20 +52,20 @@ Attributes are parsed the same way: an ATTR-Function with ID and VALUE as
 parameters:
 
     >>> p.parse('foo/bar*[@a="b"]')
-    ['EEJOIN', ('ELEM', 'foo'), ['EAJOIN', ['ATTR', ('a', 'b')], ['KCJOIN', '*', ('ELEM', 'bar')]]]
+    ['EEJOIN', ('ELEM', 'foo'), ['EAJOIN', ['ATTR', ('a', 'b', '=')], ['KCJOIN', '*', ('ELEM', 'bar')]]]
 
 Attribute values may contain quoted strings:
 
-    >>> p.parse('foo/bar[@a="b\"c d\"e"]')
-    ['EEJOIN', ('ELEM', 'foo'), ['EAJOIN', ['ATTR', ('a', 'b"c d"e')], ('ELEM', 'bar')]]
+    >>> p.parse('foo/bar[@a=="b\"c d\"e"]')
+    ['EEJOIN', ('ELEM', 'foo'), ['EAJOIN', ['ATTR', ('a', 'b"c d"e', '==')], ('ELEM', 'bar')]]
 
-    >>> p.parse('foo/bar[@a="b"c d"e"]')
-    ['EEJOIN', ('ELEM', 'foo'), ['EAJOIN', ['ATTR', ('a', 'b"c d"e')], ('ELEM', 'bar')]]
+    >>> p.parse('foo/bar[@a<"b"c d"e"]')
+    ['EEJOIN', ('ELEM', 'foo'), ['EAJOIN', ['ATTR', ('a', 'b"c d"e', '<')], ('ELEM', 'bar')]]
 
 Attribute vales may also be empty:
 
-    >>> p.parse('/foo[@A=""]')
-    ['EEJOIN', None, ['EAJOIN', ['ATTR', ('A', '')], ('ELEM', 'foo')]]
+    >>> p.parse('/foo[@A>=""]')
+    ['EEJOIN', None, ['EAJOIN', ['ATTR', ('A', '', '>=')], ('ELEM', 'foo')]]
 
 Element can also be a wildcard:
 
@@ -74,8 +74,8 @@ Element can also be a wildcard:
 
 To show the mightiness of the parser, here a more complex example:
 
-    >>> p.parse('/foo[@a="b"]/_*/bar+[@a2="b2 b3"]/fou')
-    ['EEJOIN', ['EEJOIN', ['EEJOIN', ['EEJOIN', None, ['EAJOIN', ['ATTR', ('a', 'b')], ('ELEM', 'foo')]], ['KCJOIN', '*', ('WILDCARD', '_')]], ['EAJOIN', ['ATTR', ('a2', 'b2 b3')], ['KCJOIN', '+', ('ELEM', 'bar')]]], ('ELEM', 'fou')]
+    >>> p.parse('/foo[@a!="b"]/_*/bar+[@a2="b2 b3"]/fou')
+    ['EEJOIN', ['EEJOIN', ['EEJOIN', ['EEJOIN', None, ['EAJOIN', ['ATTR', ('a', 'b', '!=')], ('ELEM', 'foo')]], ['KCJOIN', '*', ('WILDCARD', '_')]], ['EAJOIN', ['ATTR', ('a2', 'b2 b3', '=')], ['KCJOIN', '+', ('ELEM', 'bar')]]], ('ELEM', 'fou')]
 
 You may also provide precedence by using round brackets and UNIONs. Here a
 simple example:
@@ -96,7 +96,14 @@ A Union of two EEJOINS
 A really big example with everything possible included:
 
     >>> p.parse('(E1/E2)*/E3/((E4[@A="v"])|(E5/_*/E6))')
-    ['EEJOIN', ['EEJOIN', ['KCJOIN', '*', ['EEJOIN', ('ELEM', 'E1'), ('ELEM', 'E2')]], ('ELEM', 'E3')], ['UNION', ['EAJOIN', ['ATTR', ('A', 'v')], ('ELEM', 'E4')], ['EEJOIN', ['EEJOIN', ('ELEM', 'E5'), ['KCJOIN', '*', ('WILDCARD', '_')]], ('ELEM', 'E6')]]]
+    ['EEJOIN', ['EEJOIN', ['KCJOIN', '*', ['EEJOIN', ('ELEM', 'E1'), ('ELEM', 'E2')]], ('ELEM', 'E3')], ['UNION', ['EAJOIN', ['ATTR', ('A', 'v', '=')], ('ELEM', 'E4')], ['EEJOIN', ['EEJOIN', ('ELEM', 'E5'), ['KCJOIN', '*', ('WILDCARD', '_')]], ('ELEM', 'E6')]]]
+
+Specify a ``way'' through the graph with .way:
+
+    >>> p.parse('/foo.next_elem')
+    ['EEJOIN', None, ['PWJOIN', ('ELEM', 'foo'), ('WAY', 'next_elem')]]
+    >>> p.parse('(foo/bar.next)|(boo.next/far)')
+    ['UNION', ['EEJOIN', ('ELEM', 'foo'), ['PWJOIN', ('ELEM', 'bar'), ('WAY', 'next')]], ['EEJOIN', ['PWJOIN', ('ELEM', 'boo'), ('WAY', 'next')], ('ELEM', 'far')]]
 
 Here some negative RPE-Tests
 ============================
