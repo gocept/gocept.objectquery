@@ -4,7 +4,8 @@
 
 from gocept.objectquery.indexsupport import ClassIndex, AttributeIndex,\
     StructureIndex
-from gocept.objectquery.querysupport import ObjectParser, EEJoin, EAJoin
+from gocept.objectquery.querysupport import ObjectParser, EEJoin, EAJoin,\
+    KCJoin, Union
 
 class ObjectCollection(object):
     """ ObjectCollection provides functionallity to QueryProcessor.
@@ -25,6 +26,8 @@ class ObjectCollection(object):
         self._objectparser = ObjectParser()
         self._eejoin = EEJoin(self._structureindex)
         self._eajoin = EAJoin()
+        self._kcjoin = KCJoin()
+        self._union = Union()
 
     def add(self, object_oid, parent_oid=None, cycle_prev=None):
         """ Index the object to the ObjectCollection. """
@@ -80,6 +83,12 @@ class ObjectCollection(object):
 
     def eajoin(self, elemlist1, elemlist2):
         return self._eajoin(elemlist1, elemlist2)
+
+    def kcjoin(self, elemlist, occ):
+        return self._kcjoin(elemlist, occ)
+
+    def union(self, elemlist1, elemlist2):
+        return self._union(elemlist1, elemlist2)
 
     def _get_classname(self, object):
         """ Return the classname of object. """

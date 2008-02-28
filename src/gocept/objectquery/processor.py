@@ -21,8 +21,62 @@ class QueryProcessor(object):
         if pdb:
             import pdb; pdb.set_trace() 
         qp = self.parser.parse(expression)
-        result = self._process_queryplan(qp)
+        result = self._process_qp(qp)
         return self._oids2objects(result)
+
+    def _process_qp(self, qp, structindex=None):
+        """ Recursive process of query plan ``qp``. """
+        if not qp:
+            return None
+        func = getattr(self, "_process_" + qp[0])
+        args = [qp[1], len(qp) >= 3 and qp[2] or None, structindex]
+        return func(args)
+
+    def _process_ELEM(self, args):
+        """ Return all elements from ClassIndex with matching name.
+
+        Returns all elements matching name in args[0] and structure index in
+        args[2].
+        """
+        return self.collection.by_class(args[0], args[2])
+
+    def _process_WILDCARD(self, args):
+        """ Return all elements from ClassIndex. """
+        return self.collection.all()
+
+    def _process_ATTR(self, args):
+        """ Return all elements from AttributeIndex matching name.
+
+        Returns all elements matching name in args[0][0] and value in
+        args[0][1].
+        """
+        return self.collection.by_attr(args[0][0], args[0][1])
+
+    def _process_EAJOIN(self, args):
+        """ Element-Attribute-Join. """
+        return self.collection.eajoin(self._process_qp(args[1]),
+                                        self._process_qp(args[0]))
+
+    def _process_EEJOIN(self, args):
+        """ Element-Element-Join. """
+        elemlist = self._process_qp(args[0])
+        elem1 = not elemlist and [ self.collection.root() ] or elemlist
+        # only get the successors with are inside the parent StructureIndex
+        successors = []
+        for parent in elem1:
+            successors.extend(self._process_qp(args[1],
+                        self.collection.get_structureindex(parent)))
+        return self.collection.eejoin(successors, elem1, direct=True)
+
+    def _process_KCJOIN(self, args):
+        """ Element-Occurence-Join. """
+        resultlist = self._process_qp(args[1], args[2])
+        return self.collection.kcjoin(resultlist, args[0])
+
+    def _process_UNION(self, args):
+        """ Union if two results. """
+        return self.collection.union(self._process_qp(args[0]),
+                                            self._process_qp(args[1]))
 
     def _oids2objects(self, oidlist):
         """ Convert the oidlist to objectlist. """
@@ -30,69 +84,3 @@ class QueryProcessor(object):
         for oid in oidlist:
             result.append(self.collection._get_object(oid))
         return result
-
-    def __remove_multi_items(self, list):
-        """ Removes multi occurences of items in a list (but keeps one). """
-        mydict = {} # uses a dicts keys
-        for elem in list:
-            mydict[elem] = ""
-        return [elem[0] for elem in mydict.items()]
-
-    def _eajoin(self, elem1, elem2):
-        """ Element-Attribute-Join. """
-        elem1 = self._get_elem(elem1)
-        elem2 = self._get_elem(elem2)
-        return self.collection.eajoin(elem2, elem1)
-
-    def _eejoin(self, elem1, elem2):
-        """ Element-Element-Join. """
-        elem1 = self._get_elem(elem1)
-        if not elem1: # root join
-            elem1 = [ self.collection.root() ]
-        follow = []
-        for elem in elem1:
-            follow.extend(self._get_elem(elem2,
-                        self.collection.get_structureindex(elem)))
-        return self.collection.eejoin(follow, elem1, direct=True)
-
-    def _get_elem(self, elem, structindex=None):
-        """ Decide what to do with elem. """
-        if not elem:                # elem is None
-            return None
-        elif elem[0] == "ELEM":     # elem is ("ELEM", "...")
-            return self.collection.by_class(elem[1], structindex)
-        elif elem[0] == "WILDCARD": # elem is ("WILDCARD", "_")
-            return self.collection.all()
-        elif elem[0] == "ATTR":     # elem is ["ATTR", (ID, VALUE)]
-            return self.collection.by_attr(elem[1][0], elem[1][1])
-        else:                       # elem is [function, ...]
-            return self._process_queryplan(elem, structindex)
-
-    def _kcjoin(self, occ, elem, structindex):
-        """ Element-Occurence-Join. """
-        elem = self._get_elem(elem, structindex)
-        if (occ == "?" and len(elem) < 2):
-            return elem
-        elif (occ == "+" and len(elem) > 0):
-            return elem
-        elif (occ == "*"):
-            return elem
-        return []
-
-    def _process_queryplan(self, qp, structindex=None):
-        """ Recursive process of query plan ``qp``. """
-        if qp[0] == "EEJOIN":
-            result = self._eejoin(qp[1], qp[2])
-        elif qp[0] == "EAJOIN":
-            result = self._eajoin(qp[1], qp[2])
-        elif qp[0] == "KCJOIN":
-            result = self._kcjoin(qp[1], qp[2], structindex)
-        elif qp[0] == "UNION":
-            result = self._union(qp[1], qp[2])
-        return result
-
-    def _union(self, elem1, elem2):
-        """ Union if two results. """
-        elem1 = self._get_elem(elem1)
-        elem1.extend(self._get_elem(elem2))
-        return elem1

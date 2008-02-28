@@ -72,16 +72,11 @@ class ObjectParser(object):
                 returnlist.append(elem)
         return returnlist
 
-class DummyJoin(object):
-    """ Join two lists of objects by considering their structure index. """
+class EEJoin(object):
+    """ Element-Element Join. """
     def __init__(self, structindex):
         self._structindex = structindex
 
-    def __call__(self):
-        pass
-
-class EEJoin(DummyJoin):
-    """ Element-Element Join. """
     def __call__(self, elemlist1, elemlist2, direct=False, subindex=None):
         """ Return all elements which are (direct) childs of elem2.
 
@@ -118,3 +113,21 @@ class EAJoin(object):
                 if elem1 == elem2 and elem1 not in resultlist:
                     resultlist.append(elem1)
         return resultlist
+
+class KCJoin(object):
+    """ Element-Occurence-Join. """
+    def __call__(self, elemlist, occ):
+        if (occ == "?" and len(elemlist) < 2):
+            return elemlist
+        if (occ == "+" and len(elemlist) > 0):
+            return elemlist
+        if (occ == "*"):
+            return elemlist
+        return []
+
+class Union(object):
+    """ Union of two element lists. """
+    def __call__(self, elemlist1, elemlist2):
+        elemlist1.extend(elemlist2)
+        return elemlist1
+
