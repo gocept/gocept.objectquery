@@ -114,11 +114,20 @@ Now search for some object attributes:
     >>> r = oc.by_attr("number", "66", ">")
     >>> len(r)
     0
+
+Exceptions are raised if the comparison operator is not supported...:
+
     >>> r = oc.by_attr("number", "True", "not")
     Traceback (most recent call last):
     ...
     KeyError: 'not'
 
+... or the comparison value can not be casted into a legal type:
+
+    >>> r = oc.by_attr("street", "mystreet", "<")
+    Traceback (most recent call last):
+    ...
+    ValueError: invalid literal for float(): ...
 
 Adding and removing objects:
 ----------------------------
