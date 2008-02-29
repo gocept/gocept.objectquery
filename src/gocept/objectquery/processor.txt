@@ -46,9 +46,9 @@ Now fill the database with some data:
     >>> p1 = testobject.Person(name="Theuni")
     >>> p2 = testobject.Person(name="Basti", private=[t1])
     >>> p3 = testobject.Person(name="coco", work=[t2, t3])
-    >>> a1 = testobject.Address(street="Meckelstrasse", etage="2")
-    >>> a2 = testobject.Address(street="Forsterstrasse", etage="2", ref=[p1, p2])
-    >>> a3 = testobject.Address(street="Forsterstrasse", etage="1", ref=[p3])
+    >>> a1 = testobject.Address(street="Meckelstrasse", floor="2")
+    >>> a2 = testobject.Address(street="Forsterstrasse", floor="2", ref=[p1, p2])
+    >>> a3 = testobject.Address(street="Forsterstrasse", floor="1", ref=[p3])
     >>> ab = testobject.AddressBook(ref=[a1, a2, a3])
 
     >>> dbroot['test'] = ab
@@ -93,6 +93,22 @@ Give the Telephones of Persons who live *alone* at Forsterstrasse:
     >>> len(r)
     2
     >>> r[0].number == '2298890' or r[0].number == '2298891'
+    True
+
+Give all Persons that do not live in the first floor:
+
+    >>> r = query('Address[@floor!="1"]/Person')
+    >>> len(r)
+    2
+    >>> r[0].name != 'coco' and r[1].name != 'coco'
+    True
+
+Give all Persons that live on a floor smaller than 2:
+
+    >>> r = query('Address[@floor<"2"]/Person')
+    >>> len(r)
+    1
+    >>> r[0].name == 'coco'
     True
 
 Handle Wildcards correctly:

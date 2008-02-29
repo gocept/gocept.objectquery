@@ -43,8 +43,8 @@ Example usage of ObjectCollection
 
 Add some objects to the collection:
 
-    >>> t1 = testobject.Telephone(number="22988912")
-    >>> t2 = testobject.Telephone(number="22988913")
+    >>> t1 = testobject.Telephone(number="22")
+    >>> t2 = testobject.Telephone(number="66")
     >>> p1 = testobject.Person(name="Sebastian", work=[t1, t2])
     >>> a1 = testobject.Address(street="Meckelstrasse", city="Halle", ref=[p1])
     >>> dbroot['test'] = a1
@@ -92,12 +92,33 @@ Search by classname:
 
 Now search for some object attributes:
 
-    >>> r = oc.by_attr("number", "22988912")
+    >>> r = oc.by_attr("number", "22")
     >>> conn.get(r[0])
     <gocept.objectquery.testobjects.Telephone object at 0x...>
-    >>> r = oc.by_attr("street", "")
+    >>> r = oc.by_attr("street", "", "=")
     >>> r
     []
+    >>> r = oc.by_attr("street", "", "!=")
+    >>> conn.get(r[0])
+    <gocept.objectquery.testobjects.Address object at 0x...>
+    >>> r = oc.by_attr("number", "33", "<")
+    >>> len(r)
+    1
+    >>> conn.get(r[0]).number
+    '22'
+    >>> r = oc.by_attr("number", "66", ">=")
+    >>> len(r)
+    1
+    >>> conn.get(r[0]).number
+    '66'
+    >>> r = oc.by_attr("number", "66", ">")
+    >>> len(r)
+    0
+    >>> r = oc.by_attr("number", "True", "not")
+    Traceback (most recent call last):
+    ...
+    KeyError: 'not'
+
 
 Adding and removing objects:
 ----------------------------

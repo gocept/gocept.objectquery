@@ -28,6 +28,14 @@ class ObjectCollection(object):
         self._eajoin = EAJoin()
         self._kcjoin = KCJoin()
         self._union = Union()
+        # init AttributeComparison
+        self.comp_map = {
+            "==": lambda x, y: x == y,
+            "<": lambda x, y: float(x) < float(y),
+            "<=": lambda x, y: float(x) <= float(y),
+            ">": lambda x, y: float(x) > float(y),
+            ">=": lambda x, y: float(x) >= float(y),
+            "!=": lambda x, y: x != y }
 
     def add(self, object_oid, parent_oid=None, cycle_prev=None):
         """ Index the object to the ObjectCollection. """
@@ -63,12 +71,18 @@ class ObjectCollection(object):
                 classlist.append(elem)
         return classlist
 
-    def by_attr(self, name, value=None):
+    def _attr_comp(self, attr, value, comp_op):
+        if comp_op is None or comp_op == '=':
+            comp_op = '=='
+        return self.comp_map[comp_op](attr, value)
+
+    def by_attr(self, name, value=None, comp_op=None):
         """ Return a list of objects which have an attribute ``name``. """
         classlist = []
         for elem_oid in self._attributeindex.get(name):
             elem = self._get_object(elem_oid)
-            if value is None or getattr(elem, name) == value:
+            if value is None or self._attr_comp(getattr(elem, name), value,
+                                                                    comp_op):
                 classlist.append(elem_oid)
         return classlist
 

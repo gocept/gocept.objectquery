@@ -48,9 +48,9 @@ class QueryProcessor(object):
         """ Return all elements from AttributeIndex matching name.
 
         Returns all elements matching name in args[0][0] and value in
-        args[0][1].
+        args[0][1] and comparative operator in args[0][2].
         """
-        return self.collection.by_attr(args[0][0], args[0][1])
+        return self.collection.by_attr(args[0][0], args[0][1], args[0][2])
 
     def _process_EAJOIN(self, args):
         """ Element-Attribute-Join. """
