@@ -3,6 +3,7 @@
 # $Id$
 
 from gocept.objectquery.resultset import ResultSet
+import types
 
 class QueryProcessor(object):
     """ Processes a query to the collection and returns the results.
@@ -60,13 +61,25 @@ class QueryProcessor(object):
     def _process_EEJOIN(self, args):
         """ Element-Element-Join. """
         elemlist = self._process_qp(args[0])
+        # make sure that elemlist is elemlist and not a pw-tupel
+        attrname = None
+        if type(elemlist) == types.TupleType:
+            attrname = elemlist[1]
+            elemlist = elemlist[0]
         elem1 = not elemlist and [ self.collection.root() ] or elemlist
         # only get the successors with are inside the parent StructureIndex
         successors = []
         for parent in elem1:
             successors.extend(self._process_qp(args[1],
                         self.collection.get_structureindex(parent)))
-        return self.collection.eejoin(successors, elem1, direct=True)
+        return self.collection.eejoin(successors, elem1, direct=True,
+                                                          way=attrname)
+
+    def _process_PWJOIN(self, args):
+        """ Path-Way-Join. """
+        elemlist = self._process_qp(args[0])
+        attrname = args[1][1]
+        return (elemlist, attrname)
 
     def _process_KCJOIN(self, args):
         """ Element-Occurence-Join. """

@@ -24,7 +24,7 @@ class ObjectCollection(object):
         self._structureindex = StructureIndex(dbroot)
         # init QuerySupport
         self._objectparser = ObjectParser()
-        self._eejoin = EEJoin(self._structureindex)
+        self._eejoin = EEJoin(self._structureindex, self.conn)
         self._eajoin = EAJoin()
         self._kcjoin = KCJoin()
         self._union = Union()
@@ -92,8 +92,9 @@ class ObjectCollection(object):
     def is_successor(self, key1_oid, key2_oid):
         return self._structureindex.is_successor(key1_oid, key2_oid)
 
-    def eejoin(self, elemlist1, elemlist2, direct=False, subindex=None):
-        return self._eejoin(elemlist1, elemlist2, direct, subindex)
+    def eejoin(self, elemlist1, elemlist2, direct=False, subindex=None,
+                                                                way=None):
+        return self._eejoin(elemlist1, elemlist2, direct, subindex, way)
 
     def eajoin(self, elemlist1, elemlist2):
         return self._eajoin(elemlist1, elemlist2)

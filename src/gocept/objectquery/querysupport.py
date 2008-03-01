@@ -74,10 +74,12 @@ class ObjectParser(object):
 
 class EEJoin(object):
     """ Element-Element Join. """
-    def __init__(self, structindex):
+    def __init__(self, structindex, conn=None):
         self._structindex = structindex
+        self._conn = conn
 
-    def __call__(self, elemlist1, elemlist2, direct=False, subindex=None):
+    def __call__(self, elemlist1, elemlist2, direct=False, subindex=None,
+                                                                  way=None):
         """ Return all elements which are (direct) childs of elem2.
 
             If a subindex is provided, then only thoses elements under these
@@ -89,7 +91,8 @@ class EEJoin(object):
             comparer = getattr(self._structindex, "is_child")
         for elem1 in elemlist1:
             for elem2 in elemlist2:
-                if elem1 not in resultlist and comparer(elem1, elem2):
+                if elem1 not in resultlist and comparer(elem1, elem2) and\
+                      (way is None or self._check_way(elem1, elem2, way)):
                     resultlist.append(elem1)
         if subindex is None:
             return resultlist
@@ -98,6 +101,13 @@ class EEJoin(object):
             if self._structindex.validate(elem, subindex):
                 filteredlist.append(elem)
         return filteredlist
+
+    def _check_way(self, elem1, elem2, way):
+        elem1 = self._conn.get(elem1)
+        elem2 = self._conn.get(elem2)
+        if elem1 in getattr(elem2, way):
+            return True
+        return False
 
 class EAJoin(object):
     """ Element-Attribute-Join. """
