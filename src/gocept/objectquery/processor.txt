@@ -78,8 +78,8 @@ Give the Telephone of all Persons named "coco":
     >>> r = query('Address/Person[@name="coco"]/Telephone')
     >>> len(r)
     2
-    >>> r[0].number == '2298890' or r[0].number == '2298891'
-    True
+    >>> sorted(elem.number for elem in r)
+    ['2298890', '2298891']
 
 Give all Persons, that live in "Forsterstrasse":
 
@@ -158,6 +158,3 @@ Pathways:
     >>> r = query('Person.work/Telephone[@number="2298890"]')
     >>> len(r)
     1
-    >>> r = query('Address/Person.work/Telephone')
-    >>> len(r)
-    2

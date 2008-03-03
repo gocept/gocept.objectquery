@@ -193,7 +193,7 @@ Delete the first node:
     >>> list(si.index['childs'])
     [0]
 
-Cycles are supportet as well:
+Cycles are supported as well:
 
     >>> si.insert(1)
     >>> si.insert(2, 1)
