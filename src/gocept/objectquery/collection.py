@@ -26,7 +26,7 @@ class ObjectCollection(object):
         self._objectparser = ObjectParser()
         self._eejoin = EEJoin(self._structureindex, self.conn)
         self._eajoin = EAJoin()
-        self._kcjoin = KCJoin()
+        self._kcjoin = KCJoin(self._structureindex)
         self._union = Union()
         # init AttributeComparison
         self.comp_map = {

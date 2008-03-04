@@ -72,7 +72,7 @@ class QueryProcessor(object):
         for parent in elem1:
             successors.extend(self._process_qp(args[1],
                         self.collection.get_structureindex(parent)))
-        return self.collection.eejoin(successors, elem1, direct=True,
+        return self.collection.eejoin(elem1, successors, direct=True,
                                                           way=attrname)
 
     def _process_PWJOIN(self, args):

@@ -81,20 +81,6 @@ Give the Telephone of all Persons named "coco":
     >>> sorted(elem.number for elem in r)
     ['2298890', '2298891']
 
-Give all Persons, that live in "Forsterstrasse":
-
-    >>> r = query('Address[@street="Forsterstrasse"]/Person*')
-    >>> len(r)
-    3
-
-Give the Telephones of Persons who live *alone* at Forsterstrasse:
-
-    >>> r = query('Address[@street="Forsterstrasse"]/Person?/Telephone')
-    >>> len(r)
-    2
-    >>> r[0].number == '2298890' or r[0].number == '2298891'
-    True
-
 Give all Persons that do not live in the first floor:
 
     >>> r = query('Address[@floor!="1"]/Person')
@@ -113,7 +99,7 @@ Give all Persons that live on a floor smaller than 2:
 
 Handle Wildcards correctly:
 
-    >>> r = query('/Address/_+/Telephone')
+    >>> r = query('/Address/_/Telephone')
     >>> len(r)
     3
 

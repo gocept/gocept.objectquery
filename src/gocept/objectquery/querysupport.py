@@ -78,7 +78,7 @@ class EEJoin(object):
         self._structindex = structindex
         self._conn = conn
 
-    def __call__(self, elemlist1, elemlist2, direct=False, subindex=None,
+    def __call__(self, elemlist2, elemlist1, direct=False, subindex=None,
                                                                   way=None):
         """ Return all elements which are (direct) childs of elem2.
 
@@ -125,15 +125,36 @@ class EAJoin(object):
         return resultlist
 
 class KCJoin(object):
-    """ Element-Occurence-Join. """
+    """ Return the Kleene Closure of elemlist. """
+    def __init__(self, structindex):
+        self.structindex = structindex
+
     def __call__(self, elemlist, occ):
-        if (occ == "?" and len(elemlist) < 2):
-            return elemlist
-        if (occ == "+" and len(elemlist) > 0):
-            return elemlist
-        if (occ == "*"):
-            return elemlist
-        return []
+        paths = []
+        # initialize with paths of len == 1
+        for elem in elemlist:
+            paths.append([elem])
+        # create all possibilities
+        for i in elemlist:
+            for elem in elemlist:
+                for path in paths:
+                    if self.structindex.is_child(elem, path[-1]):
+                        path.append(elem)
+        # delete subpaths which are covered by bigger paths
+        for path1 in paths[:]:
+            for path2 in paths[:]:
+                if self.structindex.is_subpath(path2, path1):
+                    paths.remove(path2)
+        # if occurence == ? remove all paths longer than 1
+        if occ == "?":
+            for elem in paths[:]:
+                if len(elem) > 1:
+                    paths.remove(elem)
+        # only return last item of paths
+        returnlist = []
+        for elem in paths:
+            returnlist.append(elem[-1])
+        return returnlist
 
 class Union(object):
     """ Union of two element lists. """

@@ -207,3 +207,13 @@ class StructureIndex(OOIndex):
             if path1[i] != path2[i]:
                 return False
         return True
+
+    def is_subpath(self, path1, path2):
+        """ Check is path1 is a subpath of path2. """
+        if len(path1) > len(path2):
+            return False
+        if path1 == path2:
+            return False
+        if path1 == path2[len(path2)-len(path1):]:
+            return True
+        return False
