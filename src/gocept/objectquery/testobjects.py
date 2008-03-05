@@ -36,3 +36,12 @@ class Address(Dummy):
 
 class AddressBook(Dummy):
     pass
+
+class Document(Dummy):
+    pass
+
+class Folder(Dummy):
+    pass
+
+class Plone(Dummy):
+    pass

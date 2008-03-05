@@ -4,6 +4,16 @@
 
 import types
 
+class ResultSet(object):
+    """ Holds the resulting objects and meta data. """
+    def __init__(self):
+        self.result = []
+        self.occ_operator = None
+        self.attr_branch = None
+
+    def __repr__(self):
+        return str(self.result)
+
 class ObjectParser(object):
     def __init__(self):
         self.attributes = []     # saves all found attributes to one object
@@ -94,12 +104,13 @@ class EEJoin(object):
                 if elem1 not in resultlist and comparer(elem1, elem2) and\
                       (way is None or self._check_way(elem1, elem2, way)):
                     resultlist.append(elem1)
+        filteredlist = ResultSet()
         if subindex is None:
-            return resultlist
-        filteredlist = []
+            filteredlist.result.extend(resultlist)
+            return filteredlist
         for elem in resultlist:
             if self._structindex.validate(elem, subindex):
-                filteredlist.append(elem)
+                filteredlist.result.append(elem)
         return filteredlist
 
     def _check_way(self, elem1, elem2, way):
@@ -117,12 +128,12 @@ class EAJoin(object):
             elemlist1 holds all objects which match the element condition.
             elemlist2 holds all objects which match the predicate condition.
         """
-        resultlist = []
+        result = ResultSet()
         for elem1 in elemlist1:
             for elem2 in elemlist2:
-                if elem1 == elem2 and elem1 not in resultlist:
-                    resultlist.append(elem1)
-        return resultlist
+                if elem1 == elem2 and elem1 not in result.result:
+                    result.result.append(elem1)
+        return result
 
 class KCJoin(object):
     """ Return the Kleene Closure of elemlist. """
@@ -130,10 +141,7 @@ class KCJoin(object):
         self.structindex = structindex
 
     def __call__(self, elemlist, occ):
-        paths = []
-        # initialize with paths of len == 1
-        for elem in elemlist:
-            paths.append([elem])
+        paths = [[elem] for elem in elemlist]
         # create all possibilities
         for i in elemlist:
             for elem in elemlist:
@@ -151,14 +159,17 @@ class KCJoin(object):
                 if len(elem) > 1:
                     paths.remove(elem)
         # only return last item of paths
-        returnlist = []
+        result = ResultSet()
+        result.occ_operator = occ
         for elem in paths:
-            returnlist.append(elem[-1])
-        return returnlist
+            result.result.append(elem[-1])
+        return result
 
 class Union(object):
     """ Union of two element lists. """
     def __call__(self, elemlist1, elemlist2):
+        result = ResultSet()
         elemlist1.extend(elemlist2)
-        return elemlist1
+        result.result = elemlist
+        return result
 

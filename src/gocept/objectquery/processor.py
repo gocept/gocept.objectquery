@@ -2,7 +2,7 @@
 # See also LICENSE.txt
 # $Id$
 
-from gocept.objectquery.resultset import ResultSet
+from gocept.objectquery.querysupport import ResultSet
 import types
 
 class QueryProcessor(object):
@@ -61,19 +61,18 @@ class QueryProcessor(object):
     def _process_EEJOIN(self, args):
         """ Element-Element-Join. """
         elemlist = self._process_qp(args[0])
-        # make sure that elemlist is elemlist and not a pw-tupel
         attrname = None
-        if type(elemlist) == types.TupleType:
-            attrname = elemlist[1]
-            elemlist = elemlist[0]
+        if elemlist:
+            attrname = elemlist.attr_branch
+            elemlist = elemlist.result
         elem1 = not elemlist and [ self.collection.root() ] or elemlist
         # only get the successors with are inside the parent StructureIndex
         successors = []
         for parent in elem1:
             successors.extend(self._process_qp(args[1],
-                        self.collection.get_structureindex(parent)))
+                        self.collection.get_structureindex(parent)).result)
         return self.collection.eejoin(elem1, successors, direct=True,
-                                                          way=attrname)
+                                                              way=attrname)
 
     def _process_PWJOIN(self, args):
         """ Path-Way-Join. """
@@ -94,6 +93,6 @@ class QueryProcessor(object):
     def _oids2objects(self, oidlist):
         """ Convert the oidlist to objectlist. """
         result = []
-        for oid in oidlist:
+        for oid in oidlist.result:
             result.append(self.collection._get_object(oid))
         return result

@@ -144,3 +144,35 @@ Pathways:
     >>> r = query('Person.work/Telephone[@number="2298890"]')
     >>> len(r)
     1
+
+Occurence
+---------
+
+To test occurence, we need a new example:
+
+    >>> dbroot.clear()
+    >>> transaction.commit()
+
+    >>> objects = ObjectCollection(conn)
+    >>> query = QueryProcessor(parser, objects)
+
+Now fill the database with some data:
+
+    >>> a5 = testobject.Document()
+    >>> b5 = testobject.Document()
+    >>> c5 = testobject.Document()
+    >>> a4 = testobject.Folder(ref=[a5])
+    >>> a3 = testobject.Folder(ref=[a4])
+    >>> a2 = testobject.Folder(ref=[a3])
+    >>> a1 = testobject.Folder(ref=[a2])
+    >>> b1 = testobject.Folder(ref=[b5])
+    >>> r = testobject.Plone(ref=[a1, b1, c5])
+
+    >>> dbroot['test'] = r
+    >>> transaction.commit()
+    >>> objects.add(r._p_oid)
+
+Get all Documents, which are reachable over zero, one or more Folders:
+
+    >>> r = query('Folder*/Document')
+    >>> r

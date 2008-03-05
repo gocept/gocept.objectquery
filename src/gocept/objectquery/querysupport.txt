@@ -2,6 +2,27 @@
 Using QuerySupport
 ==================
 
+ResultSet
+=========
+
+The ResultSet object is needed for temporary results of sub-queries. It
+contains beside the resulting objects some meta data like occurence or
+attributes, which are nessesary for following join operations:
+
+    >>> from gocept.objectquery.querysupport import ResultSet
+    >>> rs = ResultSet()
+
+ResultSet contains an attribute result, which is a list of resulting objects:
+
+    >>> rs.result
+    []
+
+Furthermore it holds the occurence and attribute name, which was used for
+retrieving the result. They are set to None by default:
+
+    >>> rs.occ_operator
+    >>> rs.attr_branch
+
 ObjectParser
 ============
 
