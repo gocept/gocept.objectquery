@@ -4,8 +4,8 @@
 
 from gocept.objectquery.indexsupport import ClassIndex, AttributeIndex,\
     StructureIndex
-from gocept.objectquery.querysupport import ObjectParser, ResultSet, EEJoin,\
-    EAJoin, KCJoin, Union
+from gocept.objectquery.querysupport import ObjectParser, EEJoin, EAJoin,\
+    KCJoin, Union
 
 class ObjectCollection(object):
     """ ObjectCollection provides functionallity to QueryProcessor.
