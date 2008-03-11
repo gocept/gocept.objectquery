@@ -78,50 +78,49 @@ class EEJoin(object):
         self._structindex = structindex
         self._conn = conn
 
-    def __call__(self, elemlist2, elemlist1, direct=False, subindex=None,
-                                                                  way=None):
-        """ Return all elements which are (direct) childs of elem2.
-
-            If a subindex is provided, then only thoses elements under these
-            are returned.
-        """
+    def __call__(self, E, F):
+        """ Returns a set of (e, f) pairs such that e is an ancestor f. """
         resultlist = []
         comparer = getattr(self._structindex, "is_successor")
-        if direct:
-            comparer = getattr(self._structindex, "is_child")
-        for elem1 in elemlist1:
-            for elem2 in elemlist2:
-                if elem1 not in resultlist and comparer(elem1, elem2) and\
-                      (way is None or self._check_way(elem1, elem2, way)):
-                    resultlist.append(elem1)
-        if subindex is None:
-            return resultlist
-        filteredlist = []
-        for elem in resultlist:
-            if self._structindex.validate(elem, subindex):
-                filteredlist.append(elem)
-        return filteredlist
-
-    def _check_way(self, elem1, elem2, way):
-        elem1 = self._conn.get(elem1)
-        elem2 = self._conn.get(elem2)
-        if elem1 in getattr(elem2, way):
-            return True
-        return False
+        for e in E:
+            for f in F:
+                relation = (e, f)
+                if relation not in resultlist and comparer(f, e):
+                    resultlist.append(relation)
+        return resultlist
 
 class EAJoin(object):
     """ Element-Attribute-Join. """
-    def __call__(self, elemlist1, elemlist2):
-        """ Merge the two element lists.
+    def __init__(self):
+        self.comp_map = {
+            "==": lambda x, y: x == y,
+            "<": lambda x, y: float(x) < float(y),
+            "<=": lambda x, y: float(x) <= float(y),
+            ">": lambda x, y: float(x) > float(y),
+            ">=": lambda x, y: float(x) >= float(y),
+            "!=": lambda x, y: x != y }
 
-            elemlist1 holds all objects which match the element condition.
-            elemlist2 holds all objects which match the predicate condition.
+    def _attr_comp(self, attr, value, comp_op):
+        if comp_op is None or comp_op == '=':
+            comp_op = '=='
+        return self.comp_map[comp_op](attr, value)
+
+    def __call__(self, E, attrname, attrcomp=None, attrvalue=None):
+        """ Returns a list of elements with attribute attrname.
+
+        attrname is compared against attrvalue with compare operator attrcomp.
         """
         resultlist = []
-        for elem1 in elemlist1:
-            for elem2 in elemlist2:
-                if elem1 == elem2 and elem1 not in resultlist:
-                    resultlist.append(elem1)
+        for e in E:
+            if not hasattr(e, attrname):
+                continue
+            if e in resultlist:
+                continue
+            if not attrvalue:
+                resultlist.append(e)
+                continue
+            if self._attr_comp(getattr(e, attrname), attrvalue, attrcomp):
+                resultlist.append(e)
         return resultlist
 
 class KCJoin(object):
