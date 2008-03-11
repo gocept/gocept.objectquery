@@ -74,14 +74,13 @@ class ObjectParser(object):
 
 class EEJoin(object):
     """ Element-Element Join. """
-    def __init__(self, structindex, conn=None):
+    def __init__(self, structindex):
         self._structindex = structindex
-        self._conn = conn
 
     def __call__(self, E, F):
         """ Returns a set of (e, f) pairs such that e is an ancestor f. """
         resultlist = []
-        comparer = getattr(self._structindex, "is_successor")
+        comparer = getattr(self._structindex, "is_child")
         for e in E:
             for f in F:
                 relation = (e, f)
@@ -91,7 +90,8 @@ class EEJoin(object):
 
 class EAJoin(object):
     """ Element-Attribute-Join. """
-    def __init__(self):
+    def __init__(self, connection=None):
+        self.conn = connection
         self.comp_map = {
             "==": lambda x, y: x == y,
             "<": lambda x, y: float(x) < float(y),
@@ -105,21 +105,24 @@ class EAJoin(object):
             comp_op = '=='
         return self.comp_map[comp_op](attr, value)
 
-    def __call__(self, E, attrname, attrcomp=None, attrvalue=None):
+    def __call__(self, E, attrname, attrvalue=None, attrcomp=None):
         """ Returns a list of elements with attribute attrname.
 
         attrname is compared against attrvalue with compare operator attrcomp.
         """
         resultlist = []
         for e in E:
-            if not hasattr(e, attrname):
+            elem = e
+            if self.conn is not None:
+                elem = self.conn.get(e)
+            if not hasattr(elem, attrname):
                 continue
             if e in resultlist:
                 continue
             if not attrvalue:
                 resultlist.append(e)
                 continue
-            if self._attr_comp(getattr(e, attrname), attrvalue, attrcomp):
+            if self._attr_comp(getattr(elem, attrname), attrvalue, attrcomp):
                 resultlist.append(e)
         return resultlist
 
@@ -152,7 +155,9 @@ class KCJoin(object):
         # only return last item of paths
         returnlist = []
         for elem in paths:
-            returnlist.append(elem[-1])
+            returnlist.append((elem[0], elem[-1]))
+        if occ == "?" or occ == "*":
+            returnlist.append(None)
         return returnlist
 
 class Union(object):

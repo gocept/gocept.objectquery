@@ -24,8 +24,8 @@ class ObjectCollection(object):
         self._structureindex = StructureIndex(dbroot)
         # init QuerySupport
         self._objectparser = ObjectParser()
-        self._eejoin = EEJoin(self._structureindex, self.conn)
-        self._eajoin = EAJoin()
+        self._eejoin = EEJoin(self._structureindex)
+        self._eajoin = EAJoin(self.conn) # XXX: ValueIndex instead of conn
         self._kcjoin = KCJoin(self._structureindex)
         self._union = Union()
         # init AttributeComparison
@@ -63,13 +63,9 @@ class ObjectCollection(object):
         """ Return all objects. """
         return self._classindex.all()
 
-    def by_class(self, name, si=None):
+    def by_class(self, name):
         """ Return a list of objects which match ``name``. """
-        classlist = []
-        for elem in self._classindex.get(name):
-            if si is None or self._structureindex.validate(elem, si):
-                classlist.append(elem)
-        return classlist
+        return self._classindex.get(name)
 
     def _attr_comp(self, attr, value, comp_op):
         if comp_op is None or comp_op == '=':
@@ -92,12 +88,11 @@ class ObjectCollection(object):
     def is_successor(self, key1_oid, key2_oid):
         return self._structureindex.is_successor(key1_oid, key2_oid)
 
-    def eejoin(self, elemlist1, elemlist2, direct=False, subindex=None,
-                                                                way=None):
-        return self._eejoin(elemlist1, elemlist2, direct, subindex, way)
+    def eejoin(self, *args):
+        return self._eejoin(*args)
 
-    def eajoin(self, elemlist1, elemlist2):
-        return self._eajoin(elemlist1, elemlist2)
+    def eajoin(self, *args):
+        return self._eajoin(*args)
 
     def kcjoin(self, elemlist, occ):
         return self._kcjoin(elemlist, occ)

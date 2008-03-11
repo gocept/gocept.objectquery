@@ -61,8 +61,9 @@ Some example usecases
 Root joins:
 
     >>> r = query('/Address')
-    >>> len(r)
-    3
+    >>> sorted((elem.street, elem.floor) for elem in r)
+    [('Forsterstrasse', '1'), ('Forsterstrasse', '2'), ('Meckelstrasse', '2')]
+
     >>> r = query('/Telephone')
     >>> len(r)
     0
@@ -70,14 +71,12 @@ Root joins:
 Give all Telephones that are direct childs of Adresses:
 
     >>> r = query('Address/Telephone')
-    >>> len(r)
-    0
+    >>> len(r) == 0
+    True
 
 Give the Telephone of all Persons named "coco":
 
     >>> r = query('Address/Person[@name="coco"]/Telephone')
-    >>> len(r)
-    2
     >>> sorted(elem.number for elem in r)
     ['2298890', '2298891']
 
@@ -86,37 +85,35 @@ Give all Persons that do not live in the first floor:
     >>> r = query('Address[@floor!="1"]/Person')
     >>> len(r)
     2
-    >>> r[0].name != 'coco' and r[1].name != 'coco'
-    True
+    >>> sorted(elem.name for elem in r)
+    ['Basti', 'Theuni']
 
 Give all Persons that live on a floor smaller than 2:
 
     >>> r = query('Address[@floor<"2"]/Person')
-    >>> len(r)
-    1
-    >>> r[0].name == 'coco'
-    True
+    >>> sorted(elem.name for elem in r)
+    ['coco']
 
 Handle Wildcards correctly:
 
     >>> r = query('/Address/_/Telephone')
-    >>> len(r)
-    3
+    >>> sorted(elem.number for elem in r)
+    ['2298890', '2298891', '22988912']
 
 What about precedence:
 
     >>> r = query('/Address[@street="Forsterstrasse"]/Person/Telephone')
-    >>> len(r)
-    3
+    >>> sorted(elem.number for elem in r)
+    ['2298890', '2298891', '22988912']
     >>> r = query('(/Address[@street="Forsterstrasse"]/Person)/Telephone')
-    >>> len(r)
-    3
+    >>> sorted(elem.number for elem in r)
+    ['2298890', '2298891', '22988912']
     >>> r = query('/Address[@street="Forsterstrasse"]/(Person/Telephone)')
     >>> len(r)
     0
     >>> r = query('(/Address/Person[@name="Basti"])/(Person/Telephone)')
-    >>> len(r)
-    1
+    >>> sorted(elem.number for elem in r)
+    ['22988912']
 
 But pay attention. If you change the query from .."]/(Pers.. to .."](/Pers..
 you get an Address-Result with street name "Forsterstrasse":
@@ -136,11 +133,43 @@ Unions:
     >>> len(r)
     4
 
-Pathways:
+Kleene Closure
+--------------
 
-    >>> r = query('Person.work/Telephone')
+First we need a new database:
+
+    >>> dbroot.clear()
+    >>> transaction.commit()
+
+    >>> objects = ObjectCollection(conn)
+    >>> query = QueryProcessor(parser, objects)
+
+    >>> doc1 = testobject.Document()
+    >>> doc2 = testobject.Document()
+    >>> doc3 = testobject.Document()
+    >>> fol4 = testobject.Folder([doc2])
+    >>> fol3 = testobject.Folder([doc1])
+    >>> fol2 = testobject.Folder([fol3])
+    >>> fol1 = testobject.Folder([fol2])
+    >>> plo1 = testobject.Plone([fol1, fol4, doc3])
+    >>> root = testobject.Root([plo1])
+
+    >>> dbroot['test'] = root
+    >>> transaction.commit()
+    >>> objects.add(root._p_oid)
+
+Now there should be one Plone object under root:
+
+    >>> r = query('/Plone')
+    >>> len(r) == 1 and r[0] == plo1
+    True
+
+    >>> r = query('/Plone/_/Document')
+    >>> len(r) == 1 and r[0] == doc2
+    True
+
+Get all Documents which are under any number of Folders:
+
+    >>> r = query('/Plone/Folder*/Document')
     >>> len(r)
-    2
-    >>> r = query('Person.work/Telephone[@number="2298890"]')
-    >>> len(r)
-    1
+    3

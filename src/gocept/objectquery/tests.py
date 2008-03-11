@@ -12,7 +12,7 @@ def test_suite():
     suite.addTest(doctest.DocFileSuite( "pathexpressions.txt",
                                         "indexsupport.txt",
                                         "querysupport.txt",
-                                         "collection.txt",
-                                         "processor.txt",
+                                        "collection.txt",
+                                        "processor.txt",
                                         optionflags=doctest.ELLIPSIS))
     return suite

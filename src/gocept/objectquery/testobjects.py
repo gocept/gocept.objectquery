@@ -14,6 +14,10 @@ class Dummy(Persistent):
         for elem in ref:
             self.ref.append(elem)
 
+#
+# testobjects for processor testcases
+#
+
 class Telephone(Dummy):
     def __init__(self, number="", ref=None):
         super(self.__class__, self).__init__(ref)
@@ -35,4 +39,21 @@ class Address(Dummy):
         self.floor = floor
 
 class AddressBook(Dummy):
+    pass
+
+#
+# testobjects for Kleene Closure doctests
+#
+
+
+class Root(Dummy):
+    pass
+
+class Plone(Dummy):
+    pass
+
+class Folder(Dummy):
+    pass
+
+class Document(Dummy):
     pass

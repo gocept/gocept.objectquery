@@ -25,68 +25,42 @@ class QueryProcessor(object):
         result = self._process_qp(qp)
         return self._oids2objects(result)
 
-    def _process_qp(self, qp, structindex=None):
+    def _process_qp(self, qp):
         """ Recursive process of query plan ``qp``. """
         if not qp:
             return None
         func = getattr(self, "_process_" + qp[0])
-        args = [qp[1], len(qp) >= 3 and qp[2] or None, structindex]
-        return func(args)
+        return func(*qp[1:])
 
-    def _process_ELEM(self, args):
-        """ Return all elements from ClassIndex with matching name.
+    def _process_ELEM(self, *args):
+        """ Return all elements from ClassIndex with matching name. """
+        return self.collection.by_class(args[0])
 
-        Returns all elements matching name in args[0] and structure index in
-        args[2].
-        """
-        return self.collection.by_class(args[0], args[2])
-
-    def _process_WILDCARD(self, args):
+    def _process_WILDCARD(self, *args):
         """ Return all elements from ClassIndex. """
         return self.collection.all()
 
-    def _process_ATTR(self, args):
-        """ Return all elements from AttributeIndex matching name.
-
-        Returns all elements matching name in args[0][0] and value in
-        args[0][1] and comparative operator in args[0][2].
-        """
-        return self.collection.by_attr(args[0][0], args[0][1], args[0][2])
-
-    def _process_EAJOIN(self, args):
+    def _process_EAJOIN(self, *args):
         """ Element-Attribute-Join. """
-        return self.collection.eajoin(self._process_qp(args[1]),
-                                        self._process_qp(args[0]))
+        elemlist = self._process_qp(args[1])
+        return self.collection.eajoin(elemlist, *args[0][1])
 
-    def _process_EEJOIN(self, args):
+    def _process_EEJOIN(self, *args):
         """ Element-Element-Join. """
-        elemlist = self._process_qp(args[0])
-        # make sure that elemlist is elemlist and not a pw-tupel
-        attrname = None
-        if type(elemlist) == types.TupleType:
-            attrname = elemlist[1]
-            elemlist = elemlist[0]
-        elem1 = not elemlist and [ self.collection.root() ] or elemlist
-        # only get the successors with are inside the parent StructureIndex
-        successors = []
-        for parent in elem1:
-            successors.extend(self._process_qp(args[1],
-                        self.collection.get_structureindex(parent)))
-        return self.collection.eejoin(elem1, successors, direct=True,
-                                                          way=attrname)
+        elemlist1 = self._process_qp(args[0])
+        if not elemlist1:
+            elemlist1 = [ self.collection.root() ]
+        elemlist2 = self._process_qp(args[1])
+        result_tuples = self.collection.eejoin(elemlist1, elemlist2)
+        return [ elem[1] for elem in result_tuples ]
 
-    def _process_PWJOIN(self, args):
-        """ Path-Way-Join. """
-        elemlist = self._process_qp(args[0])
-        attrname = args[1][1]
-        return (elemlist, attrname)
-
-    def _process_KCJOIN(self, args):
+    def _process_KCJOIN(self, *args):
         """ Element-Occurence-Join. """
-        resultlist = self._process_qp(args[1], args[2])
-        return self.collection.kcjoin(resultlist, args[0])
+        elemlist = self._process_qp(args[1])
+        result_tuples = self.collection.kcjoin(elemlist, args[0])
+        return [ elem[1] for elem in result_tuples if elem ]
 
-    def _process_UNION(self, args):
+    def _process_UNION(self, *args):
         """ Union if two results. """
         return self.collection.union(self._process_qp(args[0]),
                                             self._process_qp(args[1]))
