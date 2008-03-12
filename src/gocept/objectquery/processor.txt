@@ -218,3 +218,9 @@ or more Folders:
     >>> r = query('Plone/Folder/Folder+/Document')
     >>> len(r) == 1 and r[0] == doc1
     True
+
+A special case is the combination of wildcard and ``*'' closure:
+
+    >>> r = query('Plone/_*/Document')
+    >>> len(r) == 3
+    True

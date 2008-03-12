@@ -70,12 +70,12 @@ Attribute vales may also be empty:
 Element can also be a wildcard:
 
     >>> p.parse('/_*/bar')
-    ['EEJOIN', ['EEJOIN', None, ['KCJOIN', '*', ('WILDCARD', '_')]], ('ELEM', 'bar')]
+    ['EEJOIN', None, '/_*/', ('ELEM', 'bar')]
 
 To show the mightiness of the parser, here a more complex example:
 
     >>> p.parse('/foo[@a!="b"]/_*/bar+[@a2="b2 b3"]/fou')
-    ['EEJOIN', ['EEJOIN', ['EEJOIN', ['EEJOIN', None, ['EAJOIN', ['ATTR', ('a', 'b', '!=')], ('ELEM', 'foo')]], ['KCJOIN', '*', ('WILDCARD', '_')]], ['EAJOIN', ['ATTR', ('a2', 'b2 b3', '=')], ['KCJOIN', '+', ('ELEM', 'bar')]]], ('ELEM', 'fou')]
+    ['EEJOIN', ['EEJOIN', ['EEJOIN', None, ['EAJOIN', ['ATTR', ('a', 'b', '!=')], ('ELEM', 'foo')]], '/_*/', ['EAJOIN', ['ATTR', ('a2', 'b2 b3', '=')], ['KCJOIN', '+', ('ELEM', 'bar')]]], ('ELEM', 'fou')]
 
 You may also provide precedence by using round brackets and UNIONs. Here a
 simple example:
@@ -96,7 +96,7 @@ A Union of two EEJOINS
 A really big example with everything possible included:
 
     >>> p.parse('(E1/E2)*/E3/((E4[@A="v"])|(E5/_*/E6))')
-    ['EEJOIN', ['EEJOIN', ['KCJOIN', '*', ['PREC', ['EEJOIN', ('ELEM', 'E1'), ('ELEM', 'E2')]]], ('ELEM', 'E3')], ['PREC', ['UNION', ['PREC', ['EAJOIN', ['ATTR', ('A', 'v', '=')], ('ELEM', 'E4')]], ['PREC', ['EEJOIN', ['EEJOIN', ('ELEM', 'E5'), ['KCJOIN', '*', ('WILDCARD', '_')]], ('ELEM', 'E6')]]]]]
+    ['EEJOIN', ['EEJOIN', ['KCJOIN', '*', ['PREC', ['EEJOIN', ('ELEM', 'E1'), ('ELEM', 'E2')]]], ('ELEM', 'E3')], ['PREC', ['UNION', ['PREC', ['EAJOIN', ['ATTR', ('A', 'v', '=')], ('ELEM', 'E4')]], ['PREC', ['EEJOIN', ('ELEM', 'E5'), '/_*/', ('ELEM', 'E6')]]]]]
 
 Specify a ``way'' through the graph with .way:
 

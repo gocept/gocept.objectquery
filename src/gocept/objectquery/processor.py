@@ -45,11 +45,17 @@ class QueryProcessor(object):
 
     def _process_EEJOIN(self, *args):
         """ Element-Element-Join. """
-        elemlist1 = self._process_qp(args[0])
+        elemlist1 = args[0]
+        elemlist2 = args[1]
+        kcwild = None
+        if elemlist2 == '/_*/':
+            elemlist2 = args[2]
+            kcwild = True
+        elemlist1 = self._process_qp(elemlist1)
         if not elemlist1:
             elemlist1 = [ self.collection.root() ]
-        elemlist2 = self._process_qp(args[1])
-        return self.collection.eejoin(elemlist1, elemlist2)
+        elemlist2 = self._process_qp(elemlist2)
+        return self.collection.eejoin(elemlist1, elemlist2, kcwild)
 
     def _process_KCJOIN(self, *args):
         """ Element-Occurence-Join. """

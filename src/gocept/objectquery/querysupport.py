@@ -77,10 +77,12 @@ class EEJoin(object):
     def __init__(self, structindex):
         self._structindex = structindex
 
-    def __call__(self, E, F):
+    def __call__(self, E, F, kcwild=None):
         """ Returns a set of (e, f) pairs such that e is an ancestor f. """
         resultlist = []
         comparer = getattr(self._structindex, "is_child")
+        if kcwild is not None:
+            comparer = getattr(self._structindex, "is_successor")
         for e in E:
             for f in F:
                 if f[0] is None and f[1] is None and e not in resultlist:

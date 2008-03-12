@@ -27,7 +27,7 @@ class RPEQueryParser(object):
                            [a-zA-Z0-9 ]*
         COMPARER        := COM_EQ / COM_LO_EQ / COM_GR_EQ / COM_GR / COM_LO /
                            COM_NOT_EQ
-        PATH_SEPARATOR  := '/'
+        PATH_SEPARATOR  := '/_*/' / '/'
         WILDCARD        := '_'
         UNION           := '|'
         open_bracket    := '('
@@ -111,9 +111,13 @@ class RPEQueryParser(object):
                 rtemp = self._modify_result(result[3], expression, [])
                 output = ['PWJOIN', output, rtemp]
             elif result[0] == "PATH_SEPARATOR":
+                seperator = expression[result[1]:result[2]]
                 if output == []:
                     output = None
-                output = ['EEJOIN', output]
+                if seperator == '/':
+                    output = ['EEJOIN', output]
+                else:
+                    output = ['EEJOIN', output, seperator]
             elif result[0] == "UNION":
                 output = ['UNION', output]
             elif result[0] == "ELEM":
