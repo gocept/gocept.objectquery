@@ -134,36 +134,25 @@ class KCJoin(object):
     """ Return the Kleene Closure of elemlist. """
     def __init__(self, structindex):
         self.structindex = structindex
+        self.eejoin = EEJoin(self.structindex)
 
     def __call__(self, elemlist, occ):
+        kc = []
+        kc.append(elemlist)
+        while kc[-1] != []:
+            kc.append(self.eejoin(kc[-1], elemlist))
         paths = []
-        elemlist = [ elem[1] for elem in elemlist ]
-        # initialize with paths of len == 1
-        for elem in elemlist:
-            paths.append([elem])
-        # create all possibilities
-        for i in elemlist:
-            for elem in elemlist:
-                for path in paths:
-                    if self.structindex.is_child(elem, path[-1]):
-                        path.append(elem)
-        # delete subpaths which are covered by bigger paths
-        for path1 in paths[:]:
-            for path2 in paths[:]:
-                if self.structindex.is_subpath(path2, path1):
-                    paths.remove(path2)
+        for elem in kc:
+            paths.extend(elem)
         # if occurence == ? remove all paths longer than 1
         if occ == "?":
             for elem in paths[:]:
-                if len(elem) > 1:
+                if elem[0] != elem[1] and not self.structindex.is_child(
+                        elem[1], elem[0]):
                     paths.remove(elem)
-        # only return last item of paths
-        returnlist = []
-        for elem in paths:
-            returnlist.append((elem[0], elem[-1]))
         if occ == "?" or occ == "*":
-            returnlist.append((None, None))
-        return returnlist
+            paths.append((None, None))
+        return paths
 
 class Union(object):
     """ Union of two element lists. """

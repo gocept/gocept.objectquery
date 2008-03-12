@@ -201,3 +201,25 @@ Get all Documents which are under one or more number of Folders:
     >>> r = query('Folder+/Document')
     >>> len(r) == 2 and (r[0] == doc1 or r[1] == doc1) and (r[0] == doc2 or r[1] == doc2) and r[0] != r[1]
     True
+
+You may also query absolute pathlenghts:
+
+    >>> len(query('Plone/Document'))
+    1
+    >>> len(query('Plone/Folder/Document'))
+    1
+    >>> len(query('Plone/Folder/Folder/Document'))
+    0
+    >>> len(query('Plone/Folder/Folder/Folder/Document'))
+    1
+
+Furthermore, it is possible to query all Documents, which are located under 2
+or more Folders:
+
+    >>> r = query('Plone/Folder+/Folder/Document')
+    >>> len(r) == 1 and r[0] == doc1
+    True
+
+    >>> r = query('Plone/Folder/Folder+/Document')
+    >>> len(r) == 1 and r[0] == doc1
+    True

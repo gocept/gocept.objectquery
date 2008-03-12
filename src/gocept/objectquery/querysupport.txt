@@ -161,21 +161,16 @@ Insert some values. Two trees: (1, 2, 3, 4, 5) and (1, 6, 7):
     >>> si.insert(6, 1)
     >>> si.insert(7, 6)
 
-Get all elements, which are reachable over 4, 3, 6, 2, 7 or 5:
+Get a Kleene Closure over 4, 3, 6, 2, 5 and 7:
 
     >>> r = kc([(4, 4), (3, 3), (6, 6), (2, 2), (5, 5), (7, 7)], "*")
     >>> sorted(r)
-    [(None, None), (2, 5), (6, 7)]
+    [(None, None), (2, 2), (2, 3), (2, 4), (2, 5), (3, 3), (3, 4), (3, 5), (4, 4), (4, 5), (5, 5), (6, 6), (6, 7), (7, 7)]
     >>> r = kc([(2, 2), (3, 3), (4, 4), (5, 5)], "*")
     >>> sorted(r)
-    [(None, None), (2, 5)]
+    [(None, None), (2, 2), (2, 3), (2, 4), (2, 5), (3, 3), (3, 4), (3, 5), (4, 4), (4, 5), (5, 5)]
 
-There are no paths with a length of 1 within the elements 2, 3, 4, 5:
+Get all paths with a length of zero or one within the elements 2, 3, 4, 5:
 
     >>> kc([(2, 2), (3, 3), (4, 4), (5, 5)], "?")
-    [(None, None)]
-
-But element 6 is the only one within 6, 3, 4:
-
-    >>> sorted(kc([(6, 6), (3, 3), (4, 4)], "?"))
-    [(None, None), (6, 6)]
+    [(2, 2), (3, 3), (4, 4), (5, 5), (2, 3), (3, 4), (4, 5), (None, None)]
