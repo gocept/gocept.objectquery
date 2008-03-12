@@ -89,9 +89,9 @@ class RPEQueryParser(object):
             elif result[0] == "bracket":
                 rtemp = self._modify_result(result[3], expression, [])
                 if output != []:
-                    output.append(rtemp)
+                    output.append(['PREC', rtemp])
                 else:
-                    output = rtemp;
+                    output = ['PREC', rtemp];
                 return output
             elif result[0] == "pathelem":
                 rtemp = self._modify_result(result[3], expression, [])

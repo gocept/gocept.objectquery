@@ -83,8 +83,8 @@ class EEJoin(object):
         comparer = getattr(self._structindex, "is_child")
         for e in E:
             for f in F:
-                relation = (e, f)
-                if relation not in resultlist and comparer(f, e):
+                relation = (e[0], f[1])
+                if relation not in resultlist and comparer(f[0], e[1]):
                     resultlist.append(relation)
         return resultlist
 
@@ -112,9 +112,9 @@ class EAJoin(object):
         """
         resultlist = []
         for e in E:
-            elem = e
+            elem = e[1]
             if self.conn is not None:
-                elem = self.conn.get(e)
+                elem = self.conn.get(elem)
             if not hasattr(elem, attrname):
                 continue
             if e in resultlist:
@@ -133,6 +133,7 @@ class KCJoin(object):
 
     def __call__(self, elemlist, occ):
         paths = []
+        elemlist = [ elem[1] for elem in elemlist ]
         # initialize with paths of len == 1
         for elem in elemlist:
             paths.append([elem])

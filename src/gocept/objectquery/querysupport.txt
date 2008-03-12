@@ -85,17 +85,17 @@ Fill the StructureIndex with data:
 
 A simple query. Which out of 2, 3 and 4 is reachable by 5:
 
-    >>> eejoin([5], [2, 3, 4])
+    >>> eejoin([(5, 5)], [(2, 2), (3, 3), (4, 4)])
     [(5, 4)]
 
 Some related queries:
 
-    >>> eejoin([1], [1])
+    >>> eejoin([(1, 1)], [(1, 1)])
     []
-    >>> eejoin([5], [1])
+    >>> eejoin([(5, 5)], [(1, 1)])
     []
-    >>> eejoin([1], [1, 2, 3, 4, 5])
-    [(1, 2), (1, 3), (1, 5)]
+    >>> eejoin([(1, 1)], [(1, 1), (2, 2), (3, 4), (5, 5)])
+    [(1, 2), (1, 4), (1, 5)]
 
 EAJoin
 ======
@@ -120,20 +120,20 @@ Here some example use-cases:
 
     >>> from gocept.objectquery.querysupport import EAJoin
     >>> ea = EAJoin()
-    >>> r = ea([a, b, c], 'value', 1)
-    >>> len(r) == 1 and r[0] == a
+    >>> r = ea([(a, a), (b, b), (c, c)], 'value', 1)
+    >>> len(r) == 1 and r[0] == (a, a)
     True
 
-    >>> r = ea([a, b, c], 'value', 5, "<")
-    >>> len(r) == 2 and r[0] == a and r[1] == b
+    >>> r = ea([(a, a), (a, b), (a, c)], 'value', 5, "<")
+    >>> len(r) == 2 and r[0] == (a, a) and r[1] == (a, b)
     True
 
-    >>> r = ea([a, b, c], 'offset', 10, "!=")
-    >>> len(r) == 1 and r[0] == c
+    >>> r = ea([(a, a), (b, b), (a, c)], 'offset', 10, "!=")
+    >>> len(r) == 1 and r[0] == (a, c)
     True
 
-    >>> r = ea([b, c], 'value')
-    >>> len(r) == 1 and r[0] == b
+    >>> r = ea([(a, b), (a, c)], 'value')
+    >>> len(r) == 1 and r[0] == (a, b)
     True
 
 KCJoin
@@ -163,19 +163,19 @@ Insert some values. Two trees: (1, 2, 3, 4, 5) and (1, 6, 7):
 
 Get all elements, which are reachable over 4, 3, 6, 2, 7 or 5:
 
-    >>> r = kc([4, 3, 6, 2, 5, 7], "*")
+    >>> r = kc([(4, 4), (3, 3), (6, 6), (2, 2), (5, 5), (7, 7)], "*")
     >>> sorted(r)
     [None, (2, 5), (6, 7)]
-    >>> r = kc([2, 3, 4, 5], "*")
+    >>> r = kc([(2, 2), (3, 3), (4, 4), (5, 5)], "*")
     >>> sorted(r)
     [None, (2, 5)]
 
 There are no paths with a length of 1 within the elements 2, 3, 4, 5:
 
-    >>> kc([2, 3, 4, 5], "?")
+    >>> kc([(2, 2), (3, 3), (4, 4), (5, 5)], "?")
     [None]
 
 But element 6 is the only one within 6, 3, 4:
 
-    >>> sorted(kc([6, 3, 4], "?"))
+    >>> sorted(kc([(6, 6), (3, 3), (4, 4)], "?"))
     [None, (6, 6)]

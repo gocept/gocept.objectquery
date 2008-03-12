@@ -81,29 +81,29 @@ You may also provide precedence by using round brackets and UNIONs. Here a
 simple example:
 
     >>> p.parse('(foo/bar)|boo')
-    ['UNION', ['EEJOIN', ('ELEM', 'foo'), ('ELEM', 'bar')], ('ELEM', 'boo')]
+    ['UNION', ['PREC', ['EEJOIN', ('ELEM', 'foo'), ('ELEM', 'bar')]], ('ELEM', 'boo')]
 
 And here the same example with changed precedence:
 
     >>> p.parse('foo|(bar/boo)')
-    ['UNION', ('ELEM', 'foo'), ['EEJOIN', ('ELEM', 'bar'), ('ELEM', 'boo')]]
+    ['UNION', ('ELEM', 'foo'), ['PREC', ['EEJOIN', ('ELEM', 'bar'), ('ELEM', 'boo')]]]
 
 A Union of two EEJOINS
 
     >>> p.parse('(foo/bar)|(boo/far)')
-    ['UNION', ['EEJOIN', ('ELEM', 'foo'), ('ELEM', 'bar')], ['EEJOIN', ('ELEM', 'boo'), ('ELEM', 'far')]]
+    ['UNION', ['PREC', ['EEJOIN', ('ELEM', 'foo'), ('ELEM', 'bar')]], ['PREC', ['EEJOIN', ('ELEM', 'boo'), ('ELEM', 'far')]]]
 
 A really big example with everything possible included:
 
     >>> p.parse('(E1/E2)*/E3/((E4[@A="v"])|(E5/_*/E6))')
-    ['EEJOIN', ['EEJOIN', ['KCJOIN', '*', ['EEJOIN', ('ELEM', 'E1'), ('ELEM', 'E2')]], ('ELEM', 'E3')], ['UNION', ['EAJOIN', ['ATTR', ('A', 'v', '=')], ('ELEM', 'E4')], ['EEJOIN', ['EEJOIN', ('ELEM', 'E5'), ['KCJOIN', '*', ('WILDCARD', '_')]], ('ELEM', 'E6')]]]
+    ['EEJOIN', ['EEJOIN', ['KCJOIN', '*', ['PREC', ['EEJOIN', ('ELEM', 'E1'), ('ELEM', 'E2')]]], ('ELEM', 'E3')], ['PREC', ['UNION', ['PREC', ['EAJOIN', ['ATTR', ('A', 'v', '=')], ('ELEM', 'E4')]], ['PREC', ['EEJOIN', ['EEJOIN', ('ELEM', 'E5'), ['KCJOIN', '*', ('WILDCARD', '_')]], ('ELEM', 'E6')]]]]]
 
 Specify a ``way'' through the graph with .way:
 
     >>> p.parse('/foo.next_elem')
     ['EEJOIN', None, ['PWJOIN', ('ELEM', 'foo'), ('WAY', 'next_elem')]]
     >>> p.parse('(foo/bar.next)|(boo.next/far)')
-    ['UNION', ['EEJOIN', ('ELEM', 'foo'), ['PWJOIN', ('ELEM', 'bar'), ('WAY', 'next')]], ['EEJOIN', ['PWJOIN', ('ELEM', 'boo'), ('WAY', 'next')], ('ELEM', 'far')]]
+    ['UNION', ['PREC', ['EEJOIN', ('ELEM', 'foo'), ['PWJOIN', ('ELEM', 'bar'), ('WAY', 'next')]]], ['PREC', ['EEJOIN', ['PWJOIN', ('ELEM', 'boo'), ('WAY', 'next')], ('ELEM', 'far')]]]
 
 Here some negative RPE-Tests
 ============================

@@ -57,15 +57,16 @@ class ObjectCollection(object):
 
     def root(self):
         """ Return the root object. """
-        return self._structureindex.root()
+        root = self._structureindex.root()
+        return (root, root)
 
     def all(self):
         """ Return all objects. """
-        return self._classindex.all()
+        return [ (elem, elem) for elem in self._classindex.all() ]
 
     def by_class(self, name):
         """ Return a list of objects which match ``name``. """
-        return self._classindex.get(name)
+        return [ (elem, elem) for elem in self._classindex.get(name) ]
 
     def _attr_comp(self, attr, value, comp_op):
         if comp_op is None or comp_op == '=':

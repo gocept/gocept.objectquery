@@ -51,7 +51,7 @@ Add some objects to the collection:
     >>> transaction.commit()
 
     >>> oc.add(a1._p_oid)
-    >>> oc.root() == a1._p_oid
+    >>> oc.root()[0] == a1._p_oid
     True
 
 Verify the indexes:
@@ -82,12 +82,12 @@ The method get_structureindex returns the StructureIndex for a given key:
 Search by classname:
 
     >>> r = oc.by_class("Telephone")
-    >>> conn.get(r[0])
+    >>> conn.get(r[0][0])
     <gocept.objectquery.testobjects.Telephone object at 0x...>
-    >>> conn.get(r[1])
+    >>> conn.get(r[1][0])
     <gocept.objectquery.testobjects.Telephone object at 0x...>
     >>> r = oc.by_class("Address")
-    >>> conn.get(r[0])
+    >>> conn.get(r[0][0])
     <gocept.objectquery.testobjects.Address object at 0x...>
 
 Now search for some object attributes:

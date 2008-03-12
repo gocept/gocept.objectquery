@@ -51,23 +51,26 @@ class QueryProcessor(object):
         if not elemlist1:
             elemlist1 = [ self.collection.root() ]
         elemlist2 = self._process_qp(args[1])
-        result_tuples = self.collection.eejoin(elemlist1, elemlist2)
-        return [ elem[1] for elem in result_tuples ]
+        return self.collection.eejoin(elemlist1, elemlist2)
 
     def _process_KCJOIN(self, *args):
         """ Element-Occurence-Join. """
         elemlist = self._process_qp(args[1])
-        result_tuples = self.collection.kcjoin(elemlist, args[0])
-        return [ elem[1] for elem in result_tuples if elem ]
+        return self.collection.kcjoin(elemlist, args[0])
 
     def _process_UNION(self, *args):
-        """ Union if two results. """
+        """ Union of two results. """
         return self.collection.union(self._process_qp(args[0]),
                                             self._process_qp(args[1]))
+
+    def _process_PREC(self, *args):
+        """  """
+        result = self._process_qp(args[0])
+        return [ (elem[1], elem[1]) for elem in result ]
 
     def _oids2objects(self, oidlist):
         """ Convert the oidlist to objectlist. """
         result = []
         for oid in oidlist:
-            result.append(self.collection._get_object(oid))
+            result.append(self.collection._get_object(oid[1]))
         return result
