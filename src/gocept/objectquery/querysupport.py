@@ -83,6 +83,10 @@ class EEJoin(object):
         comparer = getattr(self._structindex, "is_child")
         for e in E:
             for f in F:
+                if f[0] is None and f[1] is None:
+                    if e not in resultlist:
+                        resultlist.append(e)
+                    continue
                 relation = (e[0], f[1])
                 if relation not in resultlist and comparer(f[0], e[1]):
                     resultlist.append(relation)
@@ -158,7 +162,7 @@ class KCJoin(object):
         for elem in paths:
             returnlist.append((elem[0], elem[-1]))
         if occ == "?" or occ == "*":
-            returnlist.append(None)
+            returnlist.append((None, None))
         return returnlist
 
 class Union(object):

@@ -131,6 +131,8 @@ class StructureIndex(OOIndex):
 
     def is_child(self, key1, key2):
         """ Check if key1 is a direct successor of key2. """
+        if not key1 or not key2:
+            return True   # empty keys return True (see KCJoin)
         for elem1 in self.get(key1):
             for elem2 in self.get(key2):
                 if len(elem1) == len(elem2) + 1 and\

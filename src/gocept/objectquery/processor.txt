@@ -171,5 +171,33 @@ Now there should be one Plone object under root:
 Get all Documents which are under any number of Folders:
 
     >>> r = query('/Plone/Folder*/Document')
-    >>> len(r)
-    3
+    >>> r[0] != r[1] != r[2] and isinstance(r[0], testobject.Document)
+    True
+
+    >>> r = query('Plone/Folder*/Document')
+    >>> r[0] != r[1] != r[2] and isinstance(r[0], testobject.Document)
+    True
+
+    >>> r = query('Folder*/Document')
+    >>> r[0] != r[1] != r[2] and isinstance(r[0], testobject.Document)
+    True
+
+Get all Documents which are under one or zero number of Folders:
+
+    >>> r = query('/Plone/Folder?/Document')
+    >>> len(r) == 2 and (r[0] == doc2 or r[1] == doc2) and (r[0] == doc3 or r[1] == doc3) and r[0] != r[1]
+    True
+
+    >>> r = query('Folder?/Document')
+    >>> len(r) == 3 and r[0] != r[1] != r[2]
+    True
+
+Get all Documents which are under one or more number of Folders:
+
+    >>> r = query('/Plone/Folder+/Document')
+    >>> len(r) == 2 and (r[0] == doc1 or r[1] == doc1) and (r[0] == doc2 or r[1] == doc2) and r[0] != r[1]
+    True
+
+    >>> r = query('Folder+/Document')
+    >>> len(r) == 2 and (r[0] == doc1 or r[1] == doc1) and (r[0] == doc2 or r[1] == doc2) and r[0] != r[1]
+    True

@@ -19,8 +19,6 @@ class QueryProcessor(object):
 
     def __call__(self, expression, pdb=None):
         """ Process expression and return a queryplan. """
-        if pdb:
-            import pdb; pdb.set_trace() 
         qp = self.parser.parse(expression)
         result = self._process_qp(qp)
         return self._oids2objects(result)
@@ -56,7 +54,8 @@ class QueryProcessor(object):
     def _process_KCJOIN(self, *args):
         """ Element-Occurence-Join. """
         elemlist = self._process_qp(args[1])
-        return self.collection.kcjoin(elemlist, args[0])
+        return self._remove_duplicates(
+                        self.collection.kcjoin(elemlist, args[0]))
 
     def _process_UNION(self, *args):
         """ Union of two results. """
@@ -68,9 +67,16 @@ class QueryProcessor(object):
         result = self._process_qp(args[0])
         return [ (elem[1], elem[1]) for elem in result ]
 
+    def _remove_duplicates(self, list):
+        returnlist = []
+        for elem in list:
+            if elem not in returnlist:
+                returnlist.append(elem)
+        return returnlist
+
     def _oids2objects(self, oidlist):
         """ Convert the oidlist to objectlist. """
         result = []
         for oid in oidlist:
             result.append(self.collection._get_object(oid[1]))
-        return result
+        return self._remove_duplicates(result)

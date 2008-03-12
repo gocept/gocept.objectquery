@@ -165,17 +165,17 @@ Get all elements, which are reachable over 4, 3, 6, 2, 7 or 5:
 
     >>> r = kc([(4, 4), (3, 3), (6, 6), (2, 2), (5, 5), (7, 7)], "*")
     >>> sorted(r)
-    [None, (2, 5), (6, 7)]
+    [(None, None), (2, 5), (6, 7)]
     >>> r = kc([(2, 2), (3, 3), (4, 4), (5, 5)], "*")
     >>> sorted(r)
-    [None, (2, 5)]
+    [(None, None), (2, 5)]
 
 There are no paths with a length of 1 within the elements 2, 3, 4, 5:
 
     >>> kc([(2, 2), (3, 3), (4, 4), (5, 5)], "?")
-    [None]
+    [(None, None)]
 
 But element 6 is the only one within 6, 3, 4:
 
     >>> sorted(kc([(6, 6), (3, 3), (4, 4)], "?"))
-    [None, (6, 6)]
+    [(None, None), (6, 6)]
