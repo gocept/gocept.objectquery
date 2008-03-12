@@ -55,15 +55,13 @@ Initialization
 
 Import and create a ZODB to store the indexes:
 
-    >>> from ZODB import FileStorage, DB
+    >>> from ZODB import MappingStorage, DB
     >>> from persistent import Persistent
     >>> import transaction
-    >>> storage = FileStorage.FileStorage('/tmp/test-querysupport.fs')
+    >>> storage = MappingStorage.MappingStorage()
     >>> db = DB(storage)
     >>> conn = db.open()
     >>> dbroot = conn.root()
-    >>> dbroot.clear()
-    >>> transaction.commit()
 
 EEJoin (Element-Element-Join) joins two lists with the help of the
 StructureIndex. First we need a StructureIndex and the EEJoin:
@@ -112,7 +110,8 @@ First instantiate some data:
     >>> class B(object):
     ...     value = 4
     >>> class C(object):
-    ...     offset = 9
+    ...     offset = '9'
+    ...     string = 'something'
 
     >>> a = A(); b = B(); c = C()
 
@@ -128,13 +127,26 @@ Here some example use-cases:
     >>> len(r) == 2 and r[0] == (a, a) and r[1] == (a, b)
     True
 
-    >>> r = ea([(a, a), (b, b), (a, c)], 'offset', 10, "!=")
+    >>> r = ea([(a, a), (b, b), (a, c)], 'offset', '10', "!=")
     >>> len(r) == 1 and r[0] == (a, c)
     True
 
     >>> r = ea([(a, b), (a, c)], 'value')
     >>> len(r) == 1 and r[0] == (a, b)
     True
+
+Strings are parsed into floats, if operator needs them for comparison:
+
+    >>> r = ea([(a, b), (a, c)], 'offset', 5, '>')
+    >>> len(r) == 1 and r[0] == (a, c)
+    True
+
+But if the stored value cant be casted, an exception is raised:
+
+    >>> ea([(a, b), (a, c)], 'string', 5, '>')
+    Traceback (most recent call last):
+    ...
+    ValueError: invalid literal for float(): something
 
 KCJoin
 ======
@@ -172,5 +184,5 @@ Get a Kleene Closure over 4, 3, 6, 2, 5 and 7:
 
 Get all paths with a length of zero or one within the elements 2, 3, 4, 5:
 
-    >>> kc([(2, 2), (3, 3), (4, 4), (5, 5)], "?")
-    [(2, 2), (3, 3), (4, 4), (5, 5), (2, 3), (3, 4), (4, 5), (None, None)]
+    >>> sorted(kc([(2, 2), (3, 3), (4, 4), (5, 5)], "?"))
+    [(None, None), (2, 2), (3, 3), (4, 4), (5, 5)]

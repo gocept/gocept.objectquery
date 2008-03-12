@@ -7,18 +7,13 @@ Initialization
 
 First we need a ZODB for the IndexSupport used by ObjectCollection:
 
-    >>> from ZODB import FileStorage, DB
+    >>> from ZODB import MappingStorage, DB
     >>> from persistent import Persistent
     >>> import transaction
-    >>> storage = FileStorage.FileStorage('/tmp/test-processor.fs')
+    >>> storage = MappingStorage.MappingStorage()
     >>> db = DB(storage)
     >>> conn = db.open()
     >>> dbroot = conn.root()
-
-Purge old data:
-
-    >>> dbroot.clear()
-    >>> transaction.commit()
 
 Then we need some testobjects, which we will store into the ObjectCollection:
 

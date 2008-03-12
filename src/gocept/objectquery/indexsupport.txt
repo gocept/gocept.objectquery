@@ -7,15 +7,13 @@ Initialization
 
 Import and create a ZODB to store the indexes:
 
-    >>> from ZODB import FileStorage, DB
+    >>> from ZODB import MappingStorage, DB
     >>> from persistent import Persistent
     >>> import transaction
-    >>> storage = FileStorage.FileStorage('/tmp/test-indexsupport.fs')
+    >>> storage = MappingStorage.MappingStorage()
     >>> db = DB(storage)
     >>> conn = db.open()
     >>> dbroot = conn.root()
-    >>> dbroot.clear()
-    >>> transaction.commit()
 
 ClassIndex
 ==========
@@ -116,27 +114,26 @@ The private method get lists all paths to the given element:
 
 Check the parent-child-relationship:
 
-    >>> si.is_parent(1, 2)     # is 1 the parent of 2
-    True
-    >>> si.is_parent(2, 3)
-    False
     >>> si.is_child(1, 2)      # is 1 the child of 2
     False
-    >>> si.is_parent(2, 3)
+    >>> si.is_child(2, 1)      # is 2 the child of 1
+    True
+    >>> si.is_child(3, 1)      # is 3 the child of 1
+    True
+    >>> si.is_child(3, 2)      # is 3 the child of 2
     False
-    >>> si.is_child(1, 2) is not si.is_parent(1,2)
+    >>> si.is_child(2, 3)
     True
 
-    >>> si.is_predecessor(1, 4) # is 1 the predecessor of 4
-    True
-    >>> si.is_predecessor(4, 2)
+    >>> si.is_child(4, 1)
     False
-    >>> si.is_successor(4, 1)   # is 4 a successor of 1
+    >>> si.is_child(1, 4)
+    False
+
+    >>> si.is_successor(4, 1)
     True
     >>> si.is_successor(1, 4)
     False
-    >>> si.is_predecessor(1, 4) is not si.is_successor(1, 4)
-    True
 
 You may also validate an element against a list of (sub-)indexes:
 
@@ -205,8 +202,6 @@ Cycles are supported as well:
     >>> si.get(1)
     [(1,), (1, 2, 3, 1)]
 
-    >>> si.is_predecessor(3, 1)
-    True
     >>> si.is_successor(3, 1)
     True
 
@@ -230,6 +225,3 @@ childs (node 3):
     [(1, 2), (1, 4, 2)]
     >>> si.get(3)
     [(1, 2, 3), (1, 4, 2, 3)]
-
-    >>> dbroot.clear()
-    >>> transaction.commit()

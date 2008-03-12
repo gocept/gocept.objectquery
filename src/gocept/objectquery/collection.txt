@@ -7,18 +7,13 @@ Initialization
 
 First we need a ZODB for the IndexSupport used by ObjectCollection:
 
-    >>> from ZODB import FileStorage, DB
+    >>> from ZODB import MappingStorage, DB
     >>> from persistent import Persistent
     >>> import transaction
-    >>> storage = FileStorage.FileStorage('/tmp/test-collection.fs')
+    >>> storage = MappingStorage.MappingStorage()
     >>> db = DB(storage)
     >>> conn = db.open()
     >>> dbroot = conn.root()
-
-Purge old data:
-
-    >>> dbroot.clear()
-    >>> transaction.commit()
 
 Then we need some testobjects, which we will store into the ObjectCollection:
 
@@ -90,45 +85,6 @@ Search by classname:
     >>> conn.get(r[0][0])
     <gocept.objectquery.testobjects.Address object at 0x...>
 
-Now search for some object attributes:
-
-    >>> r = oc.by_attr("number", "22")
-    >>> conn.get(r[0])
-    <gocept.objectquery.testobjects.Telephone object at 0x...>
-    >>> r = oc.by_attr("street", "", "=")
-    >>> r
-    []
-    >>> r = oc.by_attr("street", "", "!=")
-    >>> conn.get(r[0])
-    <gocept.objectquery.testobjects.Address object at 0x...>
-    >>> r = oc.by_attr("number", "33", "<")
-    >>> len(r)
-    1
-    >>> conn.get(r[0]).number
-    '22'
-    >>> r = oc.by_attr("number", "66", ">=")
-    >>> len(r)
-    1
-    >>> conn.get(r[0]).number
-    '66'
-    >>> r = oc.by_attr("number", "66", ">")
-    >>> len(r)
-    0
-
-Exceptions are raised if the comparison operator is not supported...:
-
-    >>> r = oc.by_attr("number", "True", "not")
-    Traceback (most recent call last):
-    ...
-    KeyError: 'not'
-
-... or the comparison value can not be casted into a legal type:
-
-    >>> r = oc.by_attr("street", "mystreet", "<")
-    Traceback (most recent call last):
-    ...
-    ValueError: invalid literal for float(): ...
-
 Adding and removing objects:
 ----------------------------
 
@@ -155,10 +111,6 @@ Verify the correct insertions:
     >>> oc.is_child(t3._p_oid, p1._p_oid)
     False
     >>> oc.is_child(t3._p_oid, p2._p_oid)
-    True
-    >>> oc.is_successor(a1._p_oid, t3._p_oid)
-    False
-    >>> oc.is_successor(t1._p_oid, a1._p_oid)
     True
 
 Successful removing:

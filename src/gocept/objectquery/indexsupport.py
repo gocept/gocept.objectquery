@@ -120,15 +120,6 @@ class StructureIndex(OOIndex):
             del self.index['childs'][key]
         transaction.commit()
 
-    def is_parent(self, key1, key2):
-        """ Check if key1 is a direct predecessor of key2. """
-        for elem1 in self.get(key1):
-            for elem2 in self.get(key2):
-                if len(elem1) + 1 == len(elem2) and\
-                    self._check_path(elem1, elem2):
-                    return True
-        return False
-
     def is_child(self, key1, key2):
         """ Check if key1 is a direct successor of key2. """
         if not key1 or not key2:
@@ -140,16 +131,10 @@ class StructureIndex(OOIndex):
                     return True
         return False
 
-    def is_predecessor(self, key1, key2):
-        """ Check if key1 is a predecessor of key2. """
-        for elem1 in self.get(key1):
-            for elem2 in self.get(key2):
-                if self._check_path(elem1, elem2):
-                    return True
-        return False
-
     def is_successor(self, key1, key2):
         """ Check if key1 is a successor of key2. """
+        if not key1 or not key2:
+            return True   # empty keys return True (see KCJoin)
         for elem1 in self.get(key1):
             for elem2 in self.get(key2):
                 if self._check_path(elem2, elem1):

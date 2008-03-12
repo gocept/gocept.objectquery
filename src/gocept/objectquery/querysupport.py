@@ -83,9 +83,8 @@ class EEJoin(object):
         comparer = getattr(self._structindex, "is_child")
         for e in E:
             for f in F:
-                if f[0] is None and f[1] is None:
-                    if e not in resultlist:
-                        resultlist.append(e)
+                if f[0] is None and f[1] is None and e not in resultlist:
+                    resultlist.append(e)
                     continue
                 relation = (e[0], f[1])
                 if relation not in resultlist and comparer(f[0], e[1]):
@@ -115,6 +114,7 @@ class EAJoin(object):
         attrname is compared against attrvalue with compare operator attrcomp.
         """
         resultlist = []
+        # XXX: ToDo use ValueIndex instead of connection
         for e in E:
             elem = e[1]
             if self.conn is not None:
@@ -133,8 +133,7 @@ class EAJoin(object):
 class KCJoin(object):
     """ Return the Kleene Closure of elemlist. """
     def __init__(self, structindex):
-        self.structindex = structindex
-        self.eejoin = EEJoin(self.structindex)
+        self.eejoin = EEJoin(structindex)
 
     def __call__(self, elemlist, occ):
         kc = []
@@ -147,9 +146,9 @@ class KCJoin(object):
         # if occurence == ? remove all paths longer than 1
         if occ == "?":
             for elem in paths[:]:
-                if elem[0] != elem[1] and not self.structindex.is_child(
-                        elem[1], elem[0]):
+                if elem[0] != elem[1]:
                     paths.remove(elem)
+        # add a ``None-Tuple'' to allow EEJoins without delivered elems
         if occ == "?" or occ == "*":
             paths.append((None, None))
         return paths
@@ -159,4 +158,3 @@ class Union(object):
     def __call__(self, elemlist1, elemlist2):
         elemlist1.extend(elemlist2)
         return elemlist1
-

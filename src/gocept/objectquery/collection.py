@@ -28,14 +28,6 @@ class ObjectCollection(object):
         self._eajoin = EAJoin(self.conn) # XXX: ValueIndex instead of conn
         self._kcjoin = KCJoin(self._structureindex)
         self._union = Union()
-        # init AttributeComparison
-        self.comp_map = {
-            "==": lambda x, y: x == y,
-            "<": lambda x, y: float(x) < float(y),
-            "<=": lambda x, y: float(x) <= float(y),
-            ">": lambda x, y: float(x) > float(y),
-            ">=": lambda x, y: float(x) >= float(y),
-            "!=": lambda x, y: x != y }
 
     def add(self, object_oid, parent_oid=None, cycle_prev=None):
         """ Index the object to the ObjectCollection. """
@@ -68,26 +60,11 @@ class ObjectCollection(object):
         """ Return a list of objects which match ``name``. """
         return [ (elem, elem) for elem in self._classindex.get(name) ]
 
-    def _attr_comp(self, attr, value, comp_op):
-        if comp_op is None or comp_op == '=':
-            comp_op = '=='
-        return self.comp_map[comp_op](attr, value)
+    def is_child(self, *args):
+        return self._structureindex.is_child(*args)
 
-    def by_attr(self, name, value=None, comp_op=None):
-        """ Return a list of objects which have an attribute ``name``. """
-        classlist = []
-        for elem_oid in self._attributeindex.get(name):
-            elem = self._get_object(elem_oid)
-            if value is None or self._attr_comp(getattr(elem, name), value,
-                                                                    comp_op):
-                classlist.append(elem_oid)
-        return classlist
-
-    def is_child(self, key1_oid, key2_oid):
-        return self._structureindex.is_child(key1_oid, key2_oid)
-
-    def is_successor(self, key1_oid, key2_oid):
-        return self._structureindex.is_successor(key1_oid, key2_oid)
+    def is_successor(self, *args):
+        return self._structureindex.is_successor(*args)
 
     def eejoin(self, *args):
         return self._eejoin(*args)
@@ -95,11 +72,11 @@ class ObjectCollection(object):
     def eajoin(self, *args):
         return self._eajoin(*args)
 
-    def kcjoin(self, elemlist, occ):
-        return self._kcjoin(elemlist, occ)
+    def kcjoin(self, *args):
+        return self._kcjoin(*args)
 
-    def union(self, elemlist1, elemlist2):
-        return self._union(elemlist1, elemlist2)
+    def union(self, *args):
+        return self._union(*args)
 
     def _get_classname(self, object):
         """ Return the classname of object. """
