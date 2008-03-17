@@ -135,18 +135,16 @@ Here some example use-cases:
     >>> len(r) == 1 and r[0] == (a, b)
     True
 
-Strings are parsed into floats, if operator needs them for comparison:
+You may compare strings with integers as well. The python comparison logic is
+used:
 
     >>> r = ea([(a, b), (a, c)], 'offset', 5, '>')
     >>> len(r) == 1 and r[0] == (a, c)
     True
 
-But if the stored value cant be casted, an exception is raised:
-
-    >>> ea([(a, b), (a, c)], 'string', 5, '>')
-    Traceback (most recent call last):
-    ...
-    ValueError: invalid literal for float(): something
+    >>> r = ea([(a, b), (a, c)], 'string', 5, '>')
+    >>> len(r) == 1 and r[0] == (a, c)
+    True
 
 KCJoin
 ======

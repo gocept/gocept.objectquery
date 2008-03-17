@@ -99,10 +99,10 @@ class EAJoin(object):
         self.conn = connection
         self.comp_map = {
             "==": lambda x, y: x == y,
-            "<": lambda x, y: float(x) < float(y),
-            "<=": lambda x, y: float(x) <= float(y),
-            ">": lambda x, y: float(x) > float(y),
-            ">=": lambda x, y: float(x) >= float(y),
+            "<": lambda x, y: x < y,
+            "<=": lambda x, y: x <= y,
+            ">": lambda x, y: x > y,
+            ">=": lambda x, y: x >= y,
             "!=": lambda x, y: x != y }
 
     def _attr_comp(self, attr, value, comp_op):
