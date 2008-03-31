@@ -133,8 +133,6 @@ class StructureIndex(OOIndex):
 
     def is_successor(self, key1, key2):
         """ Check if key1 is a successor of key2. """
-        if not key1 or not key2:
-            return True   # empty keys return True (see KCJoin)
         for elem1 in self.get(key1):
             for elem2 in self.get(key2):
                 if self._check_path(elem2, elem1):
@@ -188,19 +186,8 @@ class StructureIndex(OOIndex):
         """ Check if path1 is reachable by path2. """
         if len(path1) > len(path2):
             return False
-        if path1 == path2:
-            return False
         for i in range(len(path1)):
             if path1[i] != path2[i]:
                 return False
         return True
 
-    def is_subpath(self, path1, path2):
-        """ Check is path1 is a subpath of path2. """
-        if len(path1) > len(path2):
-            return False
-        if path1 == path2:
-            return False
-        if path1 == path2[len(path2)-len(path1):]:
-            return True
-        return False

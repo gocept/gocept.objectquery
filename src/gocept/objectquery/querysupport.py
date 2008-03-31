@@ -9,7 +9,7 @@ class ObjectParser(object):
         self.attributes = []     # saves all found attributes to one object
         self.descendants = []    # saves all found descendands to one object
 
-    def parse(self, object):
+    def parse(self, object, intern=None):
         self.__init__()
         if hasattr(object, "__dict__"):
             for x in object.__dict__.keys():
@@ -30,13 +30,13 @@ class ObjectParser(object):
         for elem in object:
             if self._is_list(elem) or self._is_tuple(elem) or\
                   self._is_dict(elem):
-                self.parse(elem)
+                self._traverse(elem)
             elif self._is_class(elem):
                 self.descendants.append(elem)
 
     def _is_list(self, object):
         if isinstance(object, types.ListType) or\
-              str(type(object)).startswith("<class 'persistent"):
+              str(type(object)).endswith("PersistentList'>"):
             return True
         return False
 
@@ -47,15 +47,13 @@ class ObjectParser(object):
 
     def _is_dict(self, object):
         if isinstance(object, types.DictType) or\
-              str(type(object)).startswith("<class 'persistent"):
+              str(type(object)).endswith("PersistentDict'>"):
             return True
         return False
 
     def _is_class(self, object):
         classstring = str(type(object))
         if classstring.startswith("<class"):
-            if classstring.startswith("<class 'persistent"):
-                return False
             return True
         return False
 

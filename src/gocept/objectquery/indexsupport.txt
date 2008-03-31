@@ -96,6 +96,13 @@ Insert some values:
     >>> si.insert(5, 1)
     >>> si.insert(4, 5)
 
+The index value must be greater than 0:
+
+    >>> si.insert(0, 4)
+    Traceback (most recent call last):
+    ...
+    ValueError: Key must be > 0.
+
 StructureIndex stores the childs of a key for internal tasks:
 
     >>> si.index['childs'][1]
@@ -103,7 +110,7 @@ StructureIndex stores the childs of a key for internal tasks:
     >>> si.index['childs'][4]
     []
 
-The private method get lists all paths to the given element:
+The method get lists all paths to the given element:
 
     >>> si.get(2)
     [(1, 2), (1, 3, 2)]
@@ -111,6 +118,10 @@ The private method get lists all paths to the given element:
     [(1, 3)]
     >>> si.get(4)
     [(1, 2, 4), (1, 3, 2, 4), (1, 5, 4)]
+    >>> si.get(0)
+    Traceback (most recent call last):
+    ...
+    ValueError: Key must be > 0.
 
 Check the parent-child-relationship:
 
@@ -128,6 +139,9 @@ Check the parent-child-relationship:
     >>> si.is_child(4, 1)
     False
     >>> si.is_child(1, 4)
+    False
+
+    >>> si.is_child(1, 1)
     False
 
     >>> si.is_successor(4, 1)

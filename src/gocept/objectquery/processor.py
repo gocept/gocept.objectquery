@@ -2,20 +2,18 @@
 # See also LICENSE.txt
 # $Id$
 
-from gocept.objectquery.resultset import ResultSet
 import types
 
 class QueryProcessor(object):
     """ Processes a query to the collection and returns the results.
 
     QueryProcessor parses a query with the given parser. It returns a
-    resultset object with the results from the given collection.
+    list with resulting objects from the given collection.
     """
 
     def __init__(self, parser, collection):
         self.collection = collection
         self.parser = parser
-        self.resultset = ResultSet()
 
     def __call__(self, expression, pdb=None):
         """ Process expression and return a queryplan. """

@@ -63,9 +63,6 @@ class ObjectCollection(object):
     def is_child(self, *args):
         return self._structureindex.is_child(*args)
 
-    def is_successor(self, *args):
-        return self._structureindex.is_successor(*args)
-
     def eejoin(self, *args):
         return self._eejoin(*args)
 
@@ -80,8 +77,6 @@ class ObjectCollection(object):
 
     def _get_classname(self, object):
         """ Return the classname of object. """
-        if not str(type(object)).startswith("<class"):
-            raise ValueError("%s is not an instantiated class." % object)
         return object.__class__.__name__
 
     def _get_oid(self, object):
@@ -91,12 +86,6 @@ class ObjectCollection(object):
     def _get_object(self, oid):
         """ Return the object corresponding to oid. """
         return self.conn.get(oid)
-
-    def get_structureindex(self, key=None):
-        """ Return the StructureIndex for a given key (or the root). """
-        if key is None:
-             key = self._structureindex.root()
-        return self._structureindex.get(key)
 
     def delete(self, object_oid, parent_oid=None):
         """ Main remove method. """

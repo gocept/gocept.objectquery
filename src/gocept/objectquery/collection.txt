@@ -64,16 +64,6 @@ Verify the indexes:
     ...
     IndexError: list index out of range
 
-The method get_structureindex returns the StructureIndex for a given key:
-
-    >>> result = oc.get_structureindex(t1._p_oid)[0]
-    >>> conn.get(result[0])
-    <gocept.objectquery.testobjects.Address object at 0x...>
-    >>> conn.get(result[1])
-    <gocept.objectquery.testobjects.Person object at 0x...>
-    >>> conn.get(result[2])
-    <gocept.objectquery.testobjects.Telephone object at 0x...>
-
 Search by classname:
 
     >>> r = oc.by_class("Telephone")

@@ -16,7 +16,8 @@ we create such an object:
 
     >>> class ToParse(object):
     ...     def __init__(self):
-    ...         self.some_var = ["some tupel", Child()]
+    ...         self.some_var = ["some tupel", (Child(), Child())]
+    ...         self.other_var = {"foo": "bar"}
     ...         self._private_var = 10
     ...         self.desc = Child()
     ...
@@ -39,13 +40,19 @@ To parse an object, use the parse method:
 To get all found attributes, use the result() method:
 
     >>> op.result("attributes")
-    ['some_var', '_private_var', 'desc']
+    ['some_var', '_private_var', 'other_var', 'desc']
 
     >>> descendants = op.result("descendants")
     >>> descendants
     [<Child object at 0x...>, <Child object at 0x...>]
     >>> len(descendants)
-    2
+    3
+
+QueryParser uses a method _dict2list, which converts a dictionary to a list of
+values:
+
+    >>> op._dict2list({'foo1': ['boo', 'baz'], 'foo2': ('goo', 'gaz'), 'foo3': {'xoo': 'xar'}})
+    ['boo', 'baz', 'goo', 'gaz', 'xar']
 
 EEJoin
 ======
@@ -133,6 +140,12 @@ Here some example use-cases:
 
     >>> r = ea([(a, b), (a, c)], 'value')
     >>> len(r) == 1 and r[0] == (a, b)
+    True
+
+Duplicate results are well ignored:
+
+    >>> r = ea([(a, a), (a, a)], 'value', 1)
+    >>> len(r) == 1 and r[0] == (a, a)
     True
 
 You may compare strings with integers as well. The python comparison logic is
