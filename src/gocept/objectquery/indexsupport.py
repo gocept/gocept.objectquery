@@ -5,7 +5,6 @@
 import types
 from persistent import Persistent
 from BTrees.OOBTree import OOBTree, OOTreeSet
-import transaction
 
 class IndexItem(OOTreeSet):
     """ Holds any number of integer values. """
@@ -28,14 +27,12 @@ class OOIndex(Persistent):
         if not self.index.has_key(key):
             self.index[key] = IndexItem()
         self.index[key].insert(value)
-        transaction.commit()
 
     def delete(self, key, value):
         """ Delete value from key. """
         self.index[key].remove(value)
         if len(self.index[key]) == 0:
             del self.index[key]
-        transaction.commit()
 
     def get(self, key):
         """ Get the IndexItem for a given key. """
@@ -101,7 +98,6 @@ class StructureIndex(OOIndex):
             self.index['childs'][key] = IndexItem()
         for child in self.index['childs'][key]:
             self._update_childs(child, new_path, [key])
-        transaction.commit()
 
     def delete(self, key, parent=None):
         """ Delete the key from the index. """
@@ -118,7 +114,6 @@ class StructureIndex(OOIndex):
         if len(self.index[key]) == 0:
             del self.index[key]
             del self.index['childs'][key]
-        transaction.commit()
 
     def is_child(self, key1, key2):
         """ Check if key1 is a direct successor of key2. """
