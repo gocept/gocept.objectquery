@@ -11,16 +11,18 @@ class ObjectParser(object):
 
     def parse(self, object, intern=None):
         self.__init__()
-        if hasattr(object, "__dict__"):
-            for x in object.__dict__.keys():
-                self.attributes.append(x)
-                elem = object.__dict__[x]
-                if self._is_list(elem) or self._is_tuple(elem):
-                    self._traverse(elem)
-                elif self._is_dict(elem):
-                    self._traverse(self._dict2list(elem))
-                elif self._is_class(elem):
-                    self.descendants.append(elem)
+        attrcaller = getattr(object, "__dict__")
+        if hasattr(object, "__getstate__"):
+            attrcaller = getattr(object, "__getstate__")() # Persistent magic
+        for x in attrcaller:
+            self.attributes.append(x)
+            elem = attrcaller[x]
+            if self._is_list(elem) or self._is_tuple(elem):
+                self._traverse(elem)
+            elif self._is_dict(elem):
+                self._traverse(self._dict2list(elem))
+            elif self._is_class(elem):
+                self.descendants.append(elem)
 
     def result(self, filter=None):
         if filter is not None:
@@ -106,6 +108,10 @@ class EAJoin(object):
     def _attr_comp(self, attr, value, comp_op):
         if comp_op is None or comp_op == '=':
             comp_op = '=='
+        if type(attr) == types.IntType:
+            value = int(value)
+        if type(attr) == types.FloatType:
+            value = float(value)
         return self.comp_map[comp_op](attr, value)
 
     def __call__(self, E, attrname, attrvalue=None, attrcomp=None):
