@@ -18,7 +18,7 @@ def create_btree(n, c=1):
     temp.id = right.id + 1
     return temp
 
-heights = [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]
+heights = [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
 
 storage = MappingStorage.MappingStorage()
 db = DB(storage)
@@ -26,8 +26,7 @@ conn = db.open()
 dbroot = conn.root()
 parser = RPEQueryParser()
 
-print " h    obj  |    bi     q1     q2     q3     q4     q5 "
-print "------------------------------------------------------"
+print " h     obj  |      bi      q1      q2      q3      q4      q5  "
 
 for n in heights:
     dbroot.clear()
@@ -41,7 +40,7 @@ for n in heights:
     oq.add(dbroot[0]._p_oid)
     transaction.commit()
     t1 = time.time()
-    print "%2i %7i | %5.2fs" %(n, objects, (t1-t0)),
+    print "%2i %8i | %7.2fs" %(n, objects, (t1-t0)),
     i = 1
     queries = ['Dummy[@id="%i"]' %(objects/2), '/Dummy', '/Dummy/Dummy/Dummy',
                'Dummy[@id="%i"]/_*/Dummy[@id="1"]' %objects,
@@ -50,6 +49,6 @@ for n in heights:
         t0 = time.time()
         r = query(q)
         t1 = time.time()
-        print "%5.2fs" %(t1-t0),
+        print "%6.2fs" %(t1-t0),
         i = i + 1
     print ""
