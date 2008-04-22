@@ -47,7 +47,7 @@ class RPEQueryParser(object):
         '''
         self.parser = simpleparse.parser.Parser(declaration)
 
-    def _modify_result(self, result, expression, output):
+    def _build_queryplan(self, result, expression, output):
         """ Modifies the SimpleParse result for better usability.
 
             SimpleParse returns the same result format as the one from the
@@ -71,7 +71,7 @@ class RPEQueryParser(object):
                   )]
                 )]
 
-            And here, what we want and what _modify_result returns:
+            And here, what we want and what _build_queryplan returns:
 
                 ['EEJOIN',
                   ('ELEM', 'foo'),
@@ -81,34 +81,34 @@ class RPEQueryParser(object):
 
         if isinstance(result[0], basestring):
             if result[0] == "rpe":
-                return self._modify_result(result[3], expression, [])
+                return self._build_queryplan(result[3], expression, [])
             elif result[0] == "expr":
-                return self._modify_result(result[3], expression, output)
+                return self._build_queryplan(result[3], expression, output)
             elif result[0] == "normal":
-                return self._modify_result(result[3], expression, output)
+                return self._build_queryplan(result[3], expression, output)
             elif result[0] == "bracket":
-                rtemp = self._modify_result(result[3], expression, [])
+                rtemp = self._build_queryplan(result[3], expression, [])
                 if output != []:
                     output.append(['PREC', rtemp])
                 else:
                     output = ['PREC', rtemp];
                 return output
             elif result[0] == "pathelem":
-                rtemp = self._modify_result(result[3], expression, [])
+                rtemp = self._build_queryplan(result[3], expression, [])
                 if output == []:
                     output = rtemp
                 else:
                     output.append(rtemp)
             elif result[0] == "occurence":
-                rtemp = self._modify_result(result[3], expression, [])
+                rtemp = self._build_queryplan(result[3], expression, [])
                 output = ['KCJOIN', rtemp, output]
             elif result[0] == "predicate":
-                rtemp = self._modify_result(result[3], expression, [])
+                rtemp = self._build_queryplan(result[3], expression, [])
                 rtemp = (rtemp[0], rtemp[2], rtemp[1])
                 rtemp = ["ATTR", rtemp]
                 output = ['EAJOIN', rtemp, output]
             elif result[0] == "pathway":
-                rtemp = self._modify_result(result[3], expression, [])
+                rtemp = self._build_queryplan(result[3], expression, [])
                 output = ['PWJOIN', output, rtemp]
             elif result[0] == "PATH_SEPARATOR":
                 seperator = expression[result[1]:result[2]]
@@ -140,7 +140,7 @@ class RPEQueryParser(object):
                 output.append(expression[result[1]:result[2]])
         else:
             for i in result:
-                output = (self._modify_result(i, expression, output))
+                output = (self._build_queryplan(i, expression, output))
         return output
 
     def parse(self, expression):
@@ -150,4 +150,4 @@ class RPEQueryParser(object):
             succ, child, nextchar = self.parser.parse(expression, "rpe")
             if (not succ or nextchar != len(expression)):
                 raise SyntaxError("Wrong syntax in regular path expression.")
-        return self._modify_result(child, expression, [])
+        return self._build_queryplan(child, expression, [])

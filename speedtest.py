@@ -18,7 +18,7 @@ def create_btree(n, c=1):
     temp.id = right.id + 1
     return temp
 
-heights = [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]
+heights = [2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18]
 
 storage = MappingStorage.MappingStorage()
 db = DB(storage)
@@ -42,6 +42,7 @@ for n in heights:
     t1 = time.time()
     print "%2i %8i | %7.2fs" %(n, objects, (t1-t0)),
     i = 1
+    r = query('Dummy[@id="1"]')
     queries = ['Dummy[@id="%i"]' %(objects/2), '/Dummy', '/Dummy/Dummy/Dummy',
                'Dummy[@id="%i"]/_*/Dummy[@id="1"]' %objects,
                'Dummy[@id<"1000"]']
