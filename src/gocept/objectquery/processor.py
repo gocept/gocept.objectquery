@@ -1,8 +1,9 @@
-# Copyright (c) 2007 gocept gmbh & co. kg
+# Copyright (c) 2007-2008 gocept gmbh & co. kg
 # See also LICENSE.txt
 # $Id$
 
-import types
+from zope.interface import implements
+from gocept.objectquery.interfaces import IQueryProcessor
 
 class QueryProcessor(object):
     """ Processes a query to the collection and returns the results.
@@ -10,12 +11,14 @@ class QueryProcessor(object):
     QueryProcessor parses a query with the given parser. It returns a
     list with resulting objects from the given collection.
     """
+    implements(IQueryProcessor)
+
 
     def __init__(self, parser, collection):
         self.collection = collection
         self.parser = parser
 
-    def __call__(self, expression, pdb=None):
+    def __call__(self, expression):
         """ Process expression and return a queryplan. """
         qp = self.parser.parse(expression)
         result = self._process_qp(qp)

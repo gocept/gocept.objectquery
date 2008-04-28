@@ -1,3 +1,7 @@
+# Copyright (c) 2008 gocept gmbh & co. kg
+# See also LICENSE.txt
+# $Id$
+
 import transaction, time
 from gocept.objectquery.testobjects import Dummy
 from ZODB import MappingStorage, DB

@@ -1,11 +1,15 @@
-# Copyright (c) 2007 gocept gmbh & co. kg
+# Copyright (c) 2007-2008 gocept gmbh & co. kg
 # See also LICENSE.txt
 # $Id$
 
 import simpleparse.parser
+from zope.interface import implements
+from gocept.objectquery.interfaces import IQueryParser
 
 class RPEQueryParser(object):
     """ Parses a rpe query and returns a readable result. """
+    implements(IQueryParser)
+
     def __init__(self):
         declaration = r'''
         rpe             := expr, ((UNION / PATH_SEPARATOR), expr)?

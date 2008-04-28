@@ -1,4 +1,4 @@
-# Copyright (c) 2007 gocept gmbh & co. kg
+# Copyright (c) 2007-2008 gocept gmbh & co. kg
 # See also LICENSE.txt
 # $Id$
 
@@ -9,7 +9,8 @@ from zope.testing import doctest
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTest(doctest.DocFileSuite( "pathexpressions.txt",
+    suite.addTest(doctest.DocFileSuite( "interfaces.txt",
+                                        "pathexpressions.txt",
                                         "indexsupport.txt",
                                         "querysupport.txt",
                                         "collection.txt",

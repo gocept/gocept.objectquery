@@ -1,0 +1,33 @@
+====================
+Verifying interfaces
+====================
+
+    >>> from zope.interface.verify import verifyObject
+
+Verify the QueryParser against the interface:
+
+    >>> from gocept.objectquery.interfaces import IQueryParser
+    >>> from gocept.objectquery.pathexpressions import RPEQueryParser
+    >>> parser = RPEQueryParser()
+    >>> verifyObject(IQueryParser, parser)
+    True
+
+Verify the ObjectCollection against its interface:
+
+    >>> from gocept.objectquery.interfaces import IObjectCollection
+    >>> from gocept.objectquery.collection import ObjectCollection
+    >>> from ZODB import MappingStorage, DB
+    >>> conn = DB(MappingStorage.MappingStorage()).open()
+    >>> objects = ObjectCollection(conn)
+    >>> verifyObject(IObjectCollection, objects)
+    True
+
+Be sure, that the QueryProcessor implements its interface definition:
+
+    >>> from gocept.objectquery.interfaces import IQueryProcessor
+    >>> from zope.interface.verify import verifyObject
+    >>> from gocept.objectquery.processor import QueryProcessor
+    >>> query = QueryProcessor(parser, objects)
+    >>> verifyObject(IQueryProcessor, query)
+    True
+

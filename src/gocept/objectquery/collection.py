@@ -1,4 +1,4 @@
-# Copyright (c) 2007 gocept gmbh & co. kg
+# Copyright (c) 2007-2008 gocept gmbh & co. kg
 # See also LICENSE.txt
 # $Id$
 
@@ -6,6 +6,9 @@ from gocept.objectquery.indexsupport import ClassIndex, AttributeIndex,\
     StructureIndex
 from gocept.objectquery.querysupport import ObjectParser, EEJoin, EAJoin,\
     KCJoin, Union
+from zope.interface import implements
+from gocept.objectquery.interfaces import IObjectCollection
+
 
 class ObjectCollection(object):
     """ ObjectCollection provides functionallity to QueryProcessor.
@@ -13,6 +16,7 @@ class ObjectCollection(object):
         It helps to query for objects and bounds the indexes from
         IndexSupport.
     """
+    implements(IObjectCollection)
 
     def __init__(self, connection):
         """ Initialize ObjectCollection. """
