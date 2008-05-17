@@ -1,0 +1,12 @@
+====
+TODO
+====
+
+- Replace flat class names with hierarchical names (what about anonymous
+  classes?)
+- Use separate database for the object collection to store its indices.
+- The __getstate__/__dict__ access doesn't always work. Find a better way to
+  discover all attributes of an object.
+- The object collection's `add` method should not work recursively.
+- The `all` method returns a list of tuples due to an internal requirement.
+  This should be hidden.
