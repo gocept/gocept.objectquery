@@ -58,9 +58,7 @@ Delete some items from the index:
     KeyError: 2
     >>> ci.delete("Course", 1)
     >>> ci.get("Course")
-    Traceback (most recent call last):
-    ...
-    KeyError: 'Course'
+    []
 
 AttributeIndex
 ==============

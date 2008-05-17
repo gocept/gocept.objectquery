@@ -105,8 +105,8 @@ Verify the correct insertions:
 
 Successful removing:
 
-    >>> oc.delete(t1._p_oid, p1._p_oid)
     >>> p1.work.remove(t1)
+    >>> oc.delete(t1._p_oid, p1._p_oid)
     >>> transaction.commit()
     >>> len(oc.by_class("Telephone"))
     2

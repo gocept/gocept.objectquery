@@ -42,13 +42,13 @@ class OOIndex(Persistent):
 
     def get(self, key):
         """ Get the IndexItem for a given key. """
-        return list(self.index[key])
+        if key in self.index:
+            return list(self.index[key])
+        return []
 
     def has_key(self, key):
         """ Return True if key is present, otherwise False. """
-        if self.index.has_key(key):
-            return True
-        return False
+        return key in self.index
 
     def all(self):
         """ Return all objects from the index. """
@@ -75,8 +75,7 @@ class StructureIndex(OOIndex):
     """
 
     def __init__(self, dbroot):
-        """ """
-        super(self.__class__, self).__init__(dbroot)
+        super(StructureIndex, self).__init__(dbroot)
         self.index['childs'] = OOBTree()    # Childindex, needed for deletion
 
     def insert(self, key, parent=None):

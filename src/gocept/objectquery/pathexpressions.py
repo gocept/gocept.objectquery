@@ -25,10 +25,7 @@ class RPEQueryParser(object):
         WAY             := ELEM
         ID              := ELEM
         ELEM            := [a-zA-Z0-9_]+
-        ATTRVALUE       := text / quoted_text
-        text            := [a-zA-Z0-9 ]*, quoted_text*
-        quoted_text     := [a-zA-Z0-9 ]*, '\"', [a-zA-Z0-9 ]+, '\"',
-                           [a-zA-Z0-9 ]*
+        ATTRVALUE       := -["]*
         COMPARER        := COM_EQ / COM_LO_EQ / COM_GR_EQ / COM_GR / COM_LO /
                            COM_NOT_EQ
         PATH_SEPARATOR  := '/_*/' / '/'
@@ -153,5 +150,5 @@ class RPEQueryParser(object):
         if (expression is not None):
             succ, child, nextchar = self.parser.parse(expression, "rpe")
             if (not succ or nextchar != len(expression)):
-                raise SyntaxError("Wrong syntax in regular path expression.")
+                raise SyntaxError("%r %r %r" % (succ, child, nextchar))
         return self._build_queryplan(child, expression, [])

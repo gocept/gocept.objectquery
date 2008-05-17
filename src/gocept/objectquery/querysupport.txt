@@ -48,11 +48,6 @@ To get all found attributes, use the result() method:
     >>> len(descendants)
     3
 
-QueryParser uses a method _dict2list, which converts a dictionary to a list of
-values:
-
-    >>> op._dict2list({'foo1': ['boo', 'baz'], 'foo2': ('goo', 'gaz'), 'foo3': {'xoo': 'xar'}})
-    ['boo', 'baz', 'goo', 'gaz', 'xar']
 
 EEJoin
 ======

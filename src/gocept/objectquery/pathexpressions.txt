@@ -54,14 +54,6 @@ parameters:
     >>> p.parse('foo/bar*[@a="b"]')
     ['EEJOIN', ('ELEM', 'foo'), ['EAJOIN', ['ATTR', ('a', 'b', '=')], ['KCJOIN', '*', ('ELEM', 'bar')]]]
 
-Attribute values may contain quoted strings:
-
-    >>> p.parse('foo/bar[@a=="b\"c d\"e"]')
-    ['EEJOIN', ('ELEM', 'foo'), ['EAJOIN', ['ATTR', ('a', 'b"c d"e', '==')], ('ELEM', 'bar')]]
-
-    >>> p.parse('foo/bar[@a<"b"c d"e"]')
-    ['EEJOIN', ('ELEM', 'foo'), ['EAJOIN', ['ATTR', ('a', 'b"c d"e', '<')], ('ELEM', 'bar')]]
-
 Attribute vales may also be empty:
 
     >>> p.parse('/foo[@A>=""]')
@@ -157,7 +149,7 @@ Empty brackets are not allowed:
     ...
     SyntaxError: ...
 
-Quotet strings in attribute values must be quoted correctly:
+Quoted strings in attribute values must be quoted correctly:
 
     >>> p.parse('foo/bar[@a="b\"c de"]')
     Traceback (most recent call last):
@@ -168,3 +160,7 @@ Quotet strings in attribute values must be quoted correctly:
     Traceback (most recent call last):
     ...
     SyntaxError: ...
+
+    >>> p.parse('SingleSource/bla[@reverse_name="ns1.gocept.com"]')
+    ['EEJOIN', ('ELEM', 'SingleSource'), ['EAJOIN', ['ATTR', ('reverse_name', 'ns1.gocept.com', '=')], ('ELEM', 'bla')]]
+

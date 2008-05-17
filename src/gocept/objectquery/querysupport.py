@@ -16,27 +16,33 @@ class ObjectParser(object):
         for name in dir(object):
             if name.startswith('_'):
                 continue
-            value = getattr(object, name)
+            try:
+                value = getattr(object, name)
+            except Exception:
+                continue
             if callable(value):
                 continue
             self.attributes.append(name)
-            if self._is_list(value) or self._is_tuple(value):
-                self._traverse(value)
-            elif self._is_dict(value):
-                self._traverse(self._dict2list(value))
-            elif self._is_class(value):
+            if self._is_class(value):
                 self.descendants.append(value)
+            self._traverse(value)
+        self._traverse(object)
 
     def result(self, filter=None):
         if filter is not None:
             return getattr(self, filter)
 
     def _traverse(self, object):
-        for elem in object:
-            if self._is_list(elem) or self._is_tuple(elem) or\
-                  self._is_dict(elem):
-                self._traverse(elem)
-            elif self._is_class(elem):
+        if self._is_dict(object):
+            values = object.values()
+        elif self._is_list(object) or self._is_tuple(object):
+            values = object
+        else:
+            return
+
+        for elem in values:
+            self._traverse(elem)
+            if self._is_class(elem):
                 self.descendants.append(elem)
 
     def _is_list(self, object):
@@ -50,9 +56,14 @@ class ObjectParser(object):
             return True
         return False
 
-    def _is_dict(self, object):
-        if isinstance(object, types.DictType) or\
-              str(type(object)).endswith("PersistentDict'>"):
+    def _is_dict(self, obj):
+        if isinstance(obj, dict):
+            # Short circuit.
+            return True
+        # Heuristic for sniffing a dict
+        obj_names = set(dir(obj))
+        dict_names = set(['__getitem__', 'keys', 'values', 'get', '__len__'])
+        if dict_names.issubset(obj_names):
             return True
         return False
 
@@ -62,18 +73,6 @@ class ObjectParser(object):
             return True
         return False
 
-    def _dict2list(self, dict):
-        returnlist = []
-        for elem in dict.values():
-            if self._is_list(elem):
-                returnlist.extend(elem)
-            elif self._is_tuple(elem):
-                returnlist.extend(list(elem))
-            elif self._is_dict(elem):
-                returnlist.extend(self._dict2list(elem))
-            else:
-                returnlist.append(elem)
-        return returnlist
 
 class EEJoin(object):
     """ Element-Element Join. """

@@ -44,17 +44,15 @@ class QueryProcessor(object):
         elemlist = self._process_qp(args[1])
         return self.collection.eajoin(elemlist, *args[0][1])
 
-    def _process_EEJOIN(self, *args):
+    def _process_EEJOIN(self, elemlist1, elemlist2, elemlist2a=None):
         """ Element-Element-Join. """
-        elemlist1 = args[0]
-        elemlist2 = args[1]
         kcwild = None
         if elemlist2 == '/_*/':
-            elemlist2 = args[2]
+            elemlist2 = elemlist2a
             kcwild = True
         elemlist1 = self._process_qp(elemlist1)
-        if not elemlist1:
-            elemlist1 = [ self.collection.root() ]
+        if elemlist1 is None:
+            elemlist1 = [self.collection.root()]
         elemlist2 = self._process_qp(elemlist2)
         return self.collection.eejoin(elemlist1, elemlist2, kcwild)
 
