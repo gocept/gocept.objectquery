@@ -4,25 +4,28 @@
 
 import types
 
+
 class ObjectParser(object):
+
     def __init__(self):
         self.attributes = []     # saves all found attributes to one object
         self.descendants = []    # saves all found descendands to one object
 
     def parse(self, object, intern=None):
         self.__init__()
-        attrcaller = getattr(object, "__dict__")
-        if hasattr(object, "__getstate__"):
-            attrcaller = getattr(object, "__getstate__")() # Persistent magic
-        for x in attrcaller:
-            self.attributes.append(x)
-            elem = attrcaller[x]
-            if self._is_list(elem) or self._is_tuple(elem):
-                self._traverse(elem)
-            elif self._is_dict(elem):
-                self._traverse(self._dict2list(elem))
-            elif self._is_class(elem):
-                self.descendants.append(elem)
+        for name in dir(object):
+            if name.startswith('_'):
+                continue
+            value = getattr(object, name)
+            if callable(value):
+                continue
+            self.attributes.append(name)
+            if self._is_list(value) or self._is_tuple(value):
+                self._traverse(value)
+            elif self._is_dict(value):
+                self._traverse(self._dict2list(value))
+            elif self._is_class(value):
+                self.descendants.append(value)
 
     def result(self, filter=None):
         if filter is not None:

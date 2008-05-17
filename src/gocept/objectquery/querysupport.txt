@@ -39,8 +39,8 @@ To parse an object, use the parse method:
 
 To get all found attributes, use the result() method:
 
-    >>> op.result("attributes")
-    ['some_var', '_private_var', 'other_var', 'desc']
+    >>> sorted(op.result("attributes"))
+    ['desc', 'other_var', 'some_var']
 
     >>> descendants = op.result("descendants")
     >>> descendants

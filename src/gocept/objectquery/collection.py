@@ -11,15 +11,15 @@ from gocept.objectquery.interfaces import IObjectCollection
 
 
 class ObjectCollection(object):
-    """ ObjectCollection provides functionallity to QueryProcessor.
+    """ObjectCollection provides functionality to QueryProcessor.
 
-        It helps to query for objects and bounds the indexes from
-        IndexSupport.
+    It helps to query for objects and bounds the indexes from
+    IndexSupport.
     """
+
     implements(IObjectCollection)
 
     def __init__(self, connection):
-        """ Initialize ObjectCollection. """
         self.conn = connection
         dbroot = self.conn.root()
         # init IndexSupport
@@ -33,23 +33,22 @@ class ObjectCollection(object):
         self._kcjoin = KCJoin(self._structureindex)
         self._union = Union()
 
-    def add(self, object_oid, parent_oid=None, cycle_prev=None):
+    def add(self, obj, parent_oid=None, cycle_prev=None):
         """ Index the object to the ObjectCollection. """
         if cycle_prev is None:
             cycle_prev = []
-        if object_oid in cycle_prev:
+        if obj._p_oid in cycle_prev:
             return
-        object = self._get_object(object_oid)
-        classname = self._get_classname(object)
-        self._classindex.insert(classname, object_oid)
-        self._objectparser.parse(object)
+        classname = self._get_classname(obj)
+        self._classindex.insert(classname, obj._p_oid)
+        self._objectparser.parse(obj)
         for attr in self._objectparser.result("attributes"):
-            self._attributeindex.insert(attr, object_oid)
-        self._structureindex.insert(object_oid, parent_oid)
+            self._attributeindex.insert(attr, obj._p_oid)
+        self._structureindex.insert(obj._p_oid, parent_oid)
         descendants = self._objectparser.result("descendants")[:]
-        cycle_prev.append(object_oid)
+        cycle_prev.append(obj._p_oid)
         for desc in descendants:
-            self.add(self._get_oid(desc), object_oid, cycle_prev[:])
+            self.add(desc, obj._p_oid, cycle_prev[:])
 
     def root(self):
         """ Return the root object. """

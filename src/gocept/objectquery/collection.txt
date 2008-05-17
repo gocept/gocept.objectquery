@@ -17,7 +17,7 @@ First we need a ZODB for the IndexSupport used by ObjectCollection:
 
 Then we need some testobjects, which we will store into the ObjectCollection:
 
-    >>> import gocept.objectquery.testobjects as testobject
+    >>> from gocept.objectquery import testobjects
 
 Imporing the ObjectCollection
 =============================
@@ -38,14 +38,14 @@ Example usage of ObjectCollection
 
 Add some objects to the collection:
 
-    >>> t1 = testobject.Telephone(number="22")
-    >>> t2 = testobject.Telephone(number="66")
-    >>> p1 = testobject.Person(name="Sebastian", work=[t1, t2])
-    >>> a1 = testobject.Address(street="Meckelstrasse", city="Halle", ref=[p1])
+    >>> t1 = testobjects.Telephone(number="22")
+    >>> t2 = testobjects.Telephone(number="66")
+    >>> p1 = testobjects.Person(name="Sebastian", work=[t1, t2])
+    >>> a1 = testobjects.Address(street="Meckelstrasse", city="Halle", ref=[p1])
     >>> dbroot['test'] = a1
     >>> transaction.commit()
 
-    >>> oc.add(a1._p_oid)
+    >>> oc.add(a1)
     >>> oc.root()[0] == a1._p_oid
     True
 
@@ -80,19 +80,19 @@ Adding and removing objects:
 
 Adding some more objects to ``oc``:
 
-    >>> p2 = testobject.Person(name="Christian")
+    >>> p2 = testobjects.Person(name="Christian")
     >>> a1.ref.append(p2)
     >>> transaction.commit()
 
-    >>> oc.add(p2._p_oid, a1._p_oid)
+    >>> oc.add(p2, a1._p_oid)
     >>> len(oc.by_class("Person"))
     2
 
-    >>> t3 = testobject.Telephone(number="2298891")
+    >>> t3 = testobjects.Telephone(number="2298891")
     >>> p2.work.append(t3)
     >>> transaction.commit()
 
-    >>> oc.add(t3._p_oid, p2._p_oid)
+    >>> oc.add(t3, p2._p_oid)
     >>> len(oc.by_class("Telephone"))
     3
 
@@ -130,22 +130,22 @@ First we need a new ObjectCollection:
 
 Then create two objects and add one under the other:
 
-    >>> add = testobject.Address()
-    >>> per = testobject.Person()
+    >>> add = testobjects.Address()
+    >>> per = testobjects.Person()
 
     >>> dbroot['test'] = add
     >>> transaction.commit()
-    >>> oc.add(add._p_oid)
+    >>> oc.add(add)
 
     >>> add.ref.append(per)
     >>> transaction.commit()
-    >>> oc.add(per._p_oid, add._p_oid)
+    >>> oc.add(per, add._p_oid)
 
 Adding add unter per will create a cycle, which is possible at all:
 
     >>> per.ref.append(add)
     >>> transaction.commit()
-    >>> oc.add(per._p_oid, add._p_oid)
+    >>> oc.add(per, add._p_oid)
 
 To test the cycle, per should be a child of add and vice versa:
 
@@ -165,10 +165,10 @@ First we need a new ObjectCollection:
 
 Then create some objects and add them:
 
-    >>> add = testobject.Address()
-    >>> per1 = testobject.Person()
-    >>> per2 = testobject.Person()
-    >>> tel = testobject.Telephone()
+    >>> add = testobjects.Address()
+    >>> per1 = testobjects.Person()
+    >>> per2 = testobjects.Person()
+    >>> tel = testobjects.Telephone()
 
 Telephone now ``hangs'' under two objects, Person1 and Person2:
 
@@ -179,7 +179,7 @@ Telephone now ``hangs'' under two objects, Person1 and Person2:
 
     >>> dbroot['test'] = add
     >>> transaction.commit()
-    >>> oc.add(add._p_oid)
+    >>> oc.add(add)
 
 Now there are 2 Person and 1 Telephone object:
 
@@ -208,3 +208,28 @@ Now there is only one Person object, but still one Telephone:
     1
     >>> len(oc.by_class("Telephone"))
     1
+
+
+Automatic index updates on transaction boundaries
+=================================================
+
+When making changes to objects, the index can be updated at transaction
+boundaries automatically for all objects that where changed.
+
+A synchronizer needs to be registered with the transaction manager first and
+the object collection needs to be registered as a utility:
+
+    >>> from gocept.objectquery import indexsupport
+    >>> index_synch = indexsupport.IndexSynchronizer()
+    >>> transaction.manager.registerSynch(index_synch)
+    >>> import zope.component
+    >>> zope.component.provideUtility(oc)
+
+    >>> dbroot['add2'] = testobjects.Address()
+    >>> transaction.commit()
+    >>> len(oc.by_class("Address"))
+    2
+
+Automatic updates stop when disabling the index synchronizer again:
+
+    >>> transaction.manager.unregisterSynch(index_synch)

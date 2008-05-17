@@ -48,7 +48,7 @@ Now fill the database with some data:
 
     >>> dbroot['test'] = ab
     >>> transaction.commit()
-    >>> objects.add(ab._p_oid)
+    >>> objects.add(ab)
 
 Some example usecases
 ---------------------
@@ -151,7 +151,7 @@ First we need a new database:
 
     >>> dbroot['test'] = root
     >>> transaction.commit()
-    >>> objects.add(root._p_oid)
+    >>> objects.add(root)
 
 Now there should be one Plone object under root:
 

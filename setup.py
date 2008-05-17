@@ -22,6 +22,8 @@ setup(
     install_requires=[
         'setuptools',
         'SimpleParse',
+        'zope.interface',
+        'zope.component',
         'ZODB3',
     ],
     zip_safe=False,

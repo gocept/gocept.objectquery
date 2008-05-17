@@ -4,6 +4,7 @@
 
 from zope.interface import Interface, Attribute
 
+
 class IQueryParser(Interface):
     """ Parse an expression and return a queryplan.
     """
@@ -11,6 +12,7 @@ class IQueryParser(Interface):
     def parse(expression):
         """ Parse an expression and return a queryplan.
         """
+
 
 class IObjectCollection(Interface):
     """ Collects Index- and Querysupport for QueryProcessor.
@@ -35,6 +37,7 @@ class IObjectCollection(Interface):
     def by_class(classname):
         """ Return a list of objects with match ``classname''.
         """
+
 
 class IQueryProcessor(Interface):
     """ Processes a query to the collection and returns the result.

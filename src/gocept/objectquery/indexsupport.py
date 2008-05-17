@@ -3,14 +3,20 @@
 # $Id$
 
 import types
+import zope.interface
+import transaction
+import ZODB.Connection
+import gocept.objectquery.interfaces
 from persistent import Persistent
 from BTrees.OOBTree import OOBTree, OOTreeSet
+
 
 class IndexItem(OOTreeSet):
     """ Holds any number of integer values. """
 
     def __repr__(self):
         return str(list(self))
+
 
 class OOIndex(Persistent):
     """ A dummy object to IndexItem mapping index structure. """
@@ -185,4 +191,34 @@ class StructureIndex(OOIndex):
             if path1[i] != path2[i]:
                 return False
         return True
+
+
+class IndexSynchronizer(object):
+    """A transaction synchronizer for automatically updating the indexes on
+    transaction boundaries.
+    """
+
+    zope.interface.implements(transaction.interfaces.ISynchronizer)
+
+    def beforeCompletion(self, transaction):
+        """Hook that is called by the transaction at the start of a commit.
+        """
+        for data_manager in transaction._resources:
+            if not isinstance(data_manager, ZODB.Connection.Connection):
+                continue
+            collection = zope.component.getUtility(
+                gocept.objectquery.interfaces.IObjectCollection)
+            for obj in data_manager._registered_objects:
+                collection.add(obj)
+
+
+    def afterCompletion(self, transaction):
+        """Hook that is called by the transaction after completing a commit.
+        """
+        pass
+
+    def newTransaction(self, transaction):
+        """Hook that is called at the start of a transaction.
+        """
+        pass
 
