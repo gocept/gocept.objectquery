@@ -33,6 +33,7 @@ Get a ObjectCollection:
 Using the ObjectCollection
 ==========================
 
+
 Example usage of ObjectCollection
 ---------------------------------
 
@@ -40,14 +41,25 @@ Add some objects to the collection:
 
     >>> t1 = testobjects.Telephone(number="22")
     >>> t2 = testobjects.Telephone(number="66")
-    >>> p1 = testobjects.Person(name="Sebastian", work=[t1, t2])
-    >>> a1 = testobjects.Address(street="Meckelstrasse", city="Halle", ref=[p1])
+    >>> p1 = testobjects.Person(name="Sebastian")
+    >>> a1 = testobjects.Address(street="Meckelstrasse", city="Halle")
     >>> dbroot['test'] = a1
     >>> transaction.commit()
 
     >>> oc.add(a1)
     >>> oc.root()[0] == a1._p_oid
     True
+
+    >>> a1.ref.append(p1)
+    >>> transaction.commit()
+    >>> oc.add(p1, a1._p_oid)
+
+    >>> p1.work.append(t1)
+    >>> p1.work.append(t2)
+    >>> transaction.commit()
+    >>> oc.add(t1, p1._p_oid)
+    >>> oc.add(t2, p1._p_oid)
+
 
 Verify the indexes:
 
@@ -64,6 +76,7 @@ Verify the indexes:
     ...
     IndexError: list index out of range
 
+
 Search by classname:
 
     >>> r = oc.by_class("Telephone")
@@ -74,6 +87,7 @@ Search by classname:
     >>> r = oc.by_class("Address")
     >>> conn.get(r[0][0])
     <gocept.objectquery.testobjects.Address object at 0x...>
+
 
 Adding and removing objects:
 ----------------------------
@@ -111,12 +125,12 @@ Successful removing:
     >>> len(oc.by_class("Telephone"))
     2
 
-    >>> oc.delete(p2._p_oid)
+    >>> oc.delete(p2._p_oid, pdb=True)
     >>> a1.ref.remove(p2)
     >>> transaction.commit()
-    >>> len(oc.by_class("Telephone"))
-    1
     >>> len(oc.by_class("Person"))
+    1
+    >>> len(oc.by_class("Telephone"))
     1
 
 Adding circles to collection

@@ -159,8 +159,10 @@ Now there should be one Plone object under root:
     >>> len(r) == 1 and r[0] == plo1
     True
 
-    >>> r = query('/Plone/_/Document')
-    >>> len(r) == 1 and r[0] == doc2
+    >>> r = query('/Plone/Folder/Document')
+    >>> len(r)
+    1
+    >>> r[0] == doc2
     True
 
 Get all Documents which are under any number of Folders:

@@ -36,6 +36,10 @@ class OOIndex(Persistent):
 
     def delete(self, key, value):
         """ Delete value from key. """
+        if not self.index.has_key(key):
+            return
+        if value not in self.index[key]:
+            return
         self.index[key].remove(value)
         if len(self.index[key]) == 0:
             del self.index[key]
