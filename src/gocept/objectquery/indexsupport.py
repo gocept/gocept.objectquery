@@ -116,11 +116,12 @@ class StructureIndex(OOIndex):
             return
         for elem in self.index[key][:]:
             if parent is None or ( len(elem) > 1 and elem[-2] == parent ):
-                if len(elem) > 1 and key in self.index['childs'][elem[-2]]:
+                if len(elem) > 1 and key in self.index['childs'].get(elem[-2],[]):
                     self.index['childs'][elem[-2]].remove(key)
-                self.index[key].remove(elem)
+                if elem in self.index.get(key, []):
+                    self.index[key].remove(elem)
                 self._purge(key, elem)
-        if len(self.index[key]) == 0:
+        if self.index.has_key(key) and len(self.index[key]) == 0:
             del self.index[key]
             del self.index['childs'][key]
 
@@ -177,13 +178,13 @@ class StructureIndex(OOIndex):
 
     def _purge(self, key, tupel):
         """ Purge the child nodes of key with tupel. """
-        for child in self.index['childs'][key]:
+        for child in self.index['childs'].get(key, []):
             if self.index.has_key(child):
                 for elem in self.index[child][:]:
                     if elem[:-1] == tupel:
                         self.index[child].remove(elem)
                         self._purge(child, elem)
-                if len(self.index[child]) == 0:
+                if len(self.index.get(child, [])) == 0:
                     self.delete(child, key)
 
     def _check_path(self, path1, path2):
