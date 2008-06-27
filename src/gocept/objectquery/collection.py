@@ -35,8 +35,10 @@ class ObjectCollection(object):
 
     def add(self, obj, parent_oid=None, cycle_prev=None):
         """ Index the object to the ObjectCollection. """
+        if not hasattr(obj, '_p_oid'):
+            return
         if cycle_prev is None:
-            cycle_prev = []
+            cycle_prev = set()
         if obj._p_oid in cycle_prev:
             return
         classname = self._get_classname(obj)
@@ -46,9 +48,9 @@ class ObjectCollection(object):
             self._attributeindex.insert(attr, obj._p_oid)
         self._structureindex.insert(obj._p_oid, parent_oid)
         descendants = self._objectparser.result("descendants")[:]
-        cycle_prev.append(obj._p_oid)
+        cycle_prev.add(obj._p_oid)
         for desc in descendants:
-            self.add(desc, obj._p_oid, cycle_prev[:])
+            self.add(desc, obj._p_oid, cycle_prev)
 
     def root(self):
         """ Return the root object. """
