@@ -40,6 +40,8 @@ class ObjectCollection(object):
         if cycle_prev is None:
             cycle_prev = set()
         if obj._p_oid in cycle_prev:
+            if not self._structureindex.is_successor(obj._p_oid, parent_oid):
+                self._structureindex.insert(obj._p_oid, parent_oid)
             return
         classname = self._get_classname(obj)
         self._classindex.insert(classname, obj._p_oid)
