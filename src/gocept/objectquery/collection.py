@@ -27,7 +27,6 @@ class ObjectCollection(object):
         self._attributeindex = AttributeIndex(dbroot)
         self._structureindex = StructureIndex(dbroot)
         # init QuerySupport
-        self._objectparser = ObjectParser()
         self._eejoin = EEJoin(self._structureindex)
         self._eajoin = EAJoin(self.conn) # XXX: ValueIndex instead of conn
         self._kcjoin = KCJoin(self._structureindex)
@@ -43,15 +42,14 @@ class ObjectCollection(object):
             if not self._structureindex.is_successor(obj._p_oid, parent_oid):
                 self._structureindex.insert(obj._p_oid, parent_oid)
             return
+        op = ObjectParser()
         classname = self._get_classname(obj)
         self._classindex.insert(classname, obj._p_oid)
-        self._objectparser.parse(obj)
-        for attr in self._objectparser.result("attributes"):
+        for attr in op.get_attributes(obj):
             self._attributeindex.insert(attr, obj._p_oid)
         self._structureindex.insert(obj._p_oid, parent_oid)
-        descendants = self._objectparser.result("descendants")[:]
         cycle_prev.append(obj._p_oid)
-        for desc in descendants:
+        for desc in op.get_descendants(obj):
             self.add(desc, obj._p_oid, cycle_prev[:])
 
     def root(self):
@@ -98,13 +96,12 @@ class ObjectCollection(object):
         """ Main remove method. """
         object = self._get_object(object_oid)
         classname = self._get_classname(object)
+        op = ObjectParser()
         if self._structureindex.has_key(object_oid):
             self._structureindex.delete(object_oid, parent_oid)
         if not self._structureindex.has_key(object_oid):
              self._classindex.delete(classname, object_oid)
-        self._objectparser.parse(object)
-        for attr in self._objectparser.result("attributes"):
+        for attr in op.get_attributes(object):
              self._attributeindex.delete(attr, object_oid)
-        descendants = self._objectparser.result("descendants")[:]
-        for desc in descendants:
+        for desc in op.get_descendants(object):
             self.delete(self._get_oid(desc), object_oid)

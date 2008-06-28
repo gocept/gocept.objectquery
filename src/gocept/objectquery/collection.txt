@@ -155,7 +155,12 @@ Then create two objects and add one under the other:
     >>> transaction.commit()
     >>> oc.add(per, add._p_oid)
 
-Adding add unter per will create a cycle, which is possible at all:
+There are now no Telephone objects inside the ObjectCollection:
+
+    >>> len(oc.by_class("Telephone"))
+    0
+
+Adding add under per will create a cycle, which is possible at all:
 
     >>> per.ref.append(add)
     >>> transaction.commit()

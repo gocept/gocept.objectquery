@@ -11,15 +11,20 @@ Initialization
 ObjectParser looks inside objects for attributes and following objects. First
 we create such an object:
 
-    >>> class Child(object):
+    >>> class Child1(object):
     ...     pass
+    >>> class Child2(object):
+    ...     pass
+    >>> class Child3(object):
+    ...     pass
+    >>> class Child4(object):
+    ...     misc = Child1()
 
     >>> class ToParse(object):
-    ...     def __init__(self):
-    ...         self.some_var = ["some tupel", (Child(), Child())]
-    ...         self.other_var = {"foo": "bar"}
-    ...         self._private_var = 10
-    ...         self.desc = Child()
+    ...     some_var = ["some tupel", (Child2(), Child3())]
+    ...     other_var = {"foo": "bar"}
+    ...     _private_var = 10
+    ...     desc = Child4()
     ...
     ...     def some_method(self):
     ...         pass
@@ -33,19 +38,25 @@ You get an ObjectParser like this:
     >>> op
     <gocept.objectquery.querysupport.ObjectParser object at 0x...>
 
-To parse an object, use the parse method:
 
-    >>> op.parse(obj)
+To get all found attributes, use the get_attributes() method:
 
-To get all found attributes, use the result() method:
-
-    >>> sorted(op.result("attributes"))
+    >>> attributes = op.get_attributes(obj)
+    >>> attributes
+    <generator object at 0x...>
+    >>> sorted(list(attributes))
     ['desc', 'other_var', 'some_var']
 
-    >>> descendants = op.result("descendants")
+To get all descendants, use the appropriate method. Note, that Child1 is not
+part of the results because its a descendant of Child4:
+
+    >>> descendants = op.get_descendants(obj)
     >>> descendants
-    [<Child object at 0x...>, <Child object at 0x...>]
-    >>> len(descendants)
+    <generator object at 0x...>
+    >>> r = list(descendants)
+    >>> sorted(r)
+    [<Child2 object at 0x...>, <Child3 object at 0x...>, <Child4 object at 0x...>]
+    >>> len(r)
     3
 
 

@@ -7,43 +7,39 @@ import types
 
 class ObjectParser(object):
 
-    def __init__(self):
-        self.attributes = []     # saves all found attributes to one object
-        self.descendants = []    # saves all found descendands to one object
-
-    def parse(self, object, intern=None):
-        self.__init__()
-        for name in dir(object):
+    def get_attributes(self, obj):
+        for name in dir(obj):
             if name.startswith('_'):
                 continue
             try:
-                value = getattr(object, name)
+                value = getattr(obj, name)
             except Exception:
                 continue
             if callable(value):
                 continue
-            self.attributes.append(name)
-            if self._is_class(value):
-                self.descendants.append(value)
-            self._traverse(value)
-        self._traverse(object)
+            yield name
 
-    def result(self, filter=None):
-        if filter is not None:
-            return getattr(self, filter)
+    def get_descendants(self, obj):
+        for attribute in self.get_attributes(obj):
+            value = getattr(obj, attribute)
+            for elem in self._traverse(value):
+                yield elem
 
-    def _traverse(self, object):
-        if self._is_dict(object):
-            values = object.values()
-        elif self._is_list(object) or self._is_tuple(object):
-            values = object
-        else:
-            return
+    def _traverse(self, value):
+        values = ()
+        if self._is_dict(value):
+            values = value.values()
+        elif self._is_list(value) or self._is_tuple(value):
+            values = value
+        elif self._is_class(value):
+            yield value
 
         for elem in values:
-            self._traverse(elem)
             if self._is_class(elem):
-                self.descendants.append(elem)
+                yield elem
+            else:
+                for subelem in self._traverse(elem):
+                    yield subelem
 
     def _is_list(self, object):
         if isinstance(object, types.ListType) or\
