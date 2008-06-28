@@ -63,12 +63,12 @@ Add some objects to the collection:
 
 Verify the indexes:
 
-    >>> result = oc._classindex.get("Telephone")
+    >>> result = list(oc._classindex.get("Telephone"))
     >>> conn.get(result[0])
     <gocept.objectquery.testobjects.Telephone object at 0x...>
     >>> conn.get(result[1])
     <gocept.objectquery.testobjects.Telephone object at 0x...>
-    >>> result = oc._attributeindex.get("name")
+    >>> result = list(oc._attributeindex.get("name"))
     >>> conn.get(result[0])
     <gocept.objectquery.testobjects.Person object at 0x...>
     >>> conn.get(result[1])

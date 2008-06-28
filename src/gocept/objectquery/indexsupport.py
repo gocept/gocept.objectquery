@@ -46,9 +46,9 @@ class OOIndex(Persistent):
 
     def get(self, key):
         """ Get the IndexItem for a given key. """
-        if key in self.index:
-            return list(self.index[key])
-        return []
+        if self.has_key(key):
+            for item in self.index[key]:
+                yield item
 
     def has_key(self, key):
         """ Return True if key is present, otherwise False. """
@@ -57,19 +57,22 @@ class OOIndex(Persistent):
     def all(self):
         """ Return all objects from the index. """
         allitems = []
-        for indexitem in list(self.index.keys()):
-            for elem in self.get(indexitem):
-                if elem not in allitems:
-                    allitems.append(elem)
-        return allitems
+        for index in self.index.keys():
+            for elem in self.get(index):
+                yield elem
+
 
 class ClassIndex(OOIndex):
     """ Maps strings (classnames) to an IndexItem object. """
-    pass
+
+    zope.interface.implements(gocept.objectquery.interfaces.IAttributeIndex)
+
 
 class AttributeIndex(OOIndex):
     """ Maps strings (attributenames) to an IndexItem object. """
-    pass
+
+    zope.interface.implements(gocept.objectquery.interfaces.IAttributeIndex)
+
 
 class StructureIndex(OOIndex):
     """ Stores information about the relationship between objects. 
@@ -78,20 +81,20 @@ class StructureIndex(OOIndex):
     objects without having to touch the objects in the ZODB.
     """
 
+    zope.interface.implements(gocept.objectquery.interfaces.IStructureIndex)
+
     def __init__(self, dbroot):
         super(StructureIndex, self).__init__(dbroot)
         self.index['childs'] = OOBTree()    # Childindex, needed for deletion
 
     def insert(self, key, parent=None):
         """ Insert key under parent. """
-        if key == 0:
-            raise ValueError("Key must be > 0.")
         if parent is None:
             parent = 0
         tail = (key, )
         new_path = []
         if self.index.has_key(parent):
-            for elem in self.get(parent)[:]:
+            for elem in self.get(parent):
                 new_path.append(elem + tail)
         else:
             new_path.append(tail)
@@ -146,8 +149,6 @@ class StructureIndex(OOIndex):
 
     def get(self, key):
         """ Return the path for a given key. """
-        if key == 0:
-            raise ValueError("Key must be > 0.")
         return self.index[key]
 
     def validate(self, key, indexlist):

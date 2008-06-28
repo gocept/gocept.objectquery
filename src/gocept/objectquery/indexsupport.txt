@@ -15,6 +15,7 @@ Import and create a ZODB to store the indexes:
     >>> conn = db.open()
     >>> dbroot = conn.root()
 
+
 ClassIndex
 ==========
 
@@ -23,10 +24,12 @@ Get a ClassIndex object:
     >>> from gocept.objectquery.indexsupport import ClassIndex
     >>> ci = ClassIndex(dbroot)
 
+
 ClassIndex's index is a BTrees.OOBTree object:
 
     >>> ci.index
     <BTrees.OOBTree.OOBTree object at 0x...>
+
 
 ClassIndex holds any kind of values (e.g. OIDs from peristent objects):
 
@@ -34,27 +37,40 @@ ClassIndex holds any kind of values (e.g. OIDs from peristent objects):
     >>> ci.insert("Student", 2)
     >>> ci.insert("Student", 'bar')
 
-Validate the stored data:
+
+You may check, if a key is inside the index by using has_key():
 
     >>> ci.has_key('Student')
     True
-    >>> ci.get('Student')
-    [2, 'bar']
     >>> ci.has_key('Foo')
     False
-    >>> ci.get('Course')
+
+
+Get returns a generator object for performance reason:
+
+  >>> ci.get('Student')
+  <generator object at 0x...>
+
+
+Validate the stored data:
+
+    >>> list(ci.get('Student'))
+    [2, 'bar']
+    >>> list(ci.get('Course'))
     [1]
     >>> sorted(ci.all())
     [1, 2, 'bar']
 
+
 Delete some items from the index:
 
     >>> ci.delete("Student", 2)
-    >>> ci.get('Student')
+    >>> list(ci.get('Student'))
     ['bar']
     >>> ci.delete("Course", 1)
-    >>> ci.get("Course")
+    >>> list(ci.get("Course"))
     []
+
 
 AttributeIndex
 ==============
@@ -65,12 +81,14 @@ we can get it:
     >>> from gocept.objectquery.indexsupport import AttributeIndex
     >>> ai = AttributeIndex(dbroot)
 
+
 Lets have a look on our dbroot object:
 
     >>> dbroot.has_key('_is_AttributeIndex')
     True
     >>> dbroot.has_key('_is_ClassIndex')
     True
+
 
 StructureIndex
 ==============
@@ -90,12 +108,6 @@ Insert some values:
     >>> si.insert(5, 1)
     >>> si.insert(4, 5)
 
-The index value must be greater than 0:
-
-    >>> si.insert(0, 4)
-    Traceback (most recent call last):
-    ...
-    ValueError: Key must be > 0.
 
 StructureIndex stores the childs of a key for internal tasks:
 
@@ -119,7 +131,7 @@ The method get(key) lists all paths to the given element:
     >>> si.get(0)
     Traceback (most recent call last):
     ...
-    ValueError: Key must be > 0.
+    KeyError: 0
 
 Check the parent-child-relationship:
 
