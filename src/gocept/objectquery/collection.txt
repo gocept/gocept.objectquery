@@ -125,7 +125,7 @@ Successful removing:
     >>> len(oc.by_class("Telephone"))
     2
 
-    >>> oc.delete(p2._p_oid, pdb=True)
+    >>> oc.delete(p2._p_oid)
     >>> a1.ref.remove(p2)
     >>> transaction.commit()
     >>> len(oc.by_class("Person"))
