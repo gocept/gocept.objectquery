@@ -1,0 +1,13 @@
+=======
+CHANGES
+=======
+
+
+0.1 (unreleased)
+===============
+
+0.1pre (2008-08-19)
+===================
+
+  - initial functionality based on the work from the diploma thesis
+    (http://archiv.tu-chemnitz.de/pub/2008/0081/data/diplomarbeit.pdf)

@@ -9,7 +9,7 @@ name = 'gocept.objectquery'
 
 setup(
     name=name,
-    version='0.1',
+    version='0.1pre',
     url='http://www.python.org/pypi/'+name,
     license='ZPL 2.1',
     description='A framework for indexing and querying python objects',
