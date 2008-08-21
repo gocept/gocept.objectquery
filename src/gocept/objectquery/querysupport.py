@@ -106,10 +106,6 @@ class EAJoin(object):
     def _attr_comp(self, attr, value, comp_op):
         if comp_op is None or comp_op == '=':
             comp_op = '=='
-        if type(attr) == types.IntType:
-            value = int(value)
-        if type(attr) == types.FloatType:
-            value = float(value)
         return self.comp_map[comp_op](attr, value)
 
     def __call__(self, E, attrname, attrvalue=None, attrcomp=None):

@@ -18,14 +18,15 @@ class RPEQueryParser(object):
         normal          := PATH_SEPARATOR?, pathelem,
                            (PATH_SEPARATOR, pathelem)*
         pathelem        := (WILDCARD / ELEM), pathway?, occurence?, predicate?
-        predicate       := (PREDICATE_BEGIN, ID, COMPARER, '"', ATTRVALUE,
-                           '"', PREDICATE_END)
+        predicate       := PREDICATE_BEGIN, ID, COMPARER, ATTRVALUE, PREDICATE_END
         occurence       := OCC_NONE_OR_ONE / OCC_ONE_OR_MORE / OCC_MULTI
         pathway         := '.', WAY
         WAY             := ELEM
         ID              := ELEM
         ELEM            := [a-zA-Z0-9_]+
-        ATTRVALUE       := -["]*
+        ATTRVALUE       := ATTRVALUE_INT / ATTRVALUE_CHAR
+        ATTRVALUE_INT   := [0-9.]+
+        ATTRVALUE_CHAR  := '"', -["]*, '"'
         COMPARER        := COM_EQ / COM_LO_EQ / COM_GR_EQ / COM_GR / COM_LO /
                            COM_NOT_EQ
         PATH_SEPARATOR  := '/_*/' / '/'
@@ -136,7 +137,22 @@ class RPEQueryParser(object):
             elif result[0] == "ID":
                 output.append(expression[result[1]:result[2]])
             elif result[0] == "ATTRVALUE":
-                output.append(expression[result[1]:result[2]])
+                value = expression[result[1]:result[2]]
+                if value[0] == '"' and value[-1] == '"':
+                    value = value[1:-1]
+
+                t = None
+                #check for integer
+                try:
+                    if str(int(value)) == value:
+                        t = int
+                except ValueError:
+                    try:
+                        if str(float(value)) == value:
+                            t = float
+                    except ValueError:
+                        t = str
+                output.append(t(value))
             elif result[0] == "COMPARER":
                 output.append(expression[result[1]:result[2]])
         else:

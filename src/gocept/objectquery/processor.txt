@@ -35,15 +35,15 @@ You create a QueryProcessor like this:
 
 Now fill the database with some data:
 
-    >>> t1 = testobject.Telephone(number="22988912")
-    >>> t2 = testobject.Telephone(number="2298890")
-    >>> t3 = testobject.Telephone(number="2298891")
+    >>> t1 = testobject.Telephone(number=22988912)
+    >>> t2 = testobject.Telephone(number=2298890)
+    >>> t3 = testobject.Telephone(number=2298891)
     >>> p1 = testobject.Person(name="Theuni")
     >>> p2 = testobject.Person(name="Basti", private=[t1])
     >>> p3 = testobject.Person(name="coco", work=[t2, t3])
-    >>> a1 = testobject.Address(street="Meckelstrasse", floor="2")
-    >>> a2 = testobject.Address(street="Forsterstrasse", floor="2", ref=[p1, p2])
-    >>> a3 = testobject.Address(street="Forsterstrasse", floor="1", ref=[p3])
+    >>> a1 = testobject.Address(street="Meckelstrasse", floor=2)
+    >>> a2 = testobject.Address(street="Forsterstrasse", floor=2, ref=[p1, p2])
+    >>> a3 = testobject.Address(street="Forsterstrasse", floor=1, ref=[p3])
     >>> ab = testobject.AddressBook(ref=[a1, a2, a3])
 
     >>> dbroot['test'] = ab
@@ -57,7 +57,7 @@ Root joins:
 
     >>> r = query('/Address')
     >>> sorted((elem.street, elem.floor) for elem in r)
-    [('Forsterstrasse', '1'), ('Forsterstrasse', '2'), ('Meckelstrasse', '2')]
+    [('Forsterstrasse', 1), ('Forsterstrasse', 2), ('Meckelstrasse', 2)]
 
     >>> r = query('/Telephone')
     >>> len(r)
@@ -73,11 +73,11 @@ Give the Telephone of all Persons named "coco":
 
     >>> r = query('Address/Person[@name="coco"]/Telephone')
     >>> sorted(elem.number for elem in r)
-    ['2298890', '2298891']
+    [2298890, 2298891]
 
 Give all Persons that do not live in the first floor:
 
-    >>> r = query('Address[@floor!="1"]/Person')
+    >>> r = query('Address[@floor!=1]/Person')
     >>> len(r)
     2
     >>> sorted(elem.name for elem in r)
@@ -93,22 +93,22 @@ Handle Wildcards correctly:
 
     >>> r = query('/Address/_/Telephone')
     >>> sorted(elem.number for elem in r)
-    ['2298890', '2298891', '22988912']
+    [2298890, 2298891, 22988912]
 
 What about precedence:
 
     >>> r = query('/Address[@street="Forsterstrasse"]/Person/Telephone')
     >>> sorted(elem.number for elem in r)
-    ['2298890', '2298891', '22988912']
+    [2298890, 2298891, 22988912]
     >>> r = query('(/Address[@street="Forsterstrasse"]/Person)/Telephone')
     >>> sorted(elem.number for elem in r)
-    ['2298890', '2298891', '22988912']
+    [2298890, 2298891, 22988912]
     >>> r = query('/Address[@street="Forsterstrasse"]/(Person/Telephone)')
     >>> len(r)
     0
     >>> r = query('(/Address/Person[@name="Basti"])/(Person/Telephone)')
     >>> sorted(elem.number for elem in r)
-    ['22988912']
+    [22988912]
 
 But pay attention. If you change the query from .."]/(Pers.. to .."](/Pers..
 you get an Address-Result with street name "Forsterstrasse":

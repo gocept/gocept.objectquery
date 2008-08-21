@@ -13,8 +13,9 @@ Get a QueryParer:
 
     >>> p = RPEQueryParser()
 
-Some examples how to use the QueryPaser
-=======================================
+
+Query for elements
+==================
 
 The Parser returns a data structure, which allows to recursively call the
 Join-Functions with two parameters. Here a simple example, where we join the
@@ -35,18 +36,34 @@ But trailing path separators are **not** allowed:
     ...
     SyntaxError: ...
 
+More Pathjoins work like a tree, where the leaves are the elements:
+
+    >>> p.parse('foo/bar/bou')
+    ['EEJOIN', ['EEJOIN', ('ELEM', 'foo'), ('ELEM', 'bar')], ('ELEM', 'bou')]
+
+
+Query for occurrences
+=====================
+
 Occurrence works the same way: it's an KCJOIN with the occurrence parameter
 (+,?,*) and an element:
 
     >>> p.parse('/foo?')
     ['EEJOIN', None, ['KCJOIN', '?', ('ELEM', 'foo')]]
+
     >>> p.parse('foo*/bar')
     ['EEJOIN', ['KCJOIN', '*', ('ELEM', 'foo')], ('ELEM', 'bar')]
 
-More Pathjoins work like a tree, where the leaves are the elements:
+A special case is the combination of the all-operator with a wildcard. It
+matches for any number of some kind of element (which means in this special
+case *give me all bar elements from anywhere in the graph*:
 
-    >>> p.parse('foo/bar/bou')
-    ['EEJOIN', ['EEJOIN', ('ELEM', 'foo'), ('ELEM', 'bar')], ('ELEM', 'bou')]
+    >>> p.parse('/_*/bar')
+    ['EEJOIN', None, '/_*/', ('ELEM', 'bar')]
+
+
+Query for attribute values
+==========================
 
 Attributes are parsed the same way: an ATTR-Function with ID and VALUE as
 parameters:
@@ -56,13 +73,51 @@ parameters:
 
 Attribute vales may also be empty:
 
-    >>> p.parse('/foo[@A>=""]')
-    ['EEJOIN', None, ['EAJOIN', ['ATTR', ('A', '', '>=')], ('ELEM', 'foo')]]
+    >>> p.parse('/foo[@A=""]')
+    ['EEJOIN', None, ['EAJOIN', ['ATTR', ('A', '', '=')], ('ELEM', 'foo')]]
 
-Element can also be a wildcard:
+Possible compare operators are =, ==, <, >, <=, >= and !=:
 
-    >>> p.parse('/_*/bar')
-    ['EEJOIN', None, '/_*/', ('ELEM', 'bar')]
+    >>> p.parse('/foo[@a=="b"]')
+    ['EEJOIN', None, ['EAJOIN', ['ATTR', ('a', 'b', '==')], ('ELEM', 'foo')]]
+
+    >>> p.parse('/foo[@a>"b"]')
+    ['EEJOIN', None, ['EAJOIN', ['ATTR', ('a', 'b', '>')], ('ELEM', 'foo')]]
+
+    >>> p.parse('/foo[@a<"b"]')
+    ['EEJOIN', None, ['EAJOIN', ['ATTR', ('a', 'b', '<')], ('ELEM', 'foo')]]
+
+    >>> p.parse('/foo[@a>="b"]')
+    ['EEJOIN', None, ['EAJOIN', ['ATTR', ('a', 'b', '>=')], ('ELEM', 'foo')]]
+
+    >>> p.parse('/foo[@a<="b"]')
+    ['EEJOIN', None, ['EAJOIN', ['ATTR', ('a', 'b', '<=')], ('ELEM', 'foo')]]
+
+    >>> p.parse('/foo[@a!="b"]')
+    ['EEJOIN', None, ['EAJOIN', ['ATTR', ('a', 'b', '!=')], ('ELEM', 'foo')]]
+
+Possible chars inside a string argument are alphanumeric, dot, unterline,
+minus, plus and comma:
+
+    >>> p.parse('SingleSource/bla[@reverse_name="a1._-+,"]')
+    ['EEJOIN', ('ELEM', 'SingleSource'), ['EAJOIN', ['ATTR', ('reverse_name', 'a1._-+,', '=')], ('ELEM', 'bla')]]
+
+Querying for integer or float values is also possible:
+
+    >>> p.parse('/foo[@a=12]')
+    ['EEJOIN', None, ['EAJOIN', ['ATTR', ('a', 12, '=')], ('ELEM', 'foo')]]
+
+    >>> p.parse('/foo[@a=12.0]')
+    ['EEJOIN', None, ['EAJOIN', ['ATTR', ('a', 12.0, '=')], ('ELEM', 'foo')]]
+
+But there is a rounding problem with floats (TODO):
+
+    >>> p.parse('/foo[@a=12.7]')
+    ['EEJOIN', None, ['EAJOIN', ['ATTR', ('a', 12.699999999999999, '=')], ('ELEM', 'foo')]]
+
+
+Further queries
+===============
 
 To show the mightiness of the parser, here a more complex example:
 
@@ -90,15 +145,16 @@ A really big example with everything possible included:
     >>> p.parse('(E1/E2)*/E3/((E4[@A="v"])|(E5/_*/E6))')
     ['EEJOIN', ['EEJOIN', ['KCJOIN', '*', ['PREC', ['EEJOIN', ('ELEM', 'E1'), ('ELEM', 'E2')]]], ('ELEM', 'E3')], ['PREC', ['UNION', ['PREC', ['EAJOIN', ['ATTR', ('A', 'v', '=')], ('ELEM', 'E4')]], ['PREC', ['EEJOIN', ('ELEM', 'E5'), '/_*/', ('ELEM', 'E6')]]]]]
 
-Specify a ``way'' through the graph with .way:
+Specify a *way* through the graph with .way:
 
     >>> p.parse('/foo.next_elem')
     ['EEJOIN', None, ['PWJOIN', ('ELEM', 'foo'), ('WAY', 'next_elem')]]
     >>> p.parse('(foo/bar.next)|(boo.next/far)')
     ['UNION', ['PREC', ['EEJOIN', ('ELEM', 'foo'), ['PWJOIN', ('ELEM', 'bar'), ('WAY', 'next')]]], ['PREC', ['EEJOIN', ['PWJOIN', ('ELEM', 'boo'), ('WAY', 'next')], ('ELEM', 'far')]]]
 
-Here some negative RPE-Tests
-============================
+
+Some queries with a wrong syntax
+================================
 
 Empty querys are not allowed:
 
@@ -160,7 +216,3 @@ Quoted strings in attribute values must be quoted correctly:
     Traceback (most recent call last):
     ...
     SyntaxError: ...
-
-    >>> p.parse('SingleSource/bla[@reverse_name="ns1.gocept.com"]')
-    ['EEJOIN', ('ELEM', 'SingleSource'), ['EAJOIN', ['ATTR', ('reverse_name', 'ns1.gocept.com', '=')], ('ELEM', 'bla')]]
-
