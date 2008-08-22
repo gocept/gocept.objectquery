@@ -34,43 +34,68 @@ Using the ObjectCollection
 ==========================
 
 
-Example usage of ObjectCollection
----------------------------------
+Adding items to the ObjectCollection
+------------------------------------
 
-Add some objects to the collection:
+Before you can start, you should add objects to the collection. In most cases,
+it is sufficient to add the root object of your database. The collection will
+index all objects referenced by this root object recursively by its own.
 
-    >>> t1 = testobjects.Telephone(number="22")
-    >>> t2 = testobjects.Telephone(number="66")
+First of all, we create some objects for our test-database:
+
+    >>> t1 = testobjects.Telephone(number=22)
+    >>> t2 = testobjects.Telephone(number=66)
     >>> p1 = testobjects.Person(name="Sebastian")
     >>> a1 = testobjects.Address(street="Meckelstrasse", city="Halle")
+
+Now we create a hierachy between those objects and add them to the ZODB. Don't
+forget to commit the transaction, because the ObjectCollection needs the OID of
+your peristant objects for internal storage:
+
+    >>> a1.ref.append(p1)
+    >>> p1.work.extend((t1, t2))
     >>> dbroot['test'] = a1
     >>> transaction.commit()
 
-If providing only one argument to the add method of the ObjectCollection, we
-want to add the object as the root object:
+To index our test-db, we add the root object to the ObjectCollection. For large
+databases, this process can last some time:
 
     >>> oc.add(dbroot['test'])
-    >>> oc.root()[0] == a1._p_oid
-    True
 
-    >>> a1.ref.append(p1)
-    >>> transaction.commit()
-    >>> oc.add(p1, a1)
+The ObjectCollection has a index called ClassIndex, which is a mapping of
+classnames to OIDs of this class. It returns a generator object with all found
+results.
 
-    >>> p1.work.append(t1)
-    >>> p1.work.append(t2)
-    >>> transaction.commit()
-    >>> oc.add(t1, p1)
-    >>> oc.add(t2, p1)
+We added two Telephone objects to the database:
 
+    >>> phones = oc._classindex.get("Telephone")
+    >>> phones
+    <generator object at 0x...>
+    
+    >>> phones = list(phones)
+    >>> len(phones)
+    2
 
-Verify the indexes:
+As shortly mentioned above, the ObjectCollection stores OID instead of objects.
+To have a look at these objects, we have to ask the connection object:
 
-    >>> result = list(oc._classindex.get("Telephone"))
-    >>> conn.get(result[0])
+    >>> res_phone1 = conn.get(phones[0])
+    >>> res_phone1
     <gocept.objectquery.testobjects.Telephone object at 0x...>
-    >>> conn.get(result[1])
+    >>> res_phone2 = conn.get(phones[1])
+    >>> res_phone2
     <gocept.objectquery.testobjects.Telephone object at 0x...>
+    >>> res_phone1 == res_phone2
+    False
+
+
+
+XXX more doku and tests come here:
+
+    >>> result = list(oc._classindex.get("Foo"))
+    >>> result
+    []
+
     >>> result = list(oc._attributeindex.get("name"))
     >>> conn.get(result[0])
     <gocept.objectquery.testobjects.Person object at 0x...>
