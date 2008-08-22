@@ -46,19 +46,22 @@ Add some objects to the collection:
     >>> dbroot['test'] = a1
     >>> transaction.commit()
 
-    >>> oc.add(a1)
+If providing only one argument to the add method of the ObjectCollection, we
+want to add the object as the root object:
+
+    >>> oc.add(dbroot['test'])
     >>> oc.root()[0] == a1._p_oid
     True
 
     >>> a1.ref.append(p1)
     >>> transaction.commit()
-    >>> oc.add(p1, a1._p_oid)
+    >>> oc.add(p1, a1)
 
     >>> p1.work.append(t1)
     >>> p1.work.append(t2)
     >>> transaction.commit()
-    >>> oc.add(t1, p1._p_oid)
-    >>> oc.add(t2, p1._p_oid)
+    >>> oc.add(t1, p1)
+    >>> oc.add(t2, p1)
 
 
 Verify the indexes:
@@ -98,7 +101,7 @@ Adding some more objects to ``oc``:
     >>> a1.ref.append(p2)
     >>> transaction.commit()
 
-    >>> oc.add(p2, a1._p_oid)
+    >>> oc.add(p2, a1)
     >>> len(oc.by_class("Person"))
     2
 
@@ -106,7 +109,7 @@ Adding some more objects to ``oc``:
     >>> p2.work.append(t3)
     >>> transaction.commit()
 
-    >>> oc.add(t3, p2._p_oid)
+    >>> oc.add(t3, p2)
     >>> len(oc.by_class("Telephone"))
     3
 
@@ -153,7 +156,7 @@ Then create two objects and add one under the other:
 
     >>> add.ref.append(per)
     >>> transaction.commit()
-    >>> oc.add(per, add._p_oid)
+    >>> oc.add(per, add)
 
 There are now no Telephone objects inside the ObjectCollection:
 
@@ -164,7 +167,7 @@ Adding add under per will create a cycle, which is possible at all:
 
     >>> per.ref.append(add)
     >>> transaction.commit()
-    >>> oc.add(per, add._p_oid)
+    >>> oc.add(per, add)
 
 To test the cycle, per should be a child of add and vice versa:
 
@@ -189,7 +192,7 @@ Then create some objects and add them:
     >>> per2 = testobjects.Person()
     >>> tel = testobjects.Telephone()
 
-Telephone now ``hangs'' under two objects, Person1 and Person2:
+Telephone now 'hangs' under two objects, Person1 and Person2:
 
     >>> add.ref.append(per1)
     >>> add.ref.append(per2)

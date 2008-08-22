@@ -32,12 +32,15 @@ class ObjectCollection(object):
         self._kcjoin = KCJoin(self._structureindex)
         self._union = Union()
 
-    def add(self, obj, parent_oid=None, cycle_prev=None):
+    def add(self, obj, parent=None, cycle_prev=None):
         """ Index the object to the ObjectCollection. """
         if not hasattr(obj, '_p_oid'):
             return
         if cycle_prev is None:
             cycle_prev = []
+        parent_oid = None
+        if parent:
+            parent_oid = parent._p_oid
         if obj._p_oid in cycle_prev:
             if not self._structureindex.is_successor(obj._p_oid, parent_oid):
                 self._structureindex.insert(obj._p_oid, parent_oid)
@@ -50,7 +53,7 @@ class ObjectCollection(object):
         self._structureindex.insert(obj._p_oid, parent_oid)
         cycle_prev.append(obj._p_oid)
         for desc in op.get_descendants(obj):
-            self.add(desc, obj._p_oid, cycle_prev[:])
+            self.add(desc, obj, cycle_prev[:])
 
     def root(self):
         """ Return the root object. """
