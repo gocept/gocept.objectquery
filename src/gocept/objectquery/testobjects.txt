@@ -1,0 +1,85 @@
+============
+Testdatabase
+============
+
+Introducing the classes
+=======================
+
+For the test-db used in the objectquery tests we use some classes. First of all
+there is a user class:
+
+
+>>> from gocept.objectquery import testobjects
+>>> testobjects.User
+<class 'gocept.objectquery.testobjects.User'>
+
+Lets initialize a user. They are by default _empty_:
+
+>>> empty = testobjects.User()
+>>> empty.name
+''
+>>> empty.age
+0
+
+The attribute *owns* contains all objects the user has:
+
+>>> empty.owns
+[]
+
+
+Now create a car to make our user less empty:
+
+>>> viper = testobjects.Car()
+>>> viper.model = "Viper"
+
+By default, a new car is a silver one. Lets change this:
+
+>>> viper.color
+'silver'
+>>> viper.color = "red"
+
+
+A car needs a manufacturer:
+
+>>> print viper.manufacturer
+None
+>>> dodge = testobjects.Company()
+>>> dodge.name = "Dodge"
+>>> dodge.location = "Michigan"
+
+>>> viper.manufacturer = dodge
+
+Our empty user buys now the viper:
+
+>>> empty.owns.append(viper)
+>>> empty.owns
+[<gocept.objectquery.testobjects.Car object at 0x...>]
+
+
+Introducing the database
+========================
+
+>>> from gocept.objectquery.testobjects import testdb
+>>> testdb
+[<gocept.objectquery.testobjects.User object at 0x...>, ...]
+>>> len(testdb)
+3
+
+Tom and Susi own the same car:
+
+>>> tomscar = testdb[0].owns[0]
+>>> print "%s %s in %s" % (tomscar.manufacturer.name, tomscar.model,
+...     tomscar.color)
+Ford Focus in red
+
+>>> susiscar = testdb[1].owns[0]
+>>> tomscar == susiscar
+True
+
+Max owns a Porsche Boxter:
+
+>>> maxscar = testdb[2].owns[0]
+>>> print "%s %s in %s" % (maxscar.manufacturer.name, maxscar.model,
+...     maxscar.color)
+Porsche Boxter in black
+

@@ -10,6 +10,7 @@ from zope.testing import doctest
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTest(doctest.DocFileSuite( "interfaces.txt",
+                                        "testobjects.txt",
                                         "pathexpressions.txt",
                                         "indexsupport.txt",
                                         "querysupport.txt",
