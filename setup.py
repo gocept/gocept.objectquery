@@ -3,7 +3,13 @@
 # $Id$
 """Setup for gocept.objectquery package"""
 
+import sys
+import os.path
+
 from setuptools import setup, find_packages
+
+def read(*rnames):
+    return open(os.path.join(os.path.dirname(__file__), *rnames)).read()
 
 name = 'gocept.objectquery'
 
@@ -13,6 +19,7 @@ setup(
     url='http://www.python.org/pypi/'+name,
     license='ZPL 2.1',
     description='A framework for indexing and querying python objects',
+    long_description = (read('README.txt')),
     author='Sebastian Wehrmann',
     author_email='sw@gocept.com',
     packages=find_packages('src'),
