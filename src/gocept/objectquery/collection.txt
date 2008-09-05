@@ -62,6 +62,10 @@ databases, this process can last some time:
 
     >>> oc.add(dbroot['test'])
 
+
+Internal representation of the indexes
+--------------------------------------
+
 The ObjectCollection has a index called ClassIndex, which is a mapping of
 classnames to OIDs of this class. It returns a generator object with all found
 results.
@@ -88,83 +92,96 @@ To have a look at these objects, we have to ask the connection object:
     >>> res_phone1 == res_phone2
     False
 
+There is also an index available, which maps attribute names to OIDs of
+classes, which have that attribute. It returns a generator object, too:
 
+    >>> names = oc._attributeindex.get("name")
+    >>> names
+    <generator object at 0x...>
 
-XXX more doku and tests come here:
-
-    >>> result = list(oc._classindex.get("Foo"))
-    >>> result
-    []
-
-    >>> result = list(oc._attributeindex.get("name"))
-    >>> conn.get(result[0])
+    >>> names = list(names)
+    >>> len(names)
+    1
+    >>> basti = conn.get(names[0])
+    >>> basti
     <gocept.objectquery.testobjects.Person object at 0x...>
-    >>> conn.get(result[1])
-    Traceback (most recent call last):
-    ...
-    IndexError: list index out of range
+    >>> basti.name
+    'Sebastian'
 
 
-Search by classname:
+Adding some more objects to the ObjectCollection
+------------------------------------------------
 
-    >>> r = oc.by_class("Telephone")
-    >>> conn.get(r[0][0])
-    <gocept.objectquery.testobjects.Telephone object at 0x...>
-    >>> conn.get(r[1][0])
-    <gocept.objectquery.testobjects.Telephone object at 0x...>
-    >>> r = oc.by_class("Address")
-    >>> conn.get(r[0][0])
-    <gocept.objectquery.testobjects.Address object at 0x...>
-
-
-Adding and removing objects:
-----------------------------
-
-Adding some more objects to ``oc``:
+Adding some more objects to ``oc``. This is done in the same way as mentioned
+above:
 
     >>> p2 = testobjects.Person(name="Christian")
     >>> a1.ref.append(p2)
     >>> transaction.commit()
-
     >>> oc.add(p2, a1)
+
+There are now two person objects inside the database:
+
     >>> len(oc.by_class("Person"))
     2
+
+Now Christian gets a telephone number:
 
     >>> t3 = testobjects.Telephone(number="2298891")
     >>> p2.work.append(t3)
     >>> transaction.commit()
-
     >>> oc.add(t3, p2)
+
+There are now three telephone numbers available:
+
     >>> len(oc.by_class("Telephone"))
     3
 
-Verify the correct insertions:
+
+Testing the database hierarchie
+-------------------------------
+
+To test, wheather an object is a child of another or not, the ObjectCollection
+uses another index for performance reason, the structure index. It returns the
+result independent from the depth of the graph and the distance of the two
+objects.
 
     >>> oc.is_child(t3._p_oid, p1._p_oid)
     False
     >>> oc.is_child(t3._p_oid, p2._p_oid)
     True
 
-Successful removing:
+Removing objects from the ObjectCollection
+------------------------------------------
+
+When removing objects, all child objects, which are no longer referenced by
+others, are removed as well.
 
     >>> p1.work.remove(t1)
-    >>> oc.delete(t1._p_oid, p1._p_oid)
+    >>> oc.delete(t1._p_oid)
     >>> transaction.commit()
+
+There are two phones remaining:
+
     >>> len(oc.by_class("Telephone"))
     2
 
-    >>> oc.delete(p2._p_oid)
+When removing a person, all its telephones are removed, too:
+
     >>> a1.ref.remove(p2)
+    >>> oc.delete(p2._p_oid)
     >>> transaction.commit()
     >>> len(oc.by_class("Person"))
     1
     >>> len(oc.by_class("Telephone"))
     1
 
+
 Adding circles to collection
 ----------------------------
 
-First we need a new ObjectCollection:
+It is possible, to add circle references to a ObjectCollection. First we need
+a new ObjectCollection:
 
     >>> dbroot.clear()
     >>> transaction.commit()
@@ -188,13 +205,20 @@ There are now no Telephone objects inside the ObjectCollection:
     >>> len(oc.by_class("Telephone"))
     0
 
-Adding add under per will create a cycle, which is possible at all:
+Furthermore, Person is a child of Address, but Address is no child of Person:
+
+    >>> oc.is_child(per._p_oid, add._p_oid)
+    True
+    >>> oc.is_child(add._p_oid, per._p_oid)
+    False
+
+Adding Address under Person will create a cycle, which is possible at all:
 
     >>> per.ref.append(add)
     >>> transaction.commit()
     >>> oc.add(per, add)
 
-To test the cycle, per should be a child of add and vice versa:
+To test the cycle, Person should be a child of Address and vice versa:
 
     >>> oc.is_child(per._p_oid, add._p_oid)
     True

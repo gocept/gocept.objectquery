@@ -87,24 +87,20 @@ class ObjectCollection(object):
         """ Return the classname of object. """
         return object.__class__.__name__
 
-    def _get_oid(self, object):
-        """ Return the oid of object. """
-        return object._p_oid
-
     def _get_object(self, oid):
         """ Return the object corresponding to oid. """
         return self.conn.get(oid)
 
     def delete(self, object_oid, parent_oid=None, pdb=None):
         """ Main remove method. """
-        object = self._get_object(object_oid)
-        classname = self._get_classname(object)
+        obj = self._get_object(object_oid)
+        classname = self._get_classname(obj)
         op = ObjectParser()
         if self._structureindex.has_key(object_oid):
             self._structureindex.delete(object_oid, parent_oid)
         if not self._structureindex.has_key(object_oid):
              self._classindex.delete(classname, object_oid)
-        for attr in op.get_attributes(object):
+        for attr in op.get_attributes(obj):
              self._attributeindex.delete(attr, object_oid)
-        for desc in op.get_descendants(object):
-            self.delete(self._get_oid(desc), object_oid)
+        for desc in op.get_descendants(obj):
+            self.delete(desc._p_oid, object_oid)
