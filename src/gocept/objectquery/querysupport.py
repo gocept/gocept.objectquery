@@ -123,7 +123,7 @@ class EAJoin(object):
                 continue
             if e in resultlist:
                 continue
-            if not attrvalue:
+            if attrvalue is None:
                 resultlist.append(e)
                 continue
             if self._attr_comp(getattr(elem, attrname), attrvalue, attrcomp):
