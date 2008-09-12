@@ -43,18 +43,22 @@ index all objects referenced by this root object recursively by its own.
 
 First of all, we create some objects for our test-database:
 
-    >>> t1 = testobjects.Telephone(number=22)
-    >>> t2 = testobjects.Telephone(number=66)
-    >>> p1 = testobjects.Person(name="Sebastian")
-    >>> a1 = testobjects.Address(street="Meckelstrasse", city="Halle")
+    >>> hans = testobjects.Person(name="Hans")
+    >>> marie = testobjects.Person(name="Marie")
+    >>> zodb_book = testobjects.Book(
+    ...                 authors=[],
+    ...                 title='Ad-hoc Anfragen an die ZODB',
+    ...                 written=2004,
+    ...                 isbn=3404159063)
+    >>> halle = testobjects.Library(location="Halle")
 
 Now we create a hierachy between those objects and add them to the ZODB. Don't
 forget to commit the transaction, because the ObjectCollection needs the OID of
 your peristant objects for internal storage:
 
-    >>> a1.ref.append(p1)
-    >>> p1.work.extend((t1, t2))
-    >>> dbroot['test'] = a1
+    >>> zodb_book.authors.extend([hans, marie])
+    >>> halle.books.append(zodb_book)
+    >>> dbroot['test'] = halle
     >>> transaction.commit()
 
 To index our test-db, we add the root object to the ObjectCollection. For large
@@ -70,26 +74,31 @@ The ObjectCollection has a index called ClassIndex, which is a mapping of
 classnames to OIDs of this class. It returns a generator object with all found
 results.
 
-We added two Telephone objects to the database:
+We added two Person objects to the database:
 
-    >>> phones = oc._classindex.get("Telephone")
-    >>> phones
+    >>> persons = oc._classindex.get("Person")
+    >>> persons
     <generator object at 0x...>
     
-    >>> phones = list(phones)
-    >>> len(phones)
+    >>> persons = list(persons)
+    >>> len(persons)
     2
 
 As shortly mentioned above, the ObjectCollection stores OID instead of objects.
 To have a look at these objects, we have to ask the connection object:
 
-    >>> res_phone1 = conn.get(phones[0])
-    >>> res_phone1
-    <gocept.objectquery.testobjects.Telephone object at 0x...>
-    >>> res_phone2 = conn.get(phones[1])
-    >>> res_phone2
-    <gocept.objectquery.testobjects.Telephone object at 0x...>
-    >>> res_phone1 == res_phone2
+    >>> person1 = conn.get(persons[0])
+    >>> person1
+    <gocept.objectquery.testobjects.Person object at 0x...>
+    >>> person2 = conn.get(persons[1])
+    >>> person2
+    <gocept.objectquery.testobjects.Person object at 0x...>
+
+    >>> person1 == hans 
+    True
+    >>> person2 == marie
+    True
+    >>> person1 == person2
     False
 
 There is also an index available, which maps attribute names to OIDs of
@@ -101,40 +110,45 @@ classes, which have that attribute. It returns a generator object, too:
 
     >>> names = list(names)
     >>> len(names)
-    1
-    >>> basti = conn.get(names[0])
-    >>> basti
-    <gocept.objectquery.testobjects.Person object at 0x...>
-    >>> basti.name
-    'Sebastian'
+    2
+    >>> hans = conn.get(names[0])
+    >>> hans.name
+    'Hans'
+    >>> marie = conn.get(names[1])
+    >>> marie.name
+    'Marie'
 
 
 Adding some more objects to the ObjectCollection
 ------------------------------------------------
 
-Adding some more objects to ``oc``. This is done in the same way as mentioned
-above:
+Lets add some more objects to the collection. This is done in the same way as
+mentioned above:
 
-    >>> p2 = testobjects.Person(name="Christian")
-    >>> a1.ref.append(p2)
+    >>> zope_book = testobjects.Book(
+    ...         authors=[hans],
+    ...         title='Zope in action',
+    ...         written=2003,
+    ...         isbn=123456789)
+    >>> halle.books.append(zope_book)
     >>> transaction.commit()
-    >>> oc.add(p2, a1)
+    >>> oc.add(zope_book, halle)        # XXX: should be obsolete soon
 
-There are now two person objects inside the database:
+There are now two books inside the database:
 
-    >>> len(oc.by_class("Person"))
+    >>> len(oc.by_class("Book"))
     2
 
-Now Christian gets a telephone number:
+The Zope book now gets a second author:
 
-    >>> t3 = testobjects.Telephone(number="2298891")
-    >>> p2.work.append(t3)
+    >>> mark = testobjects.Person(name='Mark')
+    >>> zope_book.authors.append(mark)
     >>> transaction.commit()
-    >>> oc.add(t3, p2)
+    >>> oc.add(mark, zope_book)         # XXX: should be obsolete soon
 
-There are now three telephone numbers available:
+There are now three persons available:
 
-    >>> len(oc.by_class("Telephone"))
+    >>> len(oc.by_class("Person"))
     3
 
 
@@ -144,12 +158,16 @@ Testing the database hierarchie
 To test, wheather an object is a child of another or not, the ObjectCollection
 uses another index for performance reason, the structure index. It returns the
 result independent from the depth of the graph and the distance of the two
-objects.
+objects. Because it is only used internally, we must provide the OIDs here
+instead of objects:
 
-    >>> oc.is_child(t3._p_oid, p1._p_oid)
+    >>> oc.is_child(zope_book._p_oid, mark._p_oid)
     False
-    >>> oc.is_child(t3._p_oid, p2._p_oid)
+    >>> oc.is_child(mark._p_oid, zope_book._p_oid)
     True
+    >>> oc.is_child(mark._p_oid, zodb_book._p_oid)
+    False
+
 
 Removing objects from the ObjectCollection
 ------------------------------------------
@@ -157,24 +175,65 @@ Removing objects from the ObjectCollection
 When removing objects, all child objects, which are no longer referenced by
 others, are removed as well.
 
-    >>> p1.work.remove(t1)
-    >>> oc.delete(t1._p_oid)
+    >>> zope_book.authors.remove(mark)
+    >>> oc.delete(mark._p_oid)          # XXX: should be obsolete soon
     >>> transaction.commit()
 
-There are two phones remaining:
+There are two persons remaining:
 
-    >>> len(oc.by_class("Telephone"))
+    >>> len(oc.by_class("Person"))
     2
 
-When removing a person, all its telephones are removed, too:
+When removing a book, all its authors are removed, too, *if* there are no more
+books left, which they wrote:
 
-    >>> a1.ref.remove(p2)
-    >>> oc.delete(p2._p_oid)
+    >>> halle.books.remove(zodb_book)
+    >>> oc.delete(zodb_book._p_oid)
     >>> transaction.commit()
     >>> len(oc.by_class("Person"))
     1
-    >>> len(oc.by_class("Telephone"))
+    >>> len(oc.by_class("Book"))
     1
+
+
+Automatic index updates on transaction boundaries
+-------------------------------------------------
+
+When making changes to objects, the index can be updated at transaction
+boundaries automatically for all objects that where changed.
+
+A synchronizer needs to be registered with the transaction manager first and
+the object collection needs to be registered as a utility:
+
+    >>> from gocept.objectquery import indexsupport
+    >>> index_synch = indexsupport.IndexSynchronizer()
+    >>> transaction.manager.registerSynch(index_synch)
+    >>> import zope.component
+    >>> zope.component.provideUtility(oc)
+
+    >>> dbroot['person'] = testobjects.Person(name='Christian')
+    >>> transaction.commit()
+    >>> len(oc.by_class("Person"))
+    2
+
+But what still does not work, is adding objects under existing ones:
+
+    >>> zope_book.authors.append(mark)
+    >>> transaction.commit()
+
+Mark is now added (thats good, of course):
+
+    >>> len(oc.by_class("Person"))
+    3
+
+But he is not added as a child of the zope_book (which is bad):
+
+    >>> oc.is_child(mark._p_oid, zope_book._p_oid)
+    False
+
+Automatic updates stop when disabling the index synchronizer again:
+
+    >>> transaction.manager.unregisterSynch(index_synch)
 
 
 Adding circles to collection
@@ -189,118 +248,40 @@ a new ObjectCollection:
 
 Then create two objects and add one under the other:
 
-    >>> add = testobjects.Address()
-    >>> per = testobjects.Person()
+    >>> first = testobjects.Dummy(id=1)
+    >>> second = testobjects.Dummy(id=2)
 
-    >>> dbroot['test'] = add
+    >>> dbroot['test'] = first
     >>> transaction.commit()
-    >>> oc.add(add)
+    >>> oc.add(first)                   # XXX: should be obsolete soon
 
-    >>> add.ref.append(per)
+    >>> first.ref.append(second)
     >>> transaction.commit()
-    >>> oc.add(per, add)
+    >>> oc.add(second, first)           # XXX: should be obsolete soon
 
 There are now no Telephone objects inside the ObjectCollection:
 
     >>> len(oc.by_class("Telephone"))
     0
 
-Furthermore, Person is a child of Address, but Address is no child of Person:
+Furthermore, second is a child of first, but first is no child of second:
 
-    >>> oc.is_child(per._p_oid, add._p_oid)
+    >>> oc.is_child(second._p_oid, first._p_oid)
     True
-    >>> oc.is_child(add._p_oid, per._p_oid)
+    >>> oc.is_child(first._p_oid, second._p_oid)
     False
 
-Adding Address under Person will create a cycle, which is possible at all:
+Adding first under second will create a cycle, which is possible at all:
 
-    >>> per.ref.append(add)
+    >>> second.ref.append(first)
     >>> transaction.commit()
-    >>> oc.add(per, add)
+    >>> oc.add(first, second)           # XXX: should be obsolete soon
 
-To test the cycle, Person should be a child of Address and vice versa:
+To test the cycle, second should be a child of first and vice versa:
 
-    >>> oc.is_child(per._p_oid, add._p_oid)
+    >>> oc.is_child(second._p_oid, first._p_oid)
     True
-    >>> oc.is_child(add._p_oid, per._p_oid)
-    True
-
-Adding and Removing multiple objects
-------------------------------------
-
-First we need a new ObjectCollection:
-
-    >>> dbroot.clear()
-    >>> transaction.commit()
-    >>> oc = ObjectCollection(conn)
-
-Then create some objects and add them:
-
-    >>> add = testobjects.Address()
-    >>> per1 = testobjects.Person()
-    >>> per2 = testobjects.Person()
-    >>> tel = testobjects.Telephone()
-
-Telephone now 'hangs' under two objects, Person1 and Person2:
-
-    >>> add.ref.append(per1)
-    >>> add.ref.append(per2)
-    >>> per1.ref.append(tel)
-    >>> per2.ref.append(tel)
-
-    >>> dbroot['test'] = add
-    >>> transaction.commit()
-    >>> oc.add(add)
-
-Now there are 2 Person and 1 Telephone object:
-
-    >>> len(oc.by_class("Person"))
-    2
-    >>> len(oc.by_class("Telephone"))
-    1
-
-But Telephone is the child of Person1 *and* Person2:
-
-    >>> oc.is_child(tel._p_oid, per1._p_oid)
-    True
-    >>> oc.is_child(tel._p_oid, per2._p_oid)
+    >>> oc.is_child(first._p_oid, second._p_oid)
     True
 
-Removing Person1 will not cause the deletion of Telephone (because it still
-does exist under Person2):
 
-    >>> oc.delete(per1._p_oid)
-    >>> add.ref.remove(per1)
-    >>> transaction.commit()
-
-Now there is only one Person object, but still one Telephone:
-
-    >>> len(oc.by_class("Person"))
-    1
-    >>> len(oc.by_class("Telephone"))
-    1
-
-
-Automatic index updates on transaction boundaries
-=================================================
-
-When making changes to objects, the index can be updated at transaction
-boundaries automatically for all objects that where changed.
-
-A synchronizer needs to be registered with the transaction manager first and
-the object collection needs to be registered as a utility:
-
-    >>> from gocept.objectquery import indexsupport
-    >>> index_synch = indexsupport.IndexSynchronizer()
-    >>> transaction.manager.registerSynch(index_synch)
-    >>> import zope.component
-    >>> zope.component.provideUtility(oc)
-
-    >>> dbroot['add2'] = testobjects.Address()
-    >>> transaction.commit()
-    >>> len(oc.by_class("Address"))
-    2
-
-Automatic updates stop when disabling the index synchronizer again:
-
-    >>> transaction.manager.unregisterSynch(index_synch)

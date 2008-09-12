@@ -6,129 +6,104 @@ import persistent
 import persistent.list
 import transaction
 
-from ZODB import MappingStorage, DB
+import ZODB.MappingStorage, ZODB.DB
+
+# class definitions for the test db
+
+class Library(persistent.Persistent):
+    """ """
+
+    def __init__(self, location, books=[]):
+        self.location = location
+        self.books = persistent.list.PersistentList()
+        self.books.extend(books)
 
 
-class User(persistent.Persistent):
-    """A user with an access list."""
+class Book(persistent.Persistent):
+    """ """
 
-    name = ""
-    age = 0
-
-    def __init__(self):
-        self.owns = persistent.list.PersistentList()
-
-class Car(persistent.Persistent):
-    """A car."""
-
-    manufacturer = None
-    model = ""
-    color = "silver"
-
-class Company(persistent.Persistent):
-    """The manufacturer of a car."""
-
-    name = ""
-    location = ""
+    def __init__(self, authors, title, written, isbn):
+        self.authors = persistent.list.PersistentList()
+        self.authors.extend(authors)
+        self.title = title
+        self.written = written
+        self.isbn = isbn
 
 
-storage = MappingStorage.MappingStorage()
-db = DB(storage)
+class Person(persistent.Persistent):
+    """ """
+
+    def __init__(self, name):
+        self.name = name
+
+
+storage = ZODB.MappingStorage.MappingStorage()
+db = ZODB.DB(storage)
 conn = db.open()
 dbroot = conn.root()
 
-dbroot['Users'] = persistent.list.PersistentList()
+# Authors
 
-Tom = User()
-Tom.name = "Tom"
-Tom.age = 23
+p_orwell = Person(name="George Orwell")
+p_lotze = Person(name="Thomas Lotze")
+p_hasecke = Person(name="Jan Ulrich Hasecke")
+p_goethe = Person(name="Johann Wolfgang von Goethe")
+p_weitershausen = Person(name="Philipp von Weitershausen")
 
-Max = User()
-Max.name = "Max"
-Max.age = 17
+# Books
 
-Susi = User()
-Susi.name = "Susi"
-Susi.age = 31
+b_1984 = Book(authors=[p_orwell],
+              title="1984",
+              written=1990,
+              isbn=3548234100)
 
-Focus = Car()
-Focus.model = "Focus"
-Focus.color = "red"
+b_plone = Book(authors=[p_lotze, p_hasecke],
+               title="Plone-Benutzerhandbuch",
+               written=2008,
+               isbn=3939471038)
 
-Tom.owns.append(Focus)
-Susi.owns.append(Focus)
+b_faust = Book(authors=[p_goethe],
+               title="Faust",
+               written=1811,
+               isbn=3406552501)
 
-Boxter = Car()
-Boxter.model = "Boxter"
-Boxter.color = "black"
+b_farm = Book(authors=[p_orwell],
+              title="Farm der Tiere",
+              written=2002,
+              isbn=3257201184)
 
-Max.owns.append(Boxter)
+b_zope = Book(authors=[p_weitershausen],
+              title="Web Component Development with Zope 3",
+              written=2007,
+              isbn=3540338071)
 
-Ford = Company()
-Ford.name = "Ford"
-Ford.location = "USA"
+# Libraries
 
-Focus.manufacturer = Ford
+l_halle = Library(location="Halle",
+                  books=[b_1984, b_plone, b_farm, b_zope])
 
-Porsche = Company()
-Porsche.name = "Porsche"
-Porsche.location = "Germany"
+l_berlin = Library(location="Berlin",
+                   books=[b_1984, b_plone, b_faust, b_farm, b_zope])
 
-Boxter.manufacturer = Porsche
-
-
-
-dbroot['Users'].extend((Tom, Susi, Max))
-
-testdb = dbroot['Users']
-
-
-
-
-from persistent import Persistent
-from persistent.list import PersistentList
+l_chester = Library(location="Chester",
+                    books=[b_1984, b_faust, b_farm])
 
 
-class Dummy(Persistent):
-    """ Dummy object """
-    def __init__(self, ref=None):
-        self.ref = PersistentList()
-        if ref is None:
-            return
-        for elem in ref:
-            self.ref.append(elem)
+dbroot['librarydb'] = persistent.list.PersistentList()
+dbroot['librarydb'].extend([l_halle, l_berlin, l_chester])
 
-#
-# testobjects for processor testcases
-#
+librarydb = dbroot['librarydb']
 
-class Telephone(Dummy):
-    def __init__(self, number="", ref=None):
-        super(self.__class__, self).__init__(ref)
-        self.number = number
+transaction.commit()
 
-class Person(Dummy):
-    def __init__(self, name="", private=None, work=None):
-        super(self.__class__, self).__init__(private)
-        self.private = self.ref[:]
-        super(self.__class__, self).__init__(work)
-        self.work = self.ref[:]
-        self.name = name
+class Dummy(persistent.Persistent):
+    """An object with an id and a reference list."""
+    def __init__(self, id=None, ref=[]):
+        self.id = id
+        self.ref = persistent.list.PersistentList()
+        self.ref.extend(ref)
 
-class Address(Dummy):
-    def __init__(self, street="", city="", floor="", ref=None):
-        super(self.__class__, self).__init__(ref)
-        self.street = street
-        self.city = city
-        self.floor = floor
-
-class AddressBook(Dummy):
-    pass
-
-#
-# testobjects for Kleene Closure doctests
-#
-
+# needed for kleen closure tests in processor.txt
 
 class Root(Dummy):
     pass

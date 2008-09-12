@@ -5,19 +5,11 @@ Querying objects with regular path expressions
 Initialization
 ==============
 
-First we need a ZODB for the IndexSupport used by ObjectCollection:
+First load the test database. For more information about that, please have a
+look inside testobjects.py.
 
-    >>> from ZODB import MappingStorage, DB
-    >>> from persistent import Persistent
-    >>> import transaction
-    >>> storage = MappingStorage.MappingStorage()
-    >>> db = DB(storage)
-    >>> conn = db.open()
-    >>> dbroot = conn.root()
-
-Then we need some testobjects, which we will store into the ObjectCollection:
-
-    >>> import gocept.objectquery.testobjects as testobject
+    >>> from gocept.objectquery.testobjects import *
+    >>> from pprint import pprint
 
 Create QueryProcessor and initialize the ObjectCollection
 =========================================================
@@ -33,100 +25,128 @@ You create a QueryProcessor like this:
     >>> query
     <gocept.objectquery.processor.QueryProcessor object at 0x...>
 
-Now fill the database with some data:
+Now fill the indexes with the data from the test database:
 
-    >>> t1 = testobject.Telephone(number=22988912)
-    >>> t2 = testobject.Telephone(number=2298890)
-    >>> t3 = testobject.Telephone(number=2298891)
-    >>> p1 = testobject.Person(name="Theuni")
-    >>> p2 = testobject.Person(name="Basti", private=[t1])
-    >>> p3 = testobject.Person(name="coco", work=[t2, t3])
-    >>> a1 = testobject.Address(street="Meckelstrasse", floor=2)
-    >>> a2 = testobject.Address(street="Forsterstrasse", floor=2, ref=[p1, p2])
-    >>> a3 = testobject.Address(street="Forsterstrasse", floor=1, ref=[p3])
-    >>> ab = testobject.AddressBook(ref=[a1, a2, a3])
-
-    >>> dbroot['test'] = ab
-    >>> transaction.commit()
-    >>> objects.add(ab)
+    >>> objects.add(librarydb)
 
 Some example usecases
 ---------------------
 
 Root joins:
 
-    >>> r = query('/Address')
-    >>> sorted((elem.street, elem.floor) for elem in r)
-    [('Forsterstrasse', 1), ('Forsterstrasse', 2), ('Meckelstrasse', 2)]
+    >>> r = query('/Library')
+    >>> sorted(elem.location for elem in r)
+    ['Berlin', 'Chester', 'Halle']
 
-    >>> r = query('/Telephone')
+    >>> r = query('/Book')
     >>> len(r)
     0
 
-Give all Telephones that are direct childs of Adresses:
+Search for all Persons that are direct childs of Libraries:
 
-    >>> r = query('Address/Telephone')
-    >>> len(r) == 0
-    True
-
-Give the Telephone of all Persons named "coco":
-
-    >>> r = query('Address/Person[@name="coco"]/Telephone')
-    >>> sorted(elem.number for elem in r)
-    [2298890, 2298891]
-
-Give all Persons that do not live in the first floor:
-
-    >>> r = query('Address[@floor!=1]/Person')
+    >>> r = query('/Library/Person')
     >>> len(r)
-    2
-    >>> sorted(elem.name for elem in r)
-    ['Basti', 'Theuni']
+    0
 
-Give all Persons that live on a floor smaller than 2:
+Search for the authors of all Books named "Fause":
 
-    >>> r = query('Address[@floor<"2"]/Person')
+    >>> r = query('/Library/Book[@title="Faust"]/Person')
     >>> sorted(elem.name for elem in r)
-    ['coco']
+    ['Johann Wolfgang von Goethe']
+
+Search for all books written after year 2000:
+
+    >>> r = query('/Library/Book[@written>=2000]')
+    >>> len(r)
+    3
+    >>> pprint(sorted(elem.title for elem in r))
+    ['Farm der Tiere',
+     'Plone-Benutzerhandbuch',
+     'Web Component Development with Zope 3']
+
+Search for all authors of books written after year 2000:
+
+    >>> r = query('/Library/Book[@written>=2000]/Person')
+    >>> len(r)
+    4
+    >>> pprint(sorted(elem.name for elem in r))
+    ['George Orwell',
+     'Jan Ulrich Hasecke',
+     'Philipp von Weitershausen',
+     'Thomas Lotze']
+
+Search for all Books, that have are located in Halle and have been written in
+2007:
+
+    >>> r = query('/Library[@location="Halle"]/Book[@written==2007]')
+    >>> sorted((elem.title, elem.isbn) for elem in r)
+    [('Web Component Development with Zope 3', 3540338071L)]
 
 Handle Wildcards correctly:
 
-    >>> r = query('/Address/_/Telephone')
-    >>> sorted(elem.number for elem in r)
-    [2298890, 2298891, 22988912]
+    >>> r = query('/Library/_/Person')
+    >>> pprint(sorted(elem.name for elem in r))
+    ['George Orwell',
+     'Jan Ulrich Hasecke',
+     'Johann Wolfgang von Goethe',
+     'Philipp von Weitershausen',
+     'Thomas Lotze']
 
 What about precedence:
 
-    >>> r = query('/Address[@street="Forsterstrasse"]/Person/Telephone')
-    >>> sorted(elem.number for elem in r)
-    [2298890, 2298891, 22988912]
-    >>> r = query('(/Address[@street="Forsterstrasse"]/Person)/Telephone')
-    >>> sorted(elem.number for elem in r)
-    [2298890, 2298891, 22988912]
-    >>> r = query('/Address[@street="Forsterstrasse"]/(Person/Telephone)')
+    >>> r = query('/Library[@location="Halle"]/Book/Person')
+    >>> pprint(sorted(elem.name for elem in r))
+    ['George Orwell',
+     'Jan Ulrich Hasecke',
+     'Philipp von Weitershausen',
+     'Thomas Lotze']
+
+    >>> r = query('(/Library[@location="Halle"]/Book)/Person')
+    >>> pprint(sorted(elem.name for elem in r))
+    ['George Orwell',
+     'Jan Ulrich Hasecke',
+     'Philipp von Weitershausen',
+     'Thomas Lotze']
+
+    >>> r = query('/Library[@location="Halle"]/(Book/Person)')
     >>> len(r)
     0
-    >>> r = query('(/Address/Person[@name="Basti"])/(Person/Telephone)')
-    >>> sorted(elem.number for elem in r)
-    [22988912]
+    >>> r = query('(/Library/Book[@title="Faust"])/(Book/Person)')
+    >>> sorted(elem.name for elem in r)
+    ['Johann Wolfgang von Goethe']
 
-But pay attention. If you change the query from .."]/(Pers.. to .."](/Pers..
-you get an Address-Result with street name "Forsterstrasse":
+But pay attention. If you change the query from .."]/(Book.. to .."](/Book..
+you get an Library-Result with location in "Halle". This is, because the
+subquery (in brakets) returns no results:
 
-    >>> r = query('/Address[@street="Forsterstrasse"](/Person/Telephone)')
+    >>> r = query('/Library[@location="Halle"](/Book/Person)')
     >>> len(r)
-    2
-    >>> r[0].street
-    'Forsterstrasse'
+    1
+    >>> r[0].location
+    'Halle'
 
 Unions:
 
-    >>> r = query('(/Address[@street="Forsterstrasse"])|(Person/Telephone)')
+    >>> r = query('(/Library[@location="Halle"])|(Book/Person)')
     >>> len(r)
-    5
-    >>> r = query('(/Address)|(Person[@name="Basti"])')
+    6
+    >>> pprint(sorted(elem for elem in r))
+    [<gocept.objectquery.testobjects.Library object at 0x...>,
+     <gocept.objectquery.testobjects.Person object at 0x...>,
+     <gocept.objectquery.testobjects.Person object at 0x...>,
+     <gocept.objectquery.testobjects.Person object at 0x...>,
+     <gocept.objectquery.testobjects.Person object at 0x...>,
+     <gocept.objectquery.testobjects.Person object at 0x...>]
+
+    >>> r = query('(/Library)|(Book[@written=1990])')
     >>> len(r)
     4
+    >>> pprint(sorted(elem for elem in r))
+    [<gocept.objectquery.testobjects.Book object at 0x...>,
+     <gocept.objectquery.testobjects.Library object at 0x...>,
+     <gocept.objectquery.testobjects.Library object at 0x...>,
+     <gocept.objectquery.testobjects.Library object at 0x...>]
+
 
 Kleene Closure
 --------------
@@ -139,15 +159,15 @@ First we need a new database:
     >>> objects = ObjectCollection(conn)
     >>> query = QueryProcessor(parser, objects)
 
-    >>> doc1 = testobject.Document()
-    >>> doc2 = testobject.Document()
-    >>> doc3 = testobject.Document()
-    >>> fol4 = testobject.Folder([doc2])
-    >>> fol3 = testobject.Folder([doc1])
-    >>> fol2 = testobject.Folder([fol3])
-    >>> fol1 = testobject.Folder([fol2])
-    >>> plo1 = testobject.Plone([fol1, fol4, doc3])
-    >>> root = testobject.Root([plo1])
+    >>> doc1 = Document()
+    >>> doc2 = Document()
+    >>> doc3 = Document()
+    >>> fol4 = Folder([doc2])
+    >>> fol3 = Folder([doc1])
+    >>> fol2 = Folder([fol3])
+    >>> fol1 = Folder([fol2])
+    >>> plo1 = Plone([fol1, fol4, doc3])
+    >>> root = Root([plo1])
 
     >>> dbroot['test'] = root
     >>> transaction.commit()
@@ -168,15 +188,15 @@ Now there should be one Plone object under root:
 Get all Documents which are under any number of Folders:
 
     >>> r = query('/Plone/Folder*/Document')
-    >>> r[0] != r[1] != r[2] and isinstance(r[0], testobject.Document)
+    >>> r[0] != r[1] != r[2] and isinstance(r[0], Document)
     True
 
     >>> r = query('Plone/Folder*/Document')
-    >>> r[0] != r[1] != r[2] and isinstance(r[0], testobject.Document)
+    >>> r[0] != r[1] != r[2] and isinstance(r[0], Document)
     True
 
     >>> r = query('Folder*/Document')
-    >>> r[0] != r[1] != r[2] and isinstance(r[0], testobject.Document)
+    >>> r[0] != r[1] != r[2] and isinstance(r[0], Document)
     True
 
 Get all Documents which are under one or zero number of Folders:

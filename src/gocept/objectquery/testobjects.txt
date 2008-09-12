@@ -5,81 +5,112 @@ Testdatabase
 Introducing the classes
 =======================
 
-For the test-db used in the objectquery tests we use some classes. First of all
-there is a user class:
-
+For the test-db used in the objectquery tests some classes are defined. It is a
+library database with libraries, books and persons, which lent books from
+libraries:
 
 >>> from gocept.objectquery import testobjects
->>> testobjects.User
-<class 'gocept.objectquery.testobjects.User'>
+>>> testobjects.Library
+<class 'gocept.objectquery.testobjects.Library'>
 
-Lets initialize a user. They are by default _empty_:
+Lets initialize a Library. We must provide a location:
 
->>> empty = testobjects.User()
->>> empty.name
-''
->>> empty.age
-0
+>>> dd_library = testobjects.Library(location="Dresden")
+>>> dd_library.location
+'Dresden'
 
-The attribute *owns* contains all objects the user has:
+The books attribute contains all books in the library:
 
->>> empty.owns
+>>> dd_library.books
 []
 
 
-Now create a car to make our user less empty:
+In addition, there are Book and Person classes in the testdb:
 
->>> viper = testobjects.Car()
->>> viper.model = "Viper"
+>>> testobjects.Book
+<class 'gocept.objectquery.testobjects.Book'>
 
-By default, a new car is a silver one. Lets change this:
+>>> testobjects.Person
+<class 'gocept.objectquery.testobjects.Person'>
 
->>> viper.color
-'silver'
->>> viper.color = "red"
+Books need a list of authors, a title and an isbn number:
 
+>>> gier = testobjects.Book(
+...         authors=[testobjects.Person(name='Kerstin Gier')],
+...         title='Gegensätze ziehen sich aus',
+...         written=2008,
+...         isbn=3404159063)
 
-A car needs a manufacturer:
+>>> gier
+<gocept.objectquery.testobjects.Book object at 0x...>
+>>> gier.authors[0].name
+'Kerstin Gier'
+>>> gier.title
+'Gegens\xc3\xa4tze ziehen sich aus'
+>>> gier.isbn
+3404159063L
 
->>> print viper.manufacturer
-None
->>> dodge = testobjects.Company()
->>> dodge.name = "Dodge"
->>> dodge.location = "Michigan"
+Persons only have a name:
 
->>> viper.manufacturer = dodge
+>>> manuela = testobjects.Person(name='Manuela')
 
-Our empty user buys now the viper:
-
->>> empty.owns.append(viper)
->>> empty.owns
-[<gocept.objectquery.testobjects.Car object at 0x...>]
+>>> manuela
+<gocept.objectquery.testobjects.Person object at 0x...>
+>>> manuela.name
+'Manuela'
 
 
 Introducing the database
 ========================
 
->>> from gocept.objectquery.testobjects import testdb
->>> testdb
-[<gocept.objectquery.testobjects.User object at 0x...>, ...]
->>> len(testdb)
+The test database contains 3 libraries:
+
+>>> from gocept.objectquery.testobjects import librarydb
+>>> from pprint import pprint
+>>> len(librarydb)
 3
+>>> [library.location for library in librarydb]
+['Halle', 'Berlin', 'Chester']
 
-Tom and Susi own the same car:
+Lets have a closer look to the libraries. First, we define ha helper method
+which returns us some details for a book:
 
->>> tomscar = testdb[0].owns[0]
->>> print "%s %s in %s" % (tomscar.manufacturer.name, tomscar.model,
-...     tomscar.color)
-Ford Focus in red
+>>> def show_book_info(book):
+...     return '%s: %s' % (
+...         book.title,
+...         '; '.join([author.name for author in book.authors]))
 
->>> susiscar = testdb[1].owns[0]
->>> tomscar == susiscar
-True
+The libraries have the following books:
 
-Max owns a Porsche Boxter:
+>>> halle = librarydb[0]
+>>> halle.location
+'Halle'
+>>> len(halle.books)
+4
+>>> pprint([show_book_info(book) for book in halle.books])
+['1984: George Orwell',
+ 'Plone-Benutzerhandbuch: Thomas Lotze; Jan Ulrich Hasecke',
+ 'Farm der Tiere: George Orwell',
+ 'Web Component Development with Zope 3: Philipp von Weitershausen']
 
->>> maxscar = testdb[2].owns[0]
->>> print "%s %s in %s" % (maxscar.manufacturer.name, maxscar.model,
-...     maxscar.color)
-Porsche Boxter in black
+>>> berlin = librarydb[1]
+>>> berlin.location
+'Berlin'
+>>> len(berlin.books)
+5
+>>> pprint([show_book_info(book) for book in berlin.books])
+['1984: George Orwell',
+ 'Plone-Benutzerhandbuch: Thomas Lotze; Jan Ulrich Hasecke',
+ 'Faust: Johann Wolfgang von Goethe',
+ 'Farm der Tiere: George Orwell',
+ 'Web Component Development with Zope 3: Philipp von Weitershausen']
 
+>>> chester = librarydb[2]
+>>> chester.location
+'Chester'
+>>> len(chester.books)
+3
+>>> pprint([show_book_info(book) for book in chester.books])
+['1984: George Orwell',
+ 'Faust: Johann Wolfgang von Goethe',
+ 'Farm der Tiere: George Orwell']
