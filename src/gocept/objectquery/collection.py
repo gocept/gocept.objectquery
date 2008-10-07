@@ -38,6 +38,8 @@ class ObjectCollection(object):
             return
         if cycle_prev is None:
             cycle_prev = []
+        if parent is None and self.root():
+            raise ValueError('There is already a root object present.')
         parent_oid = None
         if parent:
             parent_oid = parent._p_oid
@@ -57,7 +59,10 @@ class ObjectCollection(object):
 
     def root(self):
         """ Return the root object. """
-        root = self._structureindex.root()
+        try:
+            root = self._structureindex.root()
+        except KeyError:
+            return None
         return (root, root)
 
     def all(self):

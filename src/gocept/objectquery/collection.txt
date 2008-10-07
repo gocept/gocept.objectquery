@@ -66,6 +66,13 @@ databases, this process can last some time:
 
     >>> oc.add(dbroot['test'])
 
+Adding another root object is no longer possible:
+
+    >>> oc.add(dbroot['test'])
+    Traceback (most recent call last):
+    ...
+    ValueError: There is already a root object present.
+
 
 Internal representation of the indexes
 --------------------------------------
@@ -211,25 +218,21 @@ the object collection needs to be registered as a utility:
     >>> import zope.component
     >>> zope.component.provideUtility(oc)
 
-    >>> dbroot['person'] = testobjects.Person(name='Christian')
-    >>> transaction.commit()
-    >>> len(oc.by_class("Person"))
-    2
+We add a new Person, Christian, as a contributor of the Zope book:
 
-But what still does not work, is adding objects under existing ones:
-
+    >>> mark = testobjects.Person(name='Christian')
     >>> zope_book.authors.append(mark)
+    >>> dbroot['person'] = mark
+
+XXX Committing the transaction causes an error, cause the automatic index
+updates currently do not know Christian's parent object (which is the Zoe
+book). He is added as another root for fallback reason which causes the
+ObjectCollection to raise an exception.
+
     >>> transaction.commit()
-
-Mark is now added (thats good, of course):
-
-    >>> len(oc.by_class("Person"))
-    3
-
-But he is not added as a child of the zope_book (which is bad):
-
-    >>> oc.is_child(mark._p_oid, zope_book._p_oid)
-    False
+    Traceback (most recent call last):
+    ...
+    ValueError: There is already a root object present.
 
 Automatic updates stop when disabling the index synchronizer again:
 
