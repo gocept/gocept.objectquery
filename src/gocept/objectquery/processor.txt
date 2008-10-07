@@ -27,7 +27,7 @@ You create a QueryProcessor like this:
 
 Now fill the indexes with the data from the test database:
 
-    >>> objects.add(librarydb)
+    >>> objects.add(librarydb._p_oid)
 
 Some example usecases
 ---------------------
@@ -68,12 +68,9 @@ Search for all authors of books written after year 2000:
 
     >>> r = query('/Library/Book[@written>=2000]/Person')
     >>> len(r)
-    4
+    3
     >>> pprint(sorted(elem.name for elem in r))
-    ['George Orwell',
-     'Jan Ulrich Hasecke',
-     'Philipp von Weitershausen',
-     'Thomas Lotze']
+    ['George Orwell', 'Philipp von Weitershausen', 'Thomas Lotze']
 
 Search for all Books, that have are located in Halle and have been written in
 2007:
@@ -87,7 +84,6 @@ Handle Wildcards correctly:
     >>> r = query('/Library/_/Person')
     >>> pprint(sorted(elem.name for elem in r))
     ['George Orwell',
-     'Jan Ulrich Hasecke',
      'Johann Wolfgang von Goethe',
      'Philipp von Weitershausen',
      'Thomas Lotze']
@@ -96,17 +92,11 @@ What about precedence:
 
     >>> r = query('/Library[@location="Halle"]/Book/Person')
     >>> pprint(sorted(elem.name for elem in r))
-    ['George Orwell',
-     'Jan Ulrich Hasecke',
-     'Philipp von Weitershausen',
-     'Thomas Lotze']
+    ['George Orwell', 'Philipp von Weitershausen', 'Thomas Lotze']
 
     >>> r = query('(/Library[@location="Halle"]/Book)/Person')
     >>> pprint(sorted(elem.name for elem in r))
-    ['George Orwell',
-     'Jan Ulrich Hasecke',
-     'Philipp von Weitershausen',
-     'Thomas Lotze']
+    ['George Orwell', 'Philipp von Weitershausen', 'Thomas Lotze']
 
     >>> r = query('/Library[@location="Halle"]/(Book/Person)')
     >>> len(r)
@@ -129,10 +119,9 @@ Unions:
 
     >>> r = query('(/Library[@location="Halle"])|(Book/Person)')
     >>> len(r)
-    6
+    5
     >>> pprint(sorted(elem for elem in r))
     [<gocept.objectquery.testobjects.Library object at 0x...>,
-     <gocept.objectquery.testobjects.Person object at 0x...>,
      <gocept.objectquery.testobjects.Person object at 0x...>,
      <gocept.objectquery.testobjects.Person object at 0x...>,
      <gocept.objectquery.testobjects.Person object at 0x...>,
@@ -171,7 +160,7 @@ First we need a new database:
 
     >>> dbroot['test'] = root
     >>> transaction.commit()
-    >>> objects.add(root)
+    >>> objects.add(root._p_oid)
 
 Now there should be one Plone object under root:
 
@@ -241,7 +230,7 @@ or more Folders:
     >>> len(r) == 1 and r[0] == doc1
     True
 
-A special case is the combination of wildcard and ``*'' closure:
+A special case is the combination of wildcard and '*' closure:
 
     >>> r = query('Plone/_*/Document')
     >>> len(r) == 3

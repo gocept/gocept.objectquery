@@ -33,17 +33,17 @@ In addition, there are Book and Person classes in the testdb:
 >>> testobjects.Person
 <class 'gocept.objectquery.testobjects.Person'>
 
-Books need a list of authors, a title and an isbn number:
+Books need an authors, a title and an isbn number:
 
 >>> gier = testobjects.Book(
-...         authors=[testobjects.Person(name='Kerstin Gier')],
+...         author=testobjects.Person(name='Kerstin Gier'),
 ...         title='Gegensätze ziehen sich aus',
 ...         written=2008,
 ...         isbn=3404159063)
 
 >>> gier
 <gocept.objectquery.testobjects.Book object at 0x...>
->>> gier.authors[0].name
+>>> gier.author.name
 'Kerstin Gier'
 >>> gier.title
 'Gegens\xc3\xa4tze ziehen sich aus'
@@ -76,9 +76,7 @@ Lets have a closer look to the libraries. First, we define ha helper method
 which returns us some details for a book:
 
 >>> def show_book_info(book):
-...     return '%s: %s' % (
-...         book.title,
-...         '; '.join([author.name for author in book.authors]))
+...     return '%s: %s' % (book.title, book.author.name)
 
 The libraries have the following books:
 
@@ -89,7 +87,7 @@ The libraries have the following books:
 4
 >>> pprint([show_book_info(book) for book in halle.books])
 ['1984: George Orwell',
- 'Plone-Benutzerhandbuch: Thomas Lotze; Jan Ulrich Hasecke',
+ 'Plone-Benutzerhandbuch: Thomas Lotze',
  'Farm der Tiere: George Orwell',
  'Web Component Development with Zope 3: Philipp von Weitershausen']
 
@@ -100,7 +98,7 @@ The libraries have the following books:
 5
 >>> pprint([show_book_info(book) for book in berlin.books])
 ['1984: George Orwell',
- 'Plone-Benutzerhandbuch: Thomas Lotze; Jan Ulrich Hasecke',
+ 'Plone-Benutzerhandbuch: Thomas Lotze',
  'Faust: Johann Wolfgang von Goethe',
  'Farm der Tiere: George Orwell',
  'Web Component Development with Zope 3: Philipp von Weitershausen']

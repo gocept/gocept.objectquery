@@ -86,11 +86,17 @@ class StructureIndex(OOIndex):
     def __init__(self, dbroot):
         super(StructureIndex, self).__init__(dbroot)
         self.index['childs'] = OOBTree()    # Childindex, needed for deletion
+        self.index['parents'] = OOBTree()    # Parentindex, needed for
+                                             # automated insertion
 
     def insert(self, key, parent=None):
         """ Insert key under parent. """
         if parent is None:
             parent = 0
+        else:
+            if not self.index['parents'].has_key(key):
+                self.index['parents'][key] = IndexItem()
+            self.index['parents'][key].insert(parent)
         tail = (key, )
         new_path = []
         if self.index.has_key(parent):
@@ -205,6 +211,9 @@ class IndexSynchronizer(object):
 
     zope.interface.implements(transaction.interfaces.ISynchronizer)
 
+    def __init__(self):
+        self._before_after_storage = []
+
     def beforeCompletion(self, transaction):
         """Hook that is called by the transaction at the start of a commit.
         """
@@ -214,13 +223,21 @@ class IndexSynchronizer(object):
             collection = zope.component.getUtility(
                 gocept.objectquery.interfaces.IObjectCollection)
             for obj in data_manager._registered_objects:
-                collection.add(obj)
+                self._before_after_storage.append(obj._p_oid)
 
 
     def afterCompletion(self, transaction):
         """Hook that is called by the transaction after completing a commit.
         """
-        pass
+        collection = zope.component.getUtility(
+            gocept.objectquery.interfaces.IObjectCollection)
+        for obj in self._before_after_storage:
+            parents = collection.get_parents(obj)
+            for parent in parents:
+                collection.delete(obj, parent)
+            for parent in parents:
+                collection.add(obj, parent)
+        self._before_after_storage = []
 
     def newTransaction(self, transaction):
         """Hook that is called at the start of a transaction.

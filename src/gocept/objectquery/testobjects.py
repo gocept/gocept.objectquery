@@ -15,16 +15,24 @@ class Library(persistent.Persistent):
 
     def __init__(self, location, books=[]):
         self.location = location
-        self.books = persistent.list.PersistentList()
-        self.books.extend(books)
+        self.books = []
+        for book in books:
+            self.add_book(book)
+
+    def add_book(self, book):
+        self.books.append(book)
+        self._p_changed = True
+
+    def delete_book(self, book):
+        self.books.remove(book)
+        self._p_changed = True
 
 
 class Book(persistent.Persistent):
     """ """
 
-    def __init__(self, authors, title, written, isbn):
-        self.authors = persistent.list.PersistentList()
-        self.authors.extend(authors)
+    def __init__(self, author, title, written, isbn):
+        self.author = author
         self.title = title
         self.written = written
         self.isbn = isbn
@@ -46,33 +54,32 @@ dbroot = conn.root()
 
 p_orwell = Person(name="George Orwell")
 p_lotze = Person(name="Thomas Lotze")
-p_hasecke = Person(name="Jan Ulrich Hasecke")
 p_goethe = Person(name="Johann Wolfgang von Goethe")
 p_weitershausen = Person(name="Philipp von Weitershausen")
 
 # Books
 
-b_1984 = Book(authors=[p_orwell],
+b_1984 = Book(author=p_orwell,
               title="1984",
               written=1990,
               isbn=3548234100)
 
-b_plone = Book(authors=[p_lotze, p_hasecke],
+b_plone = Book(author=p_lotze,
                title="Plone-Benutzerhandbuch",
                written=2008,
                isbn=3939471038)
 
-b_faust = Book(authors=[p_goethe],
+b_faust = Book(author=p_goethe,
                title="Faust",
                written=1811,
                isbn=3406552501)
 
-b_farm = Book(authors=[p_orwell],
+b_farm = Book(author=p_orwell,
               title="Farm der Tiere",
               written=2002,
               isbn=3257201184)
 
-b_zope = Book(authors=[p_weitershausen],
+b_zope = Book(author=p_weitershausen,
               title="Web Component Development with Zope 3",
               written=2007,
               isbn=3540338071)
@@ -100,8 +107,13 @@ class Dummy(persistent.Persistent):
     """An object with an id and a reference list."""
     def __init__(self, id=None, ref=[]):
         self.id = id
-        self.ref = persistent.list.PersistentList()
+        self.ref = []
         self.ref.extend(ref)
+
+    def add_item(self, item):
+        self.ref.append(item)
+        self._p_changed = True
+
 
 # needed for kleen closure tests in processor.txt
 

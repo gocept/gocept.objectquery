@@ -32,30 +32,25 @@ class ObjectCollection(object):
         self._kcjoin = KCJoin(self._structureindex)
         self._union = Union()
 
-    def add(self, obj, parent=None, cycle_prev=None):
+    def add(self, obj_oid, parent_oid=None, cycle_prev=None):
         """ Index the object to the ObjectCollection. """
-        if not hasattr(obj, '_p_oid'):
-            return
         if cycle_prev is None:
             cycle_prev = []
-        if parent is None and self.root():
+        if parent_oid is None and self.root():
             raise ValueError('There is already a root object present.')
-        parent_oid = None
-        if parent:
-            parent_oid = parent._p_oid
-        if obj._p_oid in cycle_prev:
-            if not self._structureindex.is_successor(obj._p_oid, parent_oid):
-                self._structureindex.insert(obj._p_oid, parent_oid)
+        if obj_oid in cycle_prev:
+            if not self._structureindex.is_successor(obj_oid, parent_oid):
+                self._structureindex.insert(obj_oid, parent_oid)
             return
         op = ObjectParser()
-        classname = self._get_classname(obj)
-        self._classindex.insert(classname, obj._p_oid)
-        for attr in op.get_attributes(obj):
-            self._attributeindex.insert(attr, obj._p_oid)
-        self._structureindex.insert(obj._p_oid, parent_oid)
-        cycle_prev.append(obj._p_oid)
-        for desc in op.get_descendants(obj):
-            self.add(desc, obj, cycle_prev[:])
+        classname = self._get_classname(self._get_object(obj_oid))
+        self._classindex.insert(classname, obj_oid)
+        for attr in op.get_attributes(self._get_object(obj_oid)):
+            self._attributeindex.insert(attr, obj_oid)
+        self._structureindex.insert(obj_oid, parent_oid)
+        cycle_prev.append(obj_oid)
+        for desc in op.get_descendants(self._get_object(obj_oid)):
+            self.add(desc._p_oid, obj_oid, cycle_prev[:])
 
     def root(self):
         """ Return the root object. """
@@ -64,6 +59,10 @@ class ObjectCollection(object):
         except KeyError:
             return None
         return (root, root)
+
+    def get_parents(self, elem):
+        """ Return the parents for an element. """
+        return self._structureindex.index['parents'][elem]
 
     def all(self):
         """ Return all objects. """
@@ -88,15 +87,15 @@ class ObjectCollection(object):
     def union(self, *args):
         return self._union(*args)
 
-    def _get_classname(self, object):
+    def _get_classname(self, obj):
         """ Return the classname of object. """
-        return object.__class__.__name__
+        return obj.__class__.__name__
 
     def _get_object(self, oid):
         """ Return the object corresponding to oid. """
         return self.conn.get(oid)
 
-    def delete(self, object_oid, parent_oid=None, pdb=None):
+    def delete(self, object_oid, parent_oid=None):
         """ Main remove method. """
         obj = self._get_object(object_oid)
         classname = self._get_classname(obj)
