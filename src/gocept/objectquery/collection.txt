@@ -192,19 +192,20 @@ We add a new Person, Christian, as a contributor of the Zope book:
 
     >>> chris = testobjects.Person(name='Christian')
     >>> zodb_book.author = chris
-    >>> zope_book.author
-    <gocept.objectquery.testobjects.Person object at 0x...>
-
-XXX Committing the transaction causes an error, cause the automatic index
-updates currently do not know Christian's parent object (which is the Zoe
-book). He is added as another root for fallback reason which causes the
-ObjectCollection to raise an exception.
-
     >>> transaction.commit()
 
-    >>> len(oc.by_class("Person"))
-    2
-
+    >>> books = oc.by_class("Book")
+    >>> len(books)
+    1
+    >>> book = conn.get(books[0][0])
+    >>> book.title
+    'Ad-hoc Anfragen an die ZODB'
+    >>> persons = oc.by_class("Person")
+    >>> len(persons)
+    1
+    >>> person = conn.get(persons[0][0])
+    >>> book.author == person
+    True
     >>> oc.is_child(chris._p_oid, zodb_book._p_oid)
     True
 

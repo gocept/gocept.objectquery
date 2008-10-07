@@ -212,7 +212,7 @@ class IndexSynchronizer(object):
     zope.interface.implements(transaction.interfaces.ISynchronizer)
 
     def __init__(self):
-        self._before_after_storage = []
+        self._store = []
 
     def beforeCompletion(self, transaction):
         """Hook that is called by the transaction at the start of a commit.
@@ -223,7 +223,14 @@ class IndexSynchronizer(object):
             collection = zope.component.getUtility(
                 gocept.objectquery.interfaces.IObjectCollection)
             for obj in data_manager._registered_objects:
-                self._before_after_storage.append(obj._p_oid)
+                obj = obj._p_oid
+                try:
+                    parents = collection.get_parents(obj)
+                except KeyError:
+                    parents = []
+                for parent in parents:
+                    collection.delete(obj, parent)
+                self._store.append([obj, parents])
 
 
     def afterCompletion(self, transaction):
@@ -231,13 +238,10 @@ class IndexSynchronizer(object):
         """
         collection = zope.component.getUtility(
             gocept.objectquery.interfaces.IObjectCollection)
-        for obj in self._before_after_storage:
-            parents = collection.get_parents(obj)
-            for parent in parents:
-                collection.delete(obj, parent)
+        for obj, parents in self._store:
             for parent in parents:
                 collection.add(obj, parent)
-        self._before_after_storage = []
+        self._store = []
 
     def newTransaction(self, transaction):
         """Hook that is called at the start of a transaction.

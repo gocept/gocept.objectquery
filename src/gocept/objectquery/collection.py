@@ -64,6 +64,10 @@ class ObjectCollection(object):
         """ Return the parents for an element. """
         return self._structureindex.index['parents'][elem]
 
+    def get_childs(self, elem):
+        """ Return the childs for an element. """
+        return self._structureindex.index['childs'][elem]
+
     def all(self):
         """ Return all objects. """
         return [ (elem, elem) for elem in self._classindex.all() ]
@@ -100,11 +104,15 @@ class ObjectCollection(object):
         obj = self._get_object(object_oid)
         classname = self._get_classname(obj)
         op = ObjectParser()
+        try:
+            childs = self.get_childs(object_oid)
+        except KeyError:
+            childs = []
         if self._structureindex.has_key(object_oid):
             self._structureindex.delete(object_oid, parent_oid)
         if not self._structureindex.has_key(object_oid):
              self._classindex.delete(classname, object_oid)
         for attr in op.get_attributes(obj):
              self._attributeindex.delete(attr, object_oid)
-        for desc in op.get_descendants(obj):
-            self.delete(desc._p_oid, object_oid)
+        for desc in childs:
+            self.delete(desc, object_oid)
