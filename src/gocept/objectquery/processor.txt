@@ -9,6 +9,58 @@ First load the test database. For more information about that, please have a
 look inside testobjects.py.
 
     >>> from gocept.objectquery.testobjects import *
+    >>> import ZODB.MappingStorage
+    >>> import ZODB
+    >>> from gocept.objectquery.collection import ObjectCollection
+    >>> storage = ZODB.MappingStorage.MappingStorage()
+    >>> db = ZODB.DB(storage)
+    >>> conn = db.open()
+    >>> dbroot = conn.root()
+    >>> dbroot['_oq_collection'] = objects = ObjectCollection(conn)
+    >>> import transaction
+    >>> import gocept.objectquery.indexsupport
+    >>> index_synch = gocept.objectquery.indexsupport.IndexSynchronizer()
+    >>> transaction.manager.registerSynch(index_synch)
+
+    >>> p_orwell = Person(name="George Orwell")
+    >>> p_lotze = Person(name="Thomas Lotze")
+    >>> p_goethe = Person(name="Johann Wolfgang von Goethe")
+    >>> p_weitershausen = Person(name="Philipp von Weitershausen")
+
+    >>> b_1984 = Book(author=p_orwell,
+    ...               title="1984",
+    ...               written=1990,
+    ...               isbn=3548234100)
+    >>> b_plone = Book(author=p_lotze,
+    ...                title="Plone-Benutzerhandbuch",
+    ...                written=2008,
+    ...                isbn=3939471038)
+    >>> b_faust = Book(author=p_goethe,
+    ...                title="Faust",
+    ...                written=1811,
+    ...                isbn=3406552501)
+    >>> b_farm = Book(author=p_orwell,
+    ...               title="Farm der Tiere",
+    ...               written=2002,
+    ...               isbn=3257201184)
+    >>> b_zope = Book(author=p_weitershausen,
+    ...               title="Web Component Development with Zope 3",
+    ...               written=2007,
+    ...               isbn=3540338071)
+
+    >>> l_halle = Library(location="Halle",
+    ...                   books=[b_1984, b_plone, b_farm, b_zope])
+    >>> l_berlin = Library(location="Berlin",
+    ...                    books=[b_1984, b_plone, b_faust, b_farm, b_zope])
+    >>> l_chester = Library(location="Chester",
+    ...                     books=[b_1984, b_faust, b_farm])
+
+    >>> dbroot['librarydb'] = persistent.list.PersistentList()
+    >>> dbroot['librarydb'].extend([l_halle, l_berlin, l_chester])
+
+    >>> librarydb = dbroot['librarydb']
+    >>> transaction.commit()
+
     >>> from pprint import pprint
 
 Create QueryProcessor and initialize the ObjectCollection
@@ -17,24 +69,19 @@ Create QueryProcessor and initialize the ObjectCollection
 You create a QueryProcessor like this:
 
     >>> from gocept.objectquery.pathexpressions import RPEQueryParser
-    >>> from gocept.objectquery.collection import ObjectCollection
     >>> from gocept.objectquery.processor import QueryProcessor
     >>> parser = RPEQueryParser()
-    >>> objects = ObjectCollection(conn)
     >>> query = QueryProcessor(parser, objects)
     >>> query
     <gocept.objectquery.processor.QueryProcessor object at 0x...>
-
-Now fill the indexes with the data from the test database:
-
-    >>> objects.add(librarydb._p_oid)
 
 Some example usecases
 ---------------------
 
 Root joins:
 
-    >>> r = query('/Library')
+    >>> r = query('PersistentMapping')
+    >>> r = query('/PersistentMapping')
     >>> sorted(elem.location for elem in r)
     ['Berlin', 'Chester', 'Halle']
 

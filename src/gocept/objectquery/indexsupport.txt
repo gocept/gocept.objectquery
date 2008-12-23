@@ -16,230 +16,167 @@ Import and create a ZODB to store the indexes:
     >>> dbroot = conn.root()
 
 
-ClassIndex
-==========
+Class index
+===========
 
-Get a ClassIndex object:
+The class index is responsible to index the class of object instances.
 
     >>> from gocept.objectquery.indexsupport import ClassIndex
-    >>> ci = ClassIndex(dbroot)
+    >>> ci = ClassIndex()
 
+We can index everything persistent:
 
-ClassIndex's index is a BTrees.OOBTree object:
+    >>> from gocept.objectquery.testobjects import Library, Person, Book
+    >>> dbroot['1'] = library = Library('Halle')
+    >>> dbroot['2'] = person = Person('Peter')
+    >>> _ = transaction.savepoint()
+    >>> dbroot['1']._p_oid
+    '\x00\x00\x00\x00\x00\x00\x00\x01'
 
-    >>> ci.index
-    <BTrees.OOBTree.OOBTree object at 0x...>
+    >>> ci.index(library)
+    >>> ci.index(person)
 
+And we can retrieve it back, by asking for all objects of a given class:
 
-ClassIndex holds any kind of values (e.g. OIDs from peristent objects):
+    >>> ci.query(Library)
+    <generator object at 0x...>
+    >>> list(ci.query(Library))
+    ['\x00\x00\x00\x00\x00\x00\x00\x01']
+    >>> list(ci.query(Person))
+    ['\x00\x00\x00\x00\x00\x00\x00\x02']
 
-    >>> ci.insert("Course", 1)
-    >>> ci.insert("Student", 2)
-    >>> ci.insert("Student", 'bar')
+#   XXX class relationships need to be supported
+#   >>> list(ci.query(object))
+#   ['\x00\x00\x00\x00\x00\x00\x00\x01', '\x00\x00\x00\x00\x00\x00\x00\x02']
 
+Unindexing removes an object from the index:
 
-You may check, if a key is inside the index by using has_key():
-
-    >>> ci.has_key('Student')
-    True
-    >>> ci.has_key('Foo')
-    False
-
-
-Get returns a generator object for performance reason:
-
-  >>> ci.get('Student')
-  <generator object at 0x...>
-
-
-Validate the stored data:
-
-    >>> list(ci.get('Student'))
-    [2, 'bar']
-    >>> list(ci.get('Course'))
-    [1]
-    >>> sorted(ci.all())
-    [1, 2, 'bar']
-
-
-Delete some items from the index:
-
-    >>> ci.delete("Student", 2)
-    >>> list(ci.get('Student'))
-    ['bar']
-    >>> ci.delete("Course", 1)
-    >>> list(ci.get("Course"))
+    >>> ci.unindex(person)
+    >>> list(ci.query(Library))
+    ['\x00\x00\x00\x00\x00\x00\x00\x01']
+    >>> list(ci.query(Person))
     []
 
 
-AttributeIndex
-==============
-
-AttributeIndex works the same as the ClassIndex, so it is ok to only test if
-we can get it:
+Attribute index
+===============
 
     >>> from gocept.objectquery.indexsupport import AttributeIndex
-    >>> ai = AttributeIndex(dbroot)
+    >>> ai = AttributeIndex()
+
+    >>> ai.index(library)
+    >>> ai.query('location')
+    <generator object at 0x...>
+    >>> list(ai.query('location'))
+    ['\x00\x00\x00\x00\x00\x00\x00\x01']
+    >>> list(ai.query('foobar'))
+    []
 
 
-Lets have a look on our dbroot object:
-
-    >>> dbroot.has_key('_is_AttributeIndex')
-    True
-    >>> dbroot.has_key('_is_ClassIndex')
-    True
-
-
-StructureIndex
-==============
-
-First, get a StructureIndex:
+Structure index
+===============
 
     >>> from gocept.objectquery.indexsupport import StructureIndex
-    >>> si = StructureIndex(dbroot)
+    >>> si = StructureIndex(library)
 
-Insert some values:
+The root is inserted immediately und thus has a path:
 
-    >>> si.insert(1)
-    >>> si.insert(2, 1)
-    >>> si.insert(3, 1)
-    >>> si.insert(2, 3)
-    >>> si.insert(4, 2)
-    >>> si.insert(5, 1)
-    >>> si.insert(4, 5)
+    >>> list(si.get_paths(library))
+    [('\x00\x00\x00\x00\x00\x00\x00\x01',)]
 
+Lets add some more objects to the root and index it:
 
-StructureIndex stores the childs of a key for internal tasks:
-
-    >>> si.index['childs'][1]
-    [2, 3, 5]
-    >>> si.index['childs'][4]
+    >>> book = Book('Author', 'Title', 'Written', 'ISBN')
+    >>> library.add_book(book)
+    >>> _ = transaction.savepoint()
+    >>> si.index(library)
     []
 
-The method get(key) lists all paths to the given element:
+The newly added object has a path now, too:
 
-    >>> si.get(1)
-    [(1,)]
-    >>> si.get(2)
-    [(1, 2), (1, 3, 2)]
-    >>> si.get(3)
-    [(1, 3)]
-    >>> si.get(4)
-    [(1, 2, 4), (1, 3, 2, 4), (1, 5, 4)]
-    >>> si.get(5)
-    [(1, 5)]
-    >>> si.get(0)
-    Traceback (most recent call last):
-    ...
-    KeyError: 0
+    >>> list(si.get_paths(book))
+    [('\x00\x00\x00\x00\x00\x00\x00\x01', '\x00\x00\x00\x00\x00\x00\x00\x03')]
 
-Check the parent-child-relationship:
+Direct parent/child relationships can be queried:
 
-    >>> si.is_child(1, 2)      # is 1 the child of 2
-    False
-    >>> si.is_child(2, 1)      # is 2 the child of 1
+    >>> si.is_child(book._p_oid, library._p_oid)
     True
-    >>> si.is_child(3, 1)      # is 3 the child of 1
-    True
-    >>> si.is_child(3, 2)      # is 3 the child of 2
+    >>> si.is_child(library._p_oid, book._p_oid)
     False
-    >>> si.is_child(2, 3)
-    True
-
-    >>> si.is_child(4, 1)
-    False
-    >>> si.is_child(1, 4)
+    >>> si.is_child(library._p_oid, library._p_oid)
     False
 
-    >>> si.is_child(1, 1)
+And transitive parent/child relationships too:
+
+    >>> si.is_successor(book, library)
+    True
+    >>> si.is_successor(library, book)
     False
 
-    >>> si.is_successor(4, 1)
-    True
-    >>> si.is_successor(1, 4)
-    False
-
-You may also validate an element against a list of (sub-)indexes:
-
-    >>> si.validate(3, [(1, )])
-    True
-    >>> si.validate(2, [(1, 5)])
-    False
-    >>> si.validate(2, [(1, 5), (1, 2)])
-    True
-    >>> si.validate(4, [(1, 3)])
-    True
-
-
-Adding a circle to the index:
-
-    >>> si.insert(1, 4)
-
-We now have the circle 1 -> 5 -> 4 -> 1 and 1 -> 2 -> 4 -> 1 and others. Lets
-habe a look at the tuples, which are now accessible by many other nodes:
-
-    >>> si.get(1)
-    [(1,), (1, 2, 4, 1), (1, 3, 2, 4, 1), (1, 5, 4, 1)]
-    >>> si.get(2)
-    [(1, 2), (1, 3, 2), (1, 2, 4, 1, 2), (1, 3, 2, 4, 1, 2), (1, 5, 4, 1, 2), (1, 2, 4, 1, 3, 2), (1, 3, 2, 4, 1, 3, 2), (1, 5, 4, 1, 3, 2)]
-    >>> si.get(3)
-    [(1, 3), (1, 2, 4, 1, 3), (1, 3, 2, 4, 1, 3), (1, 5, 4, 1, 3)]
-    >>> si.get(4)
-    [(1, 2, 4), (1, 3, 2, 4), (1, 5, 4), (1, 2, 4, 1, 2, 4), (1, 3, 2, 4, 1, 2, 4), (1, 5, 4, 1, 2, 4), (1, 2, 4, 1, 3, 2, 4), (1, 3, 2, 4, 1, 3, 2, 4), (1, 5, 4, 1, 3, 2, 4), (1, 2, 4, 1, 5, 4), (1, 3, 2, 4, 1, 5, 4), (1, 5, 4, 1, 5, 4)]
-    >>> si.get(5)
-    [(1, 5), (1, 2, 4, 1, 5), (1, 3, 2, 4, 1, 5), (1, 5, 4, 1, 5)]
-
-Now validate the successor relationship with cases, which retured in the
-uncircled environment False:
-
-    >>> si.is_successor(1, 4)
-    True
-    >>> si.is_child(3, 2)
-    False
-    >>> si.is_successor(3, 2)
-    True
-    >>> si.is_successor(1, 5)
-    True
-
-You delete keys as follows:
-
-    >>> si.delete(2)
-    >>> si.get(2)
-    Traceback (most recent call last):
-    ...
-    KeyError: 2
-    >>> si.get(4)
-    [(1, 5, 4), (1, 5, 4, 1, 5, 4)]
-
-    >>> si.insert(4, 3)
-    >>> si.get(4)
-    [(1, 5, 4), (1, 5, 4, 1, 5, 4), (1, 3, 4), (1, 5, 4, 1, 3, 4)]
-    >>> si.delete(4, 5)
-    >>> si.get(4)
-    [(1, 3, 4)]
-
-Lets look at the childs index:
-
-    >>> list(si.index['childs'])
-    [0, 1, 3, 4, 5]
-    >>> si.index['childs'][1]
-    [3, 5]
-    >>> si.index['childs'][2]
-    Traceback (most recent call last):
-    ...
-    KeyError: 2
-    >>> si.index['childs'][5]
+    >>> book.author = person
+    >>> _ = transaction.savepoint()
+    >>> si.index(dbroot['1'].books[0])
     []
 
-Special cases
-=============
+    >>> si.is_successor(person, library)
+    True
+    >>> si.is_successor(person, book)
+    True
+    >>> si.is_successor(library, person)
+    False
 
-Delete the first node:
+Successors with one or more "hops" are not childs:
 
-    >>> si.delete(1)
-    >>> si.get(1)
-    Traceback (most recent call last):
-    ...
-    KeyError: 1
-    >>> list(si.index['childs'])
-    [0]
+    >>> si.is_child(person._p_oid, library._p_oid)
+    False
+
+Adding a circular reference to the index:
+
+    >>> person.main_library = library
+    >>> si.index(person)
+    []
+
+We now have the loop Library -> Book -> Author -> Library.  Therefore,
+all the objects are successors and predecessors of each other and
+themselves:
+
+    >>> list(si.get_paths(library))
+    [('\x00\x00\x00\x00\x00\x00\x00\x01',),
+     ('\x00\x00\x00\x00\x00\x00\x00\x01',
+      '\x00\x00\x00\x00\x00\x00\x00\x03',
+      '\x00\x00\x00\x00\x00\x00\x00\x02',
+      '\x00\x00\x00\x00\x00\x00\x00\x01')]
+
+    >>> list(si.get_paths(book))
+    [('\x00\x00\x00\x00\x00\x00\x00\x01',
+      '\x00\x00\x00\x00\x00\x00\x00\x03'),
+     ('\x00\x00\x00\x00\x00\x00\x00\x01',
+      '\x00\x00\x00\x00\x00\x00\x00\x03',
+      '\x00\x00\x00\x00\x00\x00\x00\x02',
+      '\x00\x00\x00\x00\x00\x00\x00\x01',
+      '\x00\x00\x00\x00\x00\x00\x00\x03')]
+
+    >>> list(si.get_paths(person))
+    [('\x00\x00\x00\x00\x00\x00\x00\x01',
+      '\x00\x00\x00\x00\x00\x00\x00\x03',
+      '\x00\x00\x00\x00\x00\x00\x00\x02'),
+     ('\x00\x00\x00\x00\x00\x00\x00\x01',
+      '\x00\x00\x00\x00\x00\x00\x00\x03',
+      '\x00\x00\x00\x00\x00\x00\x00\x02',
+      '\x00\x00\x00\x00\x00\x00\x00\x01',
+      '\x00\x00\x00\x00\x00\x00\x00\x03',
+      '\x00\x00\x00\x00\x00\x00\x00\x02')]
+
+    >>> si.is_child(library._p_oid, library._p_oid)
+    False
+    >>> si.is_child(person._p_oid, person._p_oid)
+    False
+    >>> si.is_child(book._p_oid, book._p_oid)
+    False
+
+    >>> si.is_successor(library, library)
+    True
+    >>> si.is_successor(person, person)
+    True
+    >>> si.is_successor(book, book)
+    True

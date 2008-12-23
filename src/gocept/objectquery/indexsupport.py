@@ -2,197 +2,266 @@
 # See also LICENSE.txt
 # $Id$
 
+import threading
 import types
+import inspect
 import zope.interface
 import transaction
 import ZODB.Connection
 import gocept.objectquery.interfaces
-from persistent import Persistent
+import persistent
 from BTrees.OOBTree import OOBTree, OOTreeSet
+import gocept.objectquery.querysupport
 
 
-class IndexItem(OOTreeSet):
-    """ Holds any number of integer values. """
-
-    def __repr__(self):
-        return str(list(self))
+parser = gocept.objectquery.querysupport.ObjectParser()
 
 
-class OOIndex(Persistent):
-    """ A dummy object to IndexItem mapping index structure. """
+class OOIndex(persistent.Persistent):
 
-    def __init__(self, dbroot):
+    def __init__(self):
         """ """
-        keyname = "_is_" + self.__class__.__name__
-        if not dbroot.has_key(keyname):
-            dbroot[keyname] = OOBTree()
-        self.index = dbroot[keyname]
+        self._index = OOBTree()
 
     def insert(self, key, value):
         """ Insert value under key into the index. """
-        if not self.index.has_key(key):
-            self.index[key] = IndexItem()
-        self.index[key].insert(value)
+        if not self._index.has_key(key):
+            self._index[key] = OOTreeSet()
+        self._index[key].insert(value)
 
     def delete(self, key, value):
         """ Delete value from key. """
-        if not self.index.has_key(key):
+        if not self._index.has_key(key):
             return
-        if value not in self.index[key]:
+        if value not in self._index[key]:
             return
-        self.index[key].remove(value)
-        if len(self.index[key]) == 0:
-            del self.index[key]
+        self._index[key].remove(value)
+        if len(self._index[key]) == 0:
+            del self._index[key]
 
     def get(self, key):
-        """ Get the IndexItem for a given key. """
+        """ Get the set for a given key. """
         if self.has_key(key):
-            for item in self.index[key]:
+            for item in self._index[key]:
                 yield item
 
     def has_key(self, key):
         """ Return True if key is present, otherwise False. """
-        return key in self.index
+        return key in self._index
 
     def all(self):
         """ Return all objects from the index. """
-        allitems = []
-        for index in self.index.keys():
-            for elem in self.get(index):
+        for set in self._index.values():
+            for elem in set:
                 yield elem
 
 
 class ClassIndex(OOIndex):
-    """ Maps strings (classnames) to an IndexItem object. """
+    """Map class names to objects."""
 
-    zope.interface.implements(gocept.objectquery.interfaces.IAttributeIndex)
+    zope.interface.implements(gocept.objectquery.interfaces.IClassIndex)
+
+    def _get_key(self, obj):
+        return obj.__class__.__name__
+
+    def index(self, obj):
+        self.insert(self._get_key(obj), obj._p_oid)
+
+    def unindex(self, obj):
+        self.delete(self._get_key(obj), obj._p_oid)
+
+    def query(self, class_):
+        # XXX Don't allow naive strings to be passed in
+        if not isinstance(class_, str):
+            class_ = class_.__name__
+        return self.get(class_)
 
 
 class AttributeIndex(OOIndex):
-    """ Maps strings (attributenames) to an IndexItem object. """
 
     zope.interface.implements(gocept.objectquery.interfaces.IAttributeIndex)
 
+    def index(self, obj):
+        for attr in parser.get_attributes(obj):
+            self.insert(attr, obj._p_oid)
 
-class StructureIndex(OOIndex):
-    """ Stores information about the relationship between objects. 
+    def unindex(self, obj):
+        # XXX Introduce reverse index.
+        for obj_set in self._index.values():
+            if obj._p_oid in obj_set:
+                obj_set.remove(obj._p_oid)
 
-    It allows you to determine the parent-child-relationship between two
-    objects without having to touch the objects in the ZODB.
+    def query(self, attribute):
+        return self.get(attribute)
+
+
+def overlong_loop(path):
+    """Check whether a given OID path contains a loop.
+
+    Loops are paths that contain a sub-path consecutively *more* than
+    twice, matching from the right.
+
+    This stores loops exactly two times to allow inferring parent/child
+    relationships correctly.
+
+    >>> overlong_loop([1])
+    False
+    >>> overlong_loop([1, 1])
+    True
+    >>> overlong_loop([1, 1, 1])
+    True
+    >>> overlong_loop([1, 1, 2])
+    False
+
+    >>> overlong_loop([2, 1, 1])
+    True
+    >>> overlong_loop([2, 1, 1, 1])
+    True
+    >>> overlong_loop([2, 1, 1, 2])
+    False
+
+    >>> overlong_loop([1, 2, 3, 1, 2, 3])
+    True
+    >>> overlong_loop([1, 2, 3, 1, 2, 3, 4])
+    False
+
+    """
+    # Check for all patterns up to path/2 length. To contain a loop two
+    # times, the loop path can be at most path/2. For uneven lengths it
+    # can only be path/2-1 which is what integer division in Python
+    # does.
+    for sub_len in xrange(1, len(path)/2+1):
+        pattern = path[-sub_len:]
+        candidate = path[-sub_len*2:-sub_len]
+        if pattern == candidate:
+            return True
+    return False
+
+
+def path_starts_with(path, prefix):
+    """Test whether the path starts with another path.
+
+    >>> path_starts_with([1], [1])
+    True
+    >>> path_starts_with([1, 2], [1])
+    True
+    >>> path_starts_with([2], [1])
+    False
+    >>> path_starts_with([1,2,3], [1,2,3])
+    True
+    >>> path_starts_with([1,2,3], [1,2])
+    True
+
+    >>> path_starts_with(
+    ...    ('\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x01',
+    ...     '\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x03',
+    ...     '\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x02',
+    ...     '\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x01'),
+    ...    ('\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x01',
+    ...     '\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x03',
+    ...     '\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x02'))
+    True
+
+    """
+    return path[:len(prefix)] == prefix
+
+
+class StructureIndex(persistent.Persistent):
+    """Stores information about the relationships between objects.
+
+    It allows you to determine the parent-child relationship between two
+    objects without having to materialize the objects in memory.
+
     """
 
     zope.interface.implements(gocept.objectquery.interfaces.IStructureIndex)
 
-    def __init__(self, dbroot):
-        super(StructureIndex, self).__init__(dbroot)
-        self.index['childs'] = OOBTree()    # Childindex, needed for deletion
-        self.index['parents'] = OOBTree()    # Parentindex, needed for
-                                             # automated insertion
+    def __init__(self, root):
+        self.paths = OOBTree()
+        self.insert(None, root)
 
-    def insert(self, key, parent=None):
-        """ Insert key under parent. """
-        if parent is None:
-            parent = 0
-        else:
-            if not self.index['parents'].has_key(key):
-                self.index['parents'][key] = IndexItem()
-            self.index['parents'][key].insert(parent)
-        tail = (key, )
-        new_path = []
-        if self.index.has_key(parent):
-            for elem in self.get(parent):
-                new_path.append(elem + tail)
-        else:
-            new_path.append(tail)
-        if not self.has_key(key):
-            self.index[key] = []
-        for path in new_path:
-            if path not in self.index[key]:
-                self.index[key].append(path)
-        if not self.index['childs'].has_key(parent):
-            self.index['childs'][parent] = IndexItem()
-        self.index['childs'][parent].insert(key)
-        if not self.index['childs'].has_key(key):
-            self.index['childs'][key] = IndexItem()
-        for child in self.index['childs'][key]:
-            self._update_childs(child, new_path, [key])
+    def index(self, obj):
+        recursive_unindex = []
+        child_paths = []
+        for child in parser.get_descendants(obj):
+            new_paths = self.insert(obj, child)
+            loops = [path for path in new_paths if overlong_loop(path)]
+            if not loops:
+                recursive_unindex.extend(self.index(child))
+            child_paths.extend(new_paths)
 
-    def delete(self, key, parent=None):
-        """ Delete the key from the index. """
-        if parent == 0:
-            parent = None
-        if not self.index.has_key(key):
-            return
-        for elem in self.index[key][:]:
-            if parent is None or ( len(elem) > 1 and elem[-2] == parent ):
-                if len(elem) > 1 and key in self.index['childs'].get(elem[-2],[]):
-                    self.index['childs'][elem[-2]].remove(key)
-                if elem in self.index.get(key, []):
-                    self.index[key].remove(elem)
-                self._purge(key, elem)
-        if self.index.has_key(key) and len(self.index[key]) == 0:
-            del self.index[key]
-            del self.index['childs'][key]
+        # Remove paths not found anymore
+        for path_set, path in self.paths_traversing_obj(obj):
+            for candidate in child_paths:
+                if path_starts_with(path, candidate):
+                    # This is a valid path that is still referenced.
+                    break
+            else:
+                # This path is not referenced anymore.
+                path_set.remove(path)
 
-    def is_child(self, key1, key2):
+        # Mark objects that have not paths anymore for unindexing
+        local_unindex = []
+        for candidate, path_set in self.paths.items():
+            if len(path_set) > 0:
+                continue
+            local_unindex.append(candidate)
+        # Delete buckets. XXX Maybe don't delete buckets. This might be
+        # a conflict hotspot.
+        for candidate in local_unindex:
+            del self.paths[candidate]
+        return (recursive_unindex + 
+                [obj._p_jar.get(candidate) for candidate in local_unindex])
+
+    def paths_traversing_obj(self, obj):
+        """List all paths that touch the given obj and traverse *past*
+        it."""
+        for path_set in self.paths.values():
+            for path in list(path_set):
+                if obj._p_oid in path[:-1]:
+                    yield path_set, path
+
+    def insert(self, parent, child):
+        # Establish a new path to child_id for each path that leads to
+        # parent_id.
+        child_id = child._p_oid
+        new_paths = []
+        for parent_path in self.get_paths(parent):
+            new_paths.append(parent_path + (child_id,))
+        if not self.paths.has_key(child_id):
+            self.paths[child_id] = OOTreeSet()
+        for path in new_paths:
+            self.paths[child_id].insert(path)
+        return new_paths
+
+    def is_child(self, child, parent):
         """ Check if key1 is a direct successor of key2. """
-        if not key1 or not key2:
+        if not child or not parent:
             return True   # empty keys return True (see KCJoin)
-        for elem1 in self.get(key1):
-            for elem2 in self.get(key2):
-                if len(elem1) == len(elem2) + 1 and\
+        for elem1 in self.paths.get(child):
+            for elem2 in self.paths.get(parent):
+                if len(elem1) == len(elem2) + 1 and \
                     self._check_path(elem2, elem1):
                     return True
         return False
 
-    def is_successor(self, key1, key2):
+    def is_successor(self, child, parent):
         """ Check if key1 is a successor of key2. """
-        for elem1 in self.get(key1):
-            for elem2 in self.get(key2):
+        key1 = child._p_oid
+        key2 = parent._p_oid
+        for elem1 in self.paths.get(key1):
+            for elem2 in self.paths.get(key2):
                 if self._check_path(elem2, elem1):
                     return True
         return False
 
-    def get(self, key):
-        """ Return the path for a given key. """
-        return self.index[key]
-
-    def validate(self, key, indexlist):
-        """ Return True if keys index is a part of indexlist. """
-        for elem in self.get(key):
-            for index in indexlist:
-                if elem[:len(index)] == index:
-                    return True
-        return False
-
-    def root(self):
-        """ Return the root object. """
-        return list(self.index['childs'][0])[0]
-
-    def _update_childs(self, key, path_dict, cycle_prevention):
-        """ Update childs of inserted nodes with the new path. """
-        tail = (key, )
-        new_path = []
-        for elem in path_dict:
-            new_path.append(elem + tail)
-        for path in new_path:
-            if path not in self.index[key]:
-                self.index[key].append(path)
-        for child in self.index['childs'][key]:
-            if child not in cycle_prevention:
-                cycle_prevention.append(child)
-                self._update_childs(child, new_path, cycle_prevention)
-
-    def _purge(self, key, tupel):
-        """ Purge the child nodes of key with tupel. """
-        for child in self.index['childs'].get(key, []):
-            if self.index.has_key(child):
-                for elem in self.index[child][:]:
-                    if elem[:-1] == tupel:
-                        self.index[child].remove(elem)
-                        self._purge(child, elem)
-                if len(self.index.get(child, [])) == 0:
-                    self.delete(child, key)
+    def get_paths(self, obj):
+        """Return all paths that lead to the given object."""
+        if obj is None:
+            # `None` is a special parent for the root object causing the
+            # root path to be expressed as get_paths(None) + (root._p_oid)
+            return [()]
+        return self.paths[obj._p_oid]
 
     def _check_path(self, path1, path2):
         """ Check if path1 is reachable by path2. """
@@ -204,6 +273,21 @@ class StructureIndex(OOIndex):
         return True
 
 
+class MonitoringCreationDict(dict):
+
+    def __init__(self, connection):
+        self.connection = connection
+
+    def __setitem__(self, key, value):
+        super(MonitoringCreationDict, self).__setitem__(key, value)
+        self.connection._oq_delayed_index.add(key)
+
+    def update(self, data):
+        super(MonitoringCreationDict, self).update(data)
+        for oid in data:
+            self.connection._oq_delayed_index.add(oid)
+
+
 class IndexSynchronizer(object):
     """A transaction synchronizer for automatically updating the indexes on
     transaction boundaries.
@@ -212,39 +296,58 @@ class IndexSynchronizer(object):
     zope.interface.implements(transaction.interfaces.ISynchronizer)
 
     def __init__(self):
-        self._store = []
+        self.indexing = False
 
     def beforeCompletion(self, transaction):
         """Hook that is called by the transaction at the start of a commit.
         """
+        if self.indexing:
+            return
         for data_manager in transaction._resources:
             if not isinstance(data_manager, ZODB.Connection.Connection):
                 continue
-            collection = zope.component.getUtility(
-                gocept.objectquery.interfaces.IObjectCollection)
+            root = data_manager.root()
+            if not '_oq_collection' in root:
+                return
+            data_manager._oq_delayed_index = set()
             for obj in data_manager._registered_objects:
-                obj = obj._p_oid
-                try:
-                    parents = collection.get_parents(obj)
-                except KeyError:
-                    parents = []
-                for parent in parents:
-                    collection.delete(obj, parent)
-                self._store.append([obj, parents])
-
+                data_manager._oq_delayed_index.add(obj._p_oid)
+            data_manager._creating = MonitoringCreationDict(data_manager)
 
     def afterCompletion(self, transaction):
         """Hook that is called by the transaction after completing a commit.
         """
-        collection = zope.component.getUtility(
-            gocept.objectquery.interfaces.IObjectCollection)
-        for obj, parents in self._store:
-            for parent in parents:
-                collection.add(obj, parent)
-        self._store = []
+        if self.indexing:
+            return
+        self.indexing = True
+        for data_manager in transaction._resources:
+            if not isinstance(data_manager, ZODB.Connection.Connection):
+                continue
+            root = data_manager.root()
+            if not '_oq_collection' in root:
+                return
+            collection = root['_oq_collection']
+
+            # Remove our class, but leave the data.
+            data_manager._creating = dict(data_manager._creating)
+
+            # Process index requests
+            to_index = data_manager._oq_delayed_index
+            delayed = set()
+            while to_index:
+                for item in to_index:
+                    obj = collection._p_jar.get(item)
+                    try:
+                        collection.index(obj)
+                    except Exception:
+                        # XXX too coarse
+                        delayed.add(item)
+                to_index = delayed
+                delayed = set()
+        self.indexing = False
+
 
     def newTransaction(self, transaction):
         """Hook that is called at the start of a transaction.
         """
         pass
-

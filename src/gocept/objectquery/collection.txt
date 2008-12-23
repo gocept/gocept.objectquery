@@ -19,17 +19,6 @@ Then we need some testobjects, which we will store into the ObjectCollection:
 
     >>> from gocept.objectquery import testobjects
 
-Imporing the ObjectCollection
-=============================
-
-You can import the QueryParser as follow:
-
-    >>> from gocept.objectquery.collection import ObjectCollection
-
-Get a ObjectCollection:
-
-    >>> oc = ObjectCollection(conn)
-
 Using the ObjectCollection
 ==========================
 
@@ -60,18 +49,15 @@ your peristant objects for internal storage:
     >>> dbroot['test'] = halle
     >>> transaction.commit()
 
-To index our test-db, we add the root object to the ObjectCollection. For large
-databases, this process can last some time:
+    >>> from gocept.objectquery.collection import ObjectCollection
+    >>> oc = ObjectCollection(conn)
 
-    >>> oc.add(dbroot['test']._p_oid)
+Lets index the objects we added:
 
-Adding another root object is no longer possible:
-
-    >>> oc.add(dbroot['test']._p_oid)
-    Traceback (most recent call last):
-    ...
-    ValueError: There is already a root object present.
-
+    >>> oc.index(dbroot)
+    >>> oc.index(halle)
+    >>> oc.index(hans)
+    >>> oc.index(zodb_book)
 
 Internal representation of the indexes
 --------------------------------------
@@ -80,10 +66,10 @@ The ObjectCollection has a index called ClassIndex, which is a mapping of
 classnames to OIDs of this class. It returns a generator object with all found
 results.
 
-    >>> persons = oc._classindex.get("Person")
+    >>> persons = oc.class_index.query(testobjects.Person)
     >>> persons
     <generator object at 0x...>
-    
+
     >>> persons = list(persons)
     >>> len(persons)
     1
@@ -100,7 +86,7 @@ To have a look at these objects, we have to ask the connection object:
 There is also an index available, which maps attribute names to OIDs of
 classes, which have that attribute. It returns a generator object, too:
 
-    >>> names = oc._attributeindex.get("name")
+    >>> names = oc.attribute_index.query("name")
     >>> names
     <generator object at 0x...>
 
@@ -125,16 +111,18 @@ mentioned above:
     ...         isbn=123456789)
     >>> halle.add_book(zope_book)
     >>> transaction.commit()
-    >>> oc.add(zope_book._p_oid, halle._p_oid)        # XXX: should be obsolete soon
+    >>> oc.index(halle)
+    >>> oc.index(zope_book)
+    >>> oc.index(marie)
 
 There are now two books inside the database:
 
-    >>> len(oc.by_class("Book"))
+    >>> len(oc.by_class(testobjects.Book))
     2
 
 There are now two persons available:
 
-    >>> len(oc.by_class("Person"))
+    >>> len(oc.by_class(testobjects.Person))
     2
 
 
@@ -162,14 +150,13 @@ When removing objects, all child objects, which are no longer referenced by
 others, are removed as well.
 
     >>> halle.delete_book(zope_book)
-    >>> oc.delete(zope_book._p_oid)          # XXX: should be obsolete soon
-    >>> transaction.commit()
+    >>> oc.index(halle)
 
 There is one person and one book remaining:
 
-    >>> len(oc.by_class("Person"))
+    >>> len(oc.by_class(testobjects.Person))
     1
-    >>> len(oc.by_class("Book"))
+    >>> len(oc.by_class(testobjects.Book))
     1
 
 
@@ -185,8 +172,7 @@ the object collection needs to be registered as a utility:
     >>> from gocept.objectquery import indexsupport
     >>> index_synch = indexsupport.IndexSynchronizer()
     >>> transaction.manager.registerSynch(index_synch)
-    >>> import zope.component
-    >>> zope.component.provideUtility(oc)
+    >>> dbroot['_oq_collection'] = oc
 
 We add a new Person, Christian, as a contributor of the Zope book:
 
@@ -194,13 +180,13 @@ We add a new Person, Christian, as a contributor of the Zope book:
     >>> zodb_book.author = chris
     >>> transaction.commit()
 
-    >>> books = oc.by_class("Book")
+    >>> books = oc.by_class(testobjects.Book)
     >>> len(books)
     1
     >>> book = conn.get(books[0][0])
     >>> book.title
     'Ad-hoc Anfragen an die ZODB'
-    >>> persons = oc.by_class("Person")
+    >>> persons = oc.by_class(testobjects.Person)
     >>> len(persons)
     1
     >>> person = conn.get(persons[0][0])
@@ -211,8 +197,6 @@ We add a new Person, Christian, as a contributor of the Zope book:
 
 Automatic updates stop when disabling the index synchronizer again:
 
-    >>> transaction.manager.unregisterSynch(index_synch)
-
 
 Adding circles to collection
 ----------------------------
@@ -220,9 +204,6 @@ Adding circles to collection
 It is possible, to add circle references to a ObjectCollection. First we need
 a new ObjectCollection:
 
-    >>> dbroot.clear()
-    >>> transaction.commit()
-    >>> oc = ObjectCollection(conn)
 
 Then create two objects and add one under the other:
 
@@ -231,16 +212,10 @@ Then create two objects and add one under the other:
 
     >>> dbroot['test'] = first
     >>> transaction.commit()
-    >>> oc.add(first._p_oid)                   # XXX: should be obsolete soon
 
     >>> first.add_item(second)
     >>> transaction.commit()
-    >>> oc.add(second._p_oid, first._p_oid)           # XXX: should be obsolete soon
 
-There are now no Telephone objects inside the ObjectCollection:
-
-    >>> len(oc.by_class("Telephone"))
-    0
 
 Furthermore, second is a child of first, but first is no child of second:
 
@@ -253,7 +228,6 @@ Adding first under second will create a cycle, which is possible at all:
 
     >>> second.add_item(first)
     >>> transaction.commit()
-    >>> oc.add(first._p_oid, second._p_oid)           # XXX: should be obsolete soon
 
 To test the cycle, second should be a child of first and vice versa:
 
@@ -261,5 +235,3 @@ To test the cycle, second should be a child of first and vice versa:
     True
     >>> oc.is_child(first._p_oid, second._p_oid)
     True
-
-

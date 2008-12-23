@@ -70,13 +70,25 @@ class ObjectParser(object):
         return False
 
 
+def normalize_range_tuples(list):
+    """Expand single elements into (element, element) pairs."""
+    for i, v in enumerate(list):
+        if not isinstance(v, tuple):
+            v = (v, v)
+        list[i] = v
+
+
 class EEJoin(object):
     """ Element-Element Join. """
+
     def __init__(self, structindex):
         self._structindex = structindex
 
     def __call__(self, E, F, kcwild=None):
         """ Returns a set of (e, f) pairs such that e is an ancestor f. """
+        normalize_range_tuples(E)
+        normalize_range_tuples(F)
+
         resultlist = []
         comparer = getattr(self._structindex, "is_child")
         if kcwild is not None:
@@ -132,10 +144,12 @@ class EAJoin(object):
 
 class KCJoin(object):
     """ Return the Kleene Closure of elemlist. """
+
     def __init__(self, structindex):
         self.eejoin = EEJoin(structindex)
 
     def __call__(self, elemlist, occ):
+        normalize_range_tuples(elemlist)
         kc = []
         kc.append(elemlist)
         while kc[-1] != []:

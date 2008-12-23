@@ -5,6 +5,7 @@
 from zope.interface import implements
 from gocept.objectquery.interfaces import IQueryProcessor
 
+
 class QueryProcessor(object):
     """ Processes a query to the collection and returns the results.
 
@@ -52,7 +53,7 @@ class QueryProcessor(object):
             kcwild = True
         elemlist1 = self._process_qp(elemlist1)
         if elemlist1 is None:
-            elemlist1 = [self.collection.root()]
+            elemlist1 = [self.collection.root._p_oid]
         elemlist2 = self._process_qp(elemlist2)
         return self.collection.eejoin(elemlist1, elemlist2, kcwild)
 
@@ -83,5 +84,5 @@ class QueryProcessor(object):
         """ Convert the oidlist to objectlist. """
         result = []
         for oid in oidlist:
-            result.append(self.collection._get_object(oid[1]))
+            result.append(self.collection._p_jar.get(oid[1]))
         return self._remove_duplicates(result)
