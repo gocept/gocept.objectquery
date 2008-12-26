@@ -80,30 +80,19 @@ Some example usecases
 
 Root joins:
 
-    >>> r = query('PersistentMapping')
-    >>> r = query('/PersistentMapping')
+    >>> r = query('/PersistentList/Library')
     >>> sorted(elem.location for elem in r)
     ['Berlin', 'Chester', 'Halle']
 
-    >>> r = query('/Book')
-    >>> len(r)
-    0
+Search for the authors of all Books named "Faust":
 
-Search for all Persons that are direct childs of Libraries:
-
-    >>> r = query('/Library/Person')
-    >>> len(r)
-    0
-
-Search for the authors of all Books named "Fause":
-
-    >>> r = query('/Library/Book[@title="Faust"]/Person')
+    >>> r = query('/PersistentList/Library/Book[@title="Faust"]/Person')
     >>> sorted(elem.name for elem in r)
     ['Johann Wolfgang von Goethe']
 
 Search for all books written after year 2000:
 
-    >>> r = query('/Library/Book[@written>=2000]')
+    >>> r = query('/PersistentList/Library/Book[@written>=2000]')
     >>> len(r)
     3
     >>> pprint(sorted(elem.title for elem in r))
@@ -113,7 +102,7 @@ Search for all books written after year 2000:
 
 Search for all authors of books written after year 2000:
 
-    >>> r = query('/Library/Book[@written>=2000]/Person')
+    >>> r = query('/PersistentList/Library/Book[@written>=2000]/Person')
     >>> len(r)
     3
     >>> pprint(sorted(elem.name for elem in r))
@@ -122,13 +111,13 @@ Search for all authors of books written after year 2000:
 Search for all Books, that have are located in Halle and have been written in
 2007:
 
-    >>> r = query('/Library[@location="Halle"]/Book[@written==2007]')
+    >>> r = query('/PersistentList/Library[@location="Halle"]/Book[@written==2007]')
     >>> sorted((elem.title, elem.isbn) for elem in r)
     [('Web Component Development with Zope 3', 3540338071L)]
 
 Handle Wildcards correctly:
 
-    >>> r = query('/Library/_/Person')
+    >>> r = query('/PersistentList/Library/_/Person')
     >>> pprint(sorted(elem.name for elem in r))
     ['George Orwell',
      'Johann Wolfgang von Goethe',
@@ -137,18 +126,18 @@ Handle Wildcards correctly:
 
 What about precedence:
 
-    >>> r = query('/Library[@location="Halle"]/Book/Person')
+    >>> r = query('/PersistentList/Library[@location="Halle"]/Book/Person')
     >>> pprint(sorted(elem.name for elem in r))
     ['George Orwell', 'Philipp von Weitershausen', 'Thomas Lotze']
 
-    >>> r = query('(/Library[@location="Halle"]/Book)/Person')
+    >>> r = query('(/PersistentList/Library[@location="Halle"]/Book)/Person')
     >>> pprint(sorted(elem.name for elem in r))
     ['George Orwell', 'Philipp von Weitershausen', 'Thomas Lotze']
 
-    >>> r = query('/Library[@location="Halle"]/(Book/Person)')
+    >>> r = query('/PersistentList/Library[@location="Halle"]/(Book/Person)')
     >>> len(r)
     0
-    >>> r = query('(/Library/Book[@title="Faust"])/(Book/Person)')
+    >>> r = query('(/PersistentList/Library/Book[@title="Faust"])/(Book/Person)')
     >>> sorted(elem.name for elem in r)
     ['Johann Wolfgang von Goethe']
 
@@ -156,7 +145,7 @@ But pay attention. If you change the query from .."]/(Book.. to .."](/Book..
 you get an Library-Result with location in "Halle". This is, because the
 subquery (in brakets) returns no results:
 
-    >>> r = query('/Library[@location="Halle"](/Book/Person)')
+    >>> r = query('/PersistentList/Library[@location="Halle"](/Book/Person)')
     >>> len(r)
     1
     >>> r[0].location
@@ -164,7 +153,7 @@ subquery (in brakets) returns no results:
 
 Unions:
 
-    >>> r = query('(/Library[@location="Halle"])|(Book/Person)')
+    >>> r = query('(/PersistentList/Library[@location="Halle"])|(Book/Person)')
     >>> len(r)
     5
     >>> pprint(sorted(elem for elem in r))
@@ -174,7 +163,7 @@ Unions:
      <gocept.objectquery.testobjects.Person object at 0x...>,
      <gocept.objectquery.testobjects.Person object at 0x...>]
 
-    >>> r = query('(/Library)|(Book[@written=1990])')
+    >>> r = query('(/PersistentList/Library)|(Book[@written=1990])')
     >>> len(r)
     4
     >>> pprint(sorted(elem for elem in r))
@@ -183,17 +172,12 @@ Unions:
      <gocept.objectquery.testobjects.Library object at 0x...>,
      <gocept.objectquery.testobjects.Library object at 0x...>]
 
+    >>> transaction.commit()
 
 Kleene Closure
 --------------
 
 First we need a new database:
-
-    >>> dbroot.clear()
-    >>> transaction.commit()
-
-    >>> objects = ObjectCollection(conn)
-    >>> query = QueryProcessor(parser, objects)
 
     >>> doc1 = Document()
     >>> doc2 = Document()
@@ -207,15 +191,14 @@ First we need a new database:
 
     >>> dbroot['test'] = root
     >>> transaction.commit()
-    >>> objects.add(root._p_oid)
 
 Now there should be one Plone object under root:
 
-    >>> r = query('/Plone')
+    >>> r = query('/Root/Plone')
     >>> len(r) == 1 and r[0] == plo1
     True
 
-    >>> r = query('/Plone/Folder/Document')
+    >>> r = query('/Root/Plone/Folder/Document')
     >>> len(r)
     1
     >>> r[0] == doc2
@@ -223,7 +206,7 @@ Now there should be one Plone object under root:
 
 Get all Documents which are under any number of Folders:
 
-    >>> r = query('/Plone/Folder*/Document')
+    >>> r = query('/Root/Plone/Folder*/Document')
     >>> r[0] != r[1] != r[2] and isinstance(r[0], Document)
     True
 
@@ -237,7 +220,7 @@ Get all Documents which are under any number of Folders:
 
 Get all Documents which are under one or zero number of Folders:
 
-    >>> r = query('/Plone/Folder?/Document')
+    >>> r = query('/Root/Plone/Folder?/Document')
     >>> len(r) == 2 and (r[0] == doc2 or r[1] == doc2) and (r[0] == doc3 or r[1] == doc3) and r[0] != r[1]
     True
 
@@ -247,7 +230,7 @@ Get all Documents which are under one or zero number of Folders:
 
 Get all Documents which are under one or more number of Folders:
 
-    >>> r = query('/Plone/Folder+/Document')
+    >>> r = query('/Root/Plone/Folder+/Document')
     >>> len(r) == 2 and (r[0] == doc1 or r[1] == doc1) and (r[0] == doc2 or r[1] == doc2) and r[0] != r[1]
     True
 
@@ -255,7 +238,7 @@ Get all Documents which are under one or more number of Folders:
     >>> len(r) == 2 and (r[0] == doc1 or r[1] == doc1) and (r[0] == doc2 or r[1] == doc2) and r[0] != r[1]
     True
 
-You may also query absolute pathlenghts:
+You may also query absolute path lengths:
 
     >>> len(query('Plone/Document'))
     1

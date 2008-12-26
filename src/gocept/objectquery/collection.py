@@ -58,17 +58,14 @@ class ObjectCollection(persistent.Persistent):
         return self.structure_index.is_child(*args)
 
     def eejoin(self, *args):
-        join = EEJoin(self.structure_index)
-        return join(*args)
+        return EEJoin(self.structure_index)(*args)
 
     def eajoin(self, *args):
-        self._eajoin = EAJoin(self._p_jar) # XXX: ValueIndex instead of conn
-        return self._eajoin(*args)
+        # XXX: ValueIndex instead of conn
+        return EAJoin(self._p_jar)(*args)
 
     def kcjoin(self, *args):
-        self._kcjoin = KCJoin(self.structure_index)
-        return self._kcjoin(*args)
+        return KCJoin(self.structure_index)(*args)
 
     def union(self, *args):
-        return self._union(*args)
-        self._union = Union()
+        return Union()(*args)

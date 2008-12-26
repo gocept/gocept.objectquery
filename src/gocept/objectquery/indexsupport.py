@@ -2,6 +2,7 @@
 # See also LICENSE.txt
 # $Id$
 
+import sys
 import threading
 import types
 import inspect
@@ -238,7 +239,7 @@ class StructureIndex(persistent.Persistent):
         """ Check if key1 is a direct successor of key2. """
         if not child or not parent:
             return True   # empty keys return True (see KCJoin)
-        for elem1 in self.paths.get(child):
+        for elem1 in self.paths.get(child, []):
             for elem2 in self.paths.get(parent):
                 if len(elem1) == len(elem2) + 1 and \
                     self._check_path(elem2, elem1):
@@ -247,10 +248,8 @@ class StructureIndex(persistent.Persistent):
 
     def is_successor(self, child, parent):
         """ Check if key1 is a successor of key2. """
-        key1 = child._p_oid
-        key2 = parent._p_oid
-        for elem1 in self.paths.get(key1):
-            for elem2 in self.paths.get(key2):
+        for elem1 in self.paths.get(child):
+            for elem2 in self.paths.get(parent):
                 if self._check_path(elem2, elem1):
                     return True
         return False
@@ -314,13 +313,14 @@ class IndexSynchronizer(object):
                 data_manager._oq_delayed_index.add(obj._p_oid)
             data_manager._creating = MonitoringCreationDict(data_manager)
 
-    def afterCompletion(self, transaction):
+    def afterCompletion(self, txn):
         """Hook that is called by the transaction after completing a commit.
         """
+        transaction.begin()
         if self.indexing:
             return
         self.indexing = True
-        for data_manager in transaction._resources:
+        for data_manager in txn._resources:
             if not isinstance(data_manager, ZODB.Connection.Connection):
                 continue
             root = data_manager.root()
@@ -335,6 +335,7 @@ class IndexSynchronizer(object):
             to_index = data_manager._oq_delayed_index
             delayed = set()
             while to_index:
+                last_to_index = to_index
                 for item in to_index:
                     obj = collection._p_jar.get(item)
                     try:
@@ -343,7 +344,11 @@ class IndexSynchronizer(object):
                         # XXX too coarse
                         delayed.add(item)
                 to_index = delayed
+                if last_to_index == to_index:
+                    # XXX This is bad.
+                    break
                 delayed = set()
+        transaction.commit()
         self.indexing = False
 
 

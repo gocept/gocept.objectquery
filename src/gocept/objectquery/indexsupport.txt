@@ -108,9 +108,9 @@ Direct parent/child relationships can be queried:
 
 And transitive parent/child relationships too:
 
-    >>> si.is_successor(book, library)
+    >>> si.is_successor(book._p_oid, library._p_oid)
     True
-    >>> si.is_successor(library, book)
+    >>> si.is_successor(library._p_oid, book._p_oid)
     False
 
     >>> book.author = person
@@ -118,11 +118,11 @@ And transitive parent/child relationships too:
     >>> si.index(dbroot['1'].books[0])
     []
 
-    >>> si.is_successor(person, library)
+    >>> si.is_successor(person._p_oid, library._p_oid)
     True
-    >>> si.is_successor(person, book)
+    >>> si.is_successor(person._p_oid, book._p_oid)
     True
-    >>> si.is_successor(library, person)
+    >>> si.is_successor(library._p_oid, person._p_oid)
     False
 
 Successors with one or more "hops" are not childs:
@@ -174,9 +174,9 @@ themselves:
     >>> si.is_child(book._p_oid, book._p_oid)
     False
 
-    >>> si.is_successor(library, library)
+    >>> si.is_successor(library._p_oid, library._p_oid)
     True
-    >>> si.is_successor(person, person)
+    >>> si.is_successor(person._p_oid, person._p_oid)
     True
-    >>> si.is_successor(book, book)
+    >>> si.is_successor(book._p_oid, book._p_oid)
     True

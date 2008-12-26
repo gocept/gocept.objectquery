@@ -11,7 +11,9 @@ class QueryProcessor(object):
 
     QueryProcessor parses a query with the given parser. It returns a
     list with resulting objects from the given collection.
+
     """
+
     implements(IQueryProcessor)
 
 
