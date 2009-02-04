@@ -15,7 +15,7 @@ name = 'gocept.objectquery'
 
 setup(
     name=name,
-    version='0.1a',
+    version='0.1dev',
     url='http://www.python.org/pypi/'+name,
     license='ZPL 2.1',
     classifiers = [
