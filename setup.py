@@ -15,11 +15,25 @@ name = 'gocept.objectquery'
 
 setup(
     name=name,
-    version='0.1',
+    version='0.1a',
     url='http://www.python.org/pypi/'+name,
     license='ZPL 2.1',
-    description='A framework for indexing and querying python objects',
-    long_description = (read('README.txt')),
+    classifiers = [
+        'Development Status :: 2 - Pre-Alpha',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: Zope Public License',
+        'Programming Language :: Python',
+        'Natural Language :: English',
+        'Operating System :: OS Independent',
+        'Topic :: Database'],
+    description='A framework for indexing and querying the ZODB',
+    long_description = (read('README.txt')
+                         + '\n\n' +
+                         read('src', 'gocept', 'objectquery',
+                             'processor.txt')
+                         + '\n\n' +
+                         read('CHANGES.txt')
+    ),
     author='Sebastian Wehrmann',
     author_email='sw@gocept.com',
     packages=find_packages('src'),

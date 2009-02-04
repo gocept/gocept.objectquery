@@ -3,10 +3,10 @@ CHANGES
 =======
 
 
-0.1 (unreleased)
-===============
+0.1a (2009-02-04)
+=================
 
-  - Explicit type conversions in queries  
+  - first beta release
 
 0.1pre (2008-08-19)
 ===================
