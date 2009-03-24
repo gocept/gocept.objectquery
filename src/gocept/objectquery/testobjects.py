@@ -3,10 +3,6 @@
 # $Id$
 
 import persistent
-import persistent.list
-import transaction
-
-import ZODB.MappingStorage, ZODB.DB
 
 # class definitions for the test db
 

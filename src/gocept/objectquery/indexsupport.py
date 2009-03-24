@@ -2,10 +2,6 @@
 # See also LICENSE.txt
 # $Id$
 
-import sys
-import threading
-import types
-import inspect
 import zope.interface
 import transaction
 import ZODB.Connection
