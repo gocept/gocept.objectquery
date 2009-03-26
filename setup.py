@@ -16,7 +16,7 @@ name = 'gocept.objectquery'
 setup(
     name=name,
     version='0.1dev',
-    url='http://www.python.org/pypi/'+name,
+    url='https://intra.gocept.com/projects/projects/objectquery',
     license='ZPL 2.1',
     classifiers = [
         'Development Status :: 2 - Pre-Alpha',
