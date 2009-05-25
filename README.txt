@@ -15,6 +15,5 @@ It uses SimpleParse to parse the RPE-query.
 
 Please report bugs to `gocept project portal`_.
 
-
 .. _gocept gmbh & co. kg: http://www.gocept.com
 .. _gocept project portal: https://intra.gocept.com/projects/projects/objectquery
