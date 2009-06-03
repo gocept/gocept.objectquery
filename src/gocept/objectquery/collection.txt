@@ -52,12 +52,16 @@ your peristant objects for internal storage:
     >>> from gocept.objectquery.collection import ObjectCollection
     >>> oc = ObjectCollection(conn)
 
-Lets index the objects we added:
+It is possible to index items individually:
 
     >>> oc.index(dbroot)
     >>> oc.index(halle)
-    >>> oc.index(hans)
-    >>> oc.index(zodb_book)
+
+or recursively. Indexing the ``zodb_book`` recursively is equal to indexing
+``zodb_book`` and ``hans`` individually:
+
+    >>> oc.rindex(zodb_book)
+
 
 Internal representation of the indexes
 --------------------------------------
