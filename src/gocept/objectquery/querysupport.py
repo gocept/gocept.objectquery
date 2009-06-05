@@ -15,8 +15,9 @@ class ObjectParser(object):
                 value = getattr(obj, name)
             except Exception:
                 continue
-            if callable(value):
+            if isinstance(value, type(self.get_attributes)):
                 continue
+            # XXX: Classmethods ausschliessen
             yield name
 
     def get_descendants(self, obj):
@@ -103,6 +104,7 @@ class EEJoin(object):
                     resultlist.append(relation)
         return resultlist
 
+
 class EAJoin(object):
     """ Element-Attribute-Join. """
     def __init__(self, connection=None):
@@ -126,7 +128,8 @@ class EAJoin(object):
         attrname is compared against attrvalue with compare operator attrcomp.
         """
         resultlist = []
-        # XXX: ToDo use ValueIndex instead of connection
+        # XXX: ToDo use a ValueIndex instead of unpickling the obj
+        # for retrieving its attribute values
         for e in E:
             elem = e[1]
             if self.conn is not None:
@@ -141,6 +144,7 @@ class EAJoin(object):
             if self._attr_comp(getattr(elem, attrname), attrvalue, attrcomp):
                 resultlist.append(e)
         return resultlist
+
 
 class KCJoin(object):
     """ Return the Kleene Closure of elemlist. """
