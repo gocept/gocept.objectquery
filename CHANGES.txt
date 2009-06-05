@@ -6,6 +6,18 @@ CHANGES
 0.1 (unreleased)
 ================
 
+- Stop ignoring callable objects (e.g. a Plone site) for indexing, just once
+  ignore methods.
+
+- Do not break during indexing if added object is not added to the ZODB
+  (doesn't have the `_p_oid` attribute). Those objects are ignored for now
+  and not added to the index structures. 
+
+- Add ``rindex`` method for adding objects to the collection recursively.
+
+- Add SimpleParse as a 3rdparty egg because it can't be retrieved from pypi
+  for some months now.
+
 
 0.1a (2009-02-04)
 =================
