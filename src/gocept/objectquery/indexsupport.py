@@ -62,7 +62,10 @@ class ClassIndex(OOIndex):
         return obj.__class__.__name__
 
     def index(self, obj):
-        self.insert(self._get_key(obj), obj._p_oid)
+        try:
+            self.insert(self._get_key(obj), obj._p_oid)
+        except AttributeError:
+            pass
 
     def unindex(self, obj):
         self.delete(self._get_key(obj), obj._p_oid)
@@ -207,12 +210,16 @@ class StructureIndex(persistent.Persistent):
         # a conflict hotspot.
         for candidate in local_unindex:
             del self.paths[candidate]
-        return (recursive_unindex + 
+        return (recursive_unindex +
                 [obj._p_jar.get(candidate) for candidate in local_unindex])
 
     def paths_traversing_obj(self, obj):
         """List all paths that touch the given obj and traverse *past*
         it."""
+        try:
+            obj._p_oid
+        except AttributeError:
+            return
         for path_set in self.paths.values():
             for path in list(path_set):
                 if obj._p_oid in path[:-1]:
@@ -221,7 +228,10 @@ class StructureIndex(persistent.Persistent):
     def insert(self, parent, child):
         # Establish a new path to child_id for each path that leads to
         # parent_id.
-        child_id = child._p_oid
+        try:
+            child_id = child._p_oid
+        except AttributeError:
+            return []
         new_paths = []
         for parent_path in self.get_paths(parent):
             new_paths.append(parent_path + (child_id,))
@@ -256,7 +266,10 @@ class StructureIndex(persistent.Persistent):
             # `None` is a special parent for the root object causing the
             # root path to be expressed as get_paths(None) + (root._p_oid)
             return [()]
-        return self.paths[obj._p_oid]
+        try:
+            return self.paths[obj._p_oid]
+        except KeyError:
+            return []
 
     def _check_path(self, path1, path2):
         """ Check if path1 is reachable by path2. """
