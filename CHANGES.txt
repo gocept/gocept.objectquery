@@ -3,8 +3,8 @@ CHANGES
 =======
 
 
-0.1 (unreleased)
-================
+0.1a1 (2009-06-05)
+==================
 
 - Stop ignoring callable objects (e.g. a Plone site) for indexing, just once
   ignore methods.
