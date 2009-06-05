@@ -19,8 +19,8 @@ CHANGES
   for some months now.
 
 
-0.1a (2009-02-04)
-=================
+0.1pre (2009-02-04)
+===================
 
   - first alpha release
 
@@ -29,7 +29,6 @@ CHANGES
 ===================
 
   - initial functionality based on the work from the `diploma thesis`_
-
 
 
 .. _diploma thesis: http://archiv.tu-chemnitz.de/pub/2008/0081/data/diplomarbeit.pdf
