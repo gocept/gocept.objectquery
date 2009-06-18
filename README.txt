@@ -10,11 +10,10 @@ ObjectQuery enables you to query for persistent objects (e.g. objects in the
 ZODB). This is done with a XPath-like language named Regular Path Expressions
 (RPE). ObjectQuery also includes indexstructures for performance reasons.
 
-It uses SimpleParse_ to parse the RPE-query.
+It uses SimpleParse to parse the RPE-query.
 
 
 Please report bugs to `gocept project portal`_.
 
-.. _gocept gmbh & co. kg: http://www.gocept.com/
-.. _gocept project portal: https://intra.gocept.com/projects/projects/show/objectquery
-.. _SimpleParse: http://pypi.python.org/pypi/SimpleParse/
+.. _gocept gmbh & co. kg: http://www.gocept.com
+.. _gocept project portal: https://intra.gocept.com/projects/projects/objectquery

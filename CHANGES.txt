@@ -2,17 +2,6 @@
 CHANGES
 =======
 
-0.1a3 (unreleased)
-==================
-
-- Nothing changed yet.
-
-
-0.1a2 (2009-06-17)
-==================
-
-- Better handling of unpersistent objects.
-
 
 0.1a1 (2009-06-05)
 ==================
