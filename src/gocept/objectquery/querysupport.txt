@@ -11,16 +11,19 @@ Initialization
 ObjectParser looks inside objects for attributes and following objects. First
 we create such an object:
 
-    >>> class Child1(object):
+    >>> class Persistent(object):
+    ...     _p_oid = True
+
+    >>> class Child1(Persistent):
     ...     pass
-    >>> class Child2(object):
+    >>> class Child2(Persistent):
     ...     pass
-    >>> class Child3(object):
+    >>> class Child3(Persistent):
     ...     pass
-    >>> class Child4(object):
+    >>> class Child4(Persistent):
     ...     misc = Child1()
 
-    >>> class ToParse(object):
+    >>> class ToParse(Persistent):
     ...     some_var = ["some tupel", (Child2(), Child3())]
     ...     other_var = {"foo": "bar"}
     ...     _private_var = 10

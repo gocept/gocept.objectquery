@@ -24,7 +24,8 @@ class ObjectParser(object):
         for attribute in self.get_attributes(obj):
             value = getattr(obj, attribute)
             for elem in self._traverse(value):
-                yield elem
+                if hasattr(elem, '_p_oid'):
+                    yield elem
 
     def _traverse(self, value):
         values = ()
