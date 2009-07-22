@@ -57,20 +57,35 @@ class ClassIndex(OOIndex):
 
     zope.interface.implements(gocept.objectquery.interfaces.IClassIndex)
 
-    def _get_key(self, obj):
-        return obj.__class__.__name__
-
     def index(self, obj):
         self.insert(self._get_key(obj), obj._p_oid)
+        self._index_bases(obj.__class__, obj._p_oid)
 
     def unindex(self, obj):
         self.delete(self._get_key(obj), obj._p_oid)
+        self._unindex_bases(obj.__class__, obj._p_oid)
 
     def query(self, class_):
         # XXX Don't allow naive strings to be passed in
         if not isinstance(class_, str):
             class_ = class_.__name__
         return self.get(class_)
+
+    def _index_bases(self, class_, oid):
+        for base in class_.__bases__:
+            self.insert(self._get_name(base), oid)
+            self._index_bases(base, oid)
+
+    def _unindex_bases(self, class_, oid):
+        for base in class_.__bases__:
+            self.delete(self._get_name(base), oid)
+            self._unindex_bases(base, oid)
+
+    def _get_name(self, class_):
+        return class_.__name__
+
+    def _get_key(self, obj):
+        return self._get_name(obj.__class__)
 
 
 class AttributeIndex(OOIndex):

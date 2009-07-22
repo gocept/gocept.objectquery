@@ -45,9 +45,17 @@ And we can retrieve it back, by asking for all objects of a given class:
     >>> list(ci.query(Person))
     ['\x00\x00\x00\x00\x00\x00\x00\x02']
 
-#   XXX class relationships need to be supported
-#   >>> list(ci.query(object))
-#   ['\x00\x00\x00\x00\x00\x00\x00\x01', '\x00\x00\x00\x00\x00\x00\x00\x02']
+Querying for book returns no result:
+
+    >>> list(ci.query(Book))
+    []
+
+It is also possible to query for class relationships:
+
+   >>> list(ci.query(Persistent))
+   ['\x00\x00\x00\x00\x00\x00\x00\x01', '\x00\x00\x00\x00\x00\x00\x00\x02']
+   >>> list(ci.query(object))
+   ['\x00\x00\x00\x00\x00\x00\x00\x01', '\x00\x00\x00\x00\x00\x00\x00\x02']
 
 Unindexing removes an object from the index:
 
@@ -56,6 +64,11 @@ Unindexing removes an object from the index:
     ['\x00\x00\x00\x00\x00\x00\x00\x01']
     >>> list(ci.query(Person))
     []
+
+The base classes are removed, too:
+
+   >>> list(ci.query(Persistent))
+   ['\x00\x00\x00\x00\x00\x00\x00\x01']
 
 
 Attribute index
