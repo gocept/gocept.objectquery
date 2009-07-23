@@ -5,6 +5,7 @@ CHANGES
 0.1a3 (unreleased)
 ==================
 
+- Small API refactorings (#5780)
 - Add support for querying for classes of a given module (#5778).
 - Add support for querying for base classes of objects (#4880).
 
