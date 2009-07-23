@@ -14,11 +14,10 @@ name = 'gocept.objectquery'
 
 setup(
     name=name,
-    version = '0.1b',
+    version = '0.1b1dev',
     url='https://intra.gocept.com/projects/projects/show/objectquery',
     license='ZPL 2.1',
     classifiers = [
-        'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: Zope Public License',
         'Programming Language :: Python',
