@@ -17,7 +17,7 @@ First we need a ZODB for the IndexSupport used by ObjectCollection:
 
 Then we need some testobjects, which we will store into the ObjectCollection:
 
-    >>> from gocept.objectquery import testobjects
+    >>> from gocept.objectquery.tests import objects
 
 Using the ObjectCollection
 ==========================
@@ -32,14 +32,14 @@ index all objects referenced by this root object recursively by its own.
 
 First of all, we create some objects for our test-database:
 
-    >>> hans = testobjects.Person(name="Hans")
-    >>> marie = testobjects.Person(name="Marie")
-    >>> zodb_book = testobjects.Book(
+    >>> hans = objects.Person(name="Hans")
+    >>> marie = objects.Person(name="Marie")
+    >>> zodb_book = objects.Book(
     ...                 author=hans,
     ...                 title='Ad-hoc Anfragen an die ZODB',
     ...                 written=2004,
     ...                 isbn=3404159063)
-    >>> halle = testobjects.Library(location="Halle")
+    >>> halle = objects.Library(location="Halle")
 
 Now we create a hierachy between those objects and add them to the ZODB. Don't
 forget to commit the transaction, because the ObjectCollection needs the OID of
@@ -70,7 +70,7 @@ The ObjectCollection has a index called ClassIndex, which is a mapping of
 classnames to OIDs of this class. It returns a generator object with all found
 results.
 
-    >>> persons = oc.class_index.query(testobjects.Person)
+    >>> persons = oc.class_index.query(objects.Person)
     >>> persons
     <generator object at 0x...>
 
@@ -83,7 +83,7 @@ To have a look at these objects, we have to ask the connection object:
 
     >>> person = conn.get(persons[0])
     >>> person
-    <gocept.objectquery.testobjects.Person object at 0x...>
+    <gocept.objectquery.tests.objects.Person object at 0x...>
     >>> person == hans
     True
 
@@ -108,7 +108,7 @@ Adding some more objects to the ObjectCollection
 Lets add some more objects to the collection. This is done in the same way as
 mentioned above:
 
-    >>> zope_book = testobjects.Book(
+    >>> zope_book = objects.Book(
     ...         author=marie,
     ...         title='Zope in action',
     ...         written=2003,
@@ -121,12 +121,12 @@ mentioned above:
 
 There are now two books inside the database:
 
-    >>> len(oc.by_class(testobjects.Book))
+    >>> len(oc.by_class(objects.Book))
     2
 
 There are now two persons available:
 
-    >>> len(oc.by_class(testobjects.Person))
+    >>> len(oc.by_class(objects.Person))
     2
 
 
@@ -158,9 +158,9 @@ others, are removed as well.
 
 There is one person and one book remaining:
 
-    >>> len(oc.by_class(testobjects.Person))
+    >>> len(oc.by_class(objects.Person))
     1
-    >>> len(oc.by_class(testobjects.Book))
+    >>> len(oc.by_class(objects.Book))
     1
 
 
@@ -180,17 +180,17 @@ the object collection needs to be registered as a utility:
 
 We add a new Person, Christian, as a contributor of the Zope book:
 
-    >>> chris = testobjects.Person(name='Christian')
+    >>> chris = objects.Person(name='Christian')
     >>> zodb_book.author = chris
     >>> transaction.commit()
 
-    >>> books = oc.by_class(testobjects.Book)
+    >>> books = oc.by_class(objects.Book)
     >>> len(books)
     1
     >>> book = conn.get(books[0][0])
     >>> book.title
     'Ad-hoc Anfragen an die ZODB'
-    >>> persons = oc.by_class(testobjects.Person)
+    >>> persons = oc.by_class(objects.Person)
     >>> len(persons)
     1
     >>> person = conn.get(persons[0][0])
@@ -211,8 +211,8 @@ a new ObjectCollection:
 
 Then create two objects and add one under the other:
 
-    >>> first = testobjects.Dummy(id=1)
-    >>> second = testobjects.Dummy(id=2)
+    >>> first = objects.Dummy(id=1)
+    >>> second = objects.Dummy(id=2)
 
     >>> dbroot['test'] = first
     >>> transaction.commit()

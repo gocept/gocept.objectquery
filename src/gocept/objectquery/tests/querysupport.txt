@@ -73,7 +73,7 @@ Import and create a ZODB to store the indexes:
 
     >>> from ZODB import MappingStorage, DB
     >>> import transaction
-    >>> from gocept.objectquery.testobjects import Obj
+    >>> from gocept.objectquery.tests.objects import Obj
     >>> storage = MappingStorage.MappingStorage()
     >>> db = DB(storage)
     >>> conn = db.open()

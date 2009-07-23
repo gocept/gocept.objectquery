@@ -6,9 +6,9 @@ Initialization
 ==============
 
 First load the test database. For more information about that, please have a
-look inside testobjects.py.
+look inside objects.py.
 
-    >>> from gocept.objectquery.testobjects import *
+    >>> from gocept.objectquery.tests.objects import *
     >>> import ZODB.MappingStorage
     >>> import ZODB
     >>> from gocept.objectquery.collection import ObjectCollection
@@ -124,6 +124,15 @@ Handle Wildcards correctly:
      'Philipp von Weitershausen',
      'Thomas Lotze']
 
+Instead of only providing the classname, it is also possible to provide the
+class with its full module:
+
+    >>> r = query('/PersistentList/gocept.objectquery.tests.objects.Library')
+    >>> pprint([library.location for library in r])
+    ['Halle', 'Berlin', 'Chester']
+    >>> query('/PersistentList/gocept.objectquery.tests.objects2.Library')
+    []
+
 What about precedence:
 
     >>> r = query('/PersistentList/Library[@location="Halle"]/Book/Person')
@@ -157,20 +166,20 @@ Unions:
     >>> len(r)
     5
     >>> pprint(sorted(elem for elem in r))
-    [<gocept.objectquery.testobjects.Library object at 0x...>,
-     <gocept.objectquery.testobjects.Person object at 0x...>,
-     <gocept.objectquery.testobjects.Person object at 0x...>,
-     <gocept.objectquery.testobjects.Person object at 0x...>,
-     <gocept.objectquery.testobjects.Person object at 0x...>]
+    [<gocept.objectquery.tests.objects.Library object at 0x...>,
+     <gocept.objectquery.tests.objects.Person object at 0x...>,
+     <gocept.objectquery.tests.objects.Person object at 0x...>,
+     <gocept.objectquery.tests.objects.Person object at 0x...>,
+     <gocept.objectquery.tests.objects.Person object at 0x...>]
 
     >>> r = query('(/PersistentList/Library)|(Book[@written=1990])')
     >>> len(r)
     4
     >>> pprint(sorted(elem for elem in r))
-    [<gocept.objectquery.testobjects.Book object at 0x...>,
-     <gocept.objectquery.testobjects.Library object at 0x...>,
-     <gocept.objectquery.testobjects.Library object at 0x...>,
-     <gocept.objectquery.testobjects.Library object at 0x...>]
+    [<gocept.objectquery.tests.objects.Book object at 0x...>,
+     <gocept.objectquery.tests.objects.Library object at 0x...>,
+     <gocept.objectquery.tests.objects.Library object at 0x...>,
+     <gocept.objectquery.tests.objects.Library object at 0x...>]
 
     >>> transaction.commit()
 

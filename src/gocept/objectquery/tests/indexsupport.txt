@@ -26,7 +26,7 @@ The class index is responsible to index the class of object instances.
 
 We can index everything persistent:
 
-    >>> from gocept.objectquery.testobjects import Library, Person, Book
+    >>> from gocept.objectquery.tests.objects import Library, Person, Book
     >>> dbroot['1'] = library = Library('Halle')
     >>> dbroot['2'] = person = Person('Peter')
     >>> _ = transaction.savepoint()
@@ -57,6 +57,23 @@ It is also possible to query for class relationships:
    >>> list(ci.query(object))
    ['\x00\x00\x00\x00\x00\x00\x00\x01', '\x00\x00\x00\x00\x00\x00\x00\x02']
 
+Querying for classes from another module:
+
+    >>> import gocept.objectquery.tests.objects
+    >>> import gocept.objectquery.tests.objects2
+    >>> list(ci.query(gocept.objectquery.tests.objects.Library))
+    ['\x00\x00\x00\x00\x00\x00\x00\x01']
+    >>> list(ci.query(gocept.objectquery.tests.objects2.Library))
+    []
+
+    >>> dbroot['3'] = gocept.objectquery.tests.objects2.Library()
+    >>> _ = transaction.savepoint()
+    >>> ci.index(dbroot['3'])
+    >>> list(ci.query(gocept.objectquery.tests.objects2.Library))
+    ['\x00\x00\x00\x00\x00\x00\x00\x03']
+    >>> list(ci.query('Library'))
+    ['\x00\x00\x00\x00\x00\x00\x00\x01', '\x00\x00\x00\x00\x00\x00\x00\x03']
+
 Unindexing removes an object from the index:
 
     >>> ci.unindex(person)
@@ -68,7 +85,7 @@ Unindexing removes an object from the index:
 The base classes are removed, too:
 
    >>> list(ci.query(Persistent))
-   ['\x00\x00\x00\x00\x00\x00\x00\x01']
+   ['\x00\x00\x00\x00\x00\x00\x00\x01', '\x00\x00\x00\x00\x00\x00\x00\x03']
 
 
 Attribute index
@@ -108,7 +125,7 @@ Lets add some more objects to the root and index it:
 The newly added object has a path now, too:
 
     >>> list(si.get_paths(book))
-    [('\x00\x00\x00\x00\x00\x00\x00\x01', '\x00\x00\x00\x00\x00\x00\x00\x03')]
+    [('\x00\x00\x00\x00\x00\x00\x00\x01', '\x00\x00\x00\x00\x00\x00\x00\x04')]
 
 Direct parent/child relationships can be queried:
 
@@ -156,28 +173,28 @@ themselves:
     >>> list(si.get_paths(library))
     [('\x00\x00\x00\x00\x00\x00\x00\x01',),
      ('\x00\x00\x00\x00\x00\x00\x00\x01',
-      '\x00\x00\x00\x00\x00\x00\x00\x03',
+      '\x00\x00\x00\x00\x00\x00\x00\x04',
       '\x00\x00\x00\x00\x00\x00\x00\x02',
       '\x00\x00\x00\x00\x00\x00\x00\x01')]
 
     >>> list(si.get_paths(book))
     [('\x00\x00\x00\x00\x00\x00\x00\x01',
-      '\x00\x00\x00\x00\x00\x00\x00\x03'),
+      '\x00\x00\x00\x00\x00\x00\x00\x04'),
      ('\x00\x00\x00\x00\x00\x00\x00\x01',
-      '\x00\x00\x00\x00\x00\x00\x00\x03',
+      '\x00\x00\x00\x00\x00\x00\x00\x04',
       '\x00\x00\x00\x00\x00\x00\x00\x02',
       '\x00\x00\x00\x00\x00\x00\x00\x01',
-      '\x00\x00\x00\x00\x00\x00\x00\x03')]
+      '\x00\x00\x00\x00\x00\x00\x00\x04')]
 
     >>> list(si.get_paths(person))
     [('\x00\x00\x00\x00\x00\x00\x00\x01',
-      '\x00\x00\x00\x00\x00\x00\x00\x03',
+      '\x00\x00\x00\x00\x00\x00\x00\x04',
       '\x00\x00\x00\x00\x00\x00\x00\x02'),
      ('\x00\x00\x00\x00\x00\x00\x00\x01',
-      '\x00\x00\x00\x00\x00\x00\x00\x03',
+      '\x00\x00\x00\x00\x00\x00\x00\x04',
       '\x00\x00\x00\x00\x00\x00\x00\x02',
       '\x00\x00\x00\x00\x00\x00\x00\x01',
-      '\x00\x00\x00\x00\x00\x00\x00\x03',
+      '\x00\x00\x00\x00\x00\x00\x00\x04',
       '\x00\x00\x00\x00\x00\x00\x00\x02')]
 
     >>> si.is_child(library._p_oid, library._p_oid)

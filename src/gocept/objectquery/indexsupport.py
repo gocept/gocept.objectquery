@@ -58,34 +58,43 @@ class ClassIndex(OOIndex):
     zope.interface.implements(gocept.objectquery.interfaces.IClassIndex)
 
     def index(self, obj):
-        self.insert(self._get_key(obj), obj._p_oid)
+        self._insert(obj.__class__, obj._p_oid)
         self._index_bases(obj.__class__, obj._p_oid)
 
     def unindex(self, obj):
-        self.delete(self._get_key(obj), obj._p_oid)
+        self._delete(obj.__class__, obj._p_oid)
         self._unindex_bases(obj.__class__, obj._p_oid)
 
     def query(self, class_):
-        # XXX Don't allow naive strings to be passed in (#5778)
         if not isinstance(class_, str):
-            class_ = class_.__name__
+            class_ = self._get_module(class_)
         return self.get(class_)
+
+    def _insert(self, class_, oid):
+        """Index the class name and the module."""
+        self.insert(self._get_name(class_), oid)
+        self.insert(self._get_module(class_), oid)
+
+    def _delete(self, class_, oid):
+        """Unindex the class name and the module."""
+        self.delete(self._get_name(class_), oid)
+        self.delete(self._get_module(class_), oid)
 
     def _index_bases(self, class_, oid):
         for base in class_.__bases__:
-            self.insert(self._get_name(base), oid)
+            self._insert(base, oid)
             self._index_bases(base, oid)
 
     def _unindex_bases(self, class_, oid):
         for base in class_.__bases__:
-            self.delete(self._get_name(base), oid)
+            self._delete(base, oid)
             self._unindex_bases(base, oid)
 
     def _get_name(self, class_):
         return class_.__name__
 
-    def _get_key(self, obj):
-        return self._get_name(obj.__class__)
+    def _get_module(self, class_):
+        return '%s.%s' % (class_.__module__, class_.__name__)
 
 
 class AttributeIndex(OOIndex):

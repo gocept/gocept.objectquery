@@ -28,7 +28,7 @@ setup(
     description='A framework for indexing and querying the ZODB',
     long_description = (read('README.txt')
                          + '\n\n' +
-                         read('src', 'gocept', 'objectquery',
+                         read('src', 'gocept', 'objectquery', 'tests',
                              'processor.txt')
                          + '\n\n' +
                          read('CHANGES.txt')
