@@ -42,6 +42,20 @@ More Pathjoins work like a tree, where the leaves are the elements:
     ['EEJOIN', ['EEJOIN', ('ELEM', 'foo'), ('ELEM', 'bar')], ('ELEM', 'bou')]
 
 
+Elements may contains alphanumeric characters, the underscore `_` or a dot `.`:
+
+    >>> p.parse('/foo_bar')
+    ['EEJOIN', None, ('ELEM', 'foo_bar')]
+
+    >>> p.parse('/foo.bar')
+    ['EEJOIN', None, ('ELEM', 'foo.bar')]
+
+    >>> p.parse('/foo&bar')
+    Traceback (most recent call last):
+    ...
+    SyntaxError: ...
+
+
 Query for occurrences
 =====================
 
@@ -144,13 +158,6 @@ A really big example with everything possible included:
 
     >>> p.parse('(E1/E2)*/E3/((E4[@A="v"])|(E5/_*/E6))')
     ['EEJOIN', ['EEJOIN', ['KCJOIN', '*', ['PREC', ['EEJOIN', ('ELEM', 'E1'), ('ELEM', 'E2')]]], ('ELEM', 'E3')], ['PREC', ['UNION', ['PREC', ['EAJOIN', ['ATTR', ('A', 'v', '=')], ('ELEM', 'E4')]], ['PREC', ['EEJOIN', ('ELEM', 'E5'), '/_*/', ('ELEM', 'E6')]]]]]
-
-Specify a *way* through the graph with .way:
-
-    >>> p.parse('/foo.next_elem')
-    ['EEJOIN', None, ['PWJOIN', ('ELEM', 'foo'), ('WAY', 'next_elem')]]
-    >>> p.parse('(foo/bar.next)|(boo.next/far)')
-    ['UNION', ['PREC', ['EEJOIN', ('ELEM', 'foo'), ['PWJOIN', ('ELEM', 'bar'), ('WAY', 'next')]]], ['PREC', ['EEJOIN', ['PWJOIN', ('ELEM', 'boo'), ('WAY', 'next')], ('ELEM', 'far')]]]
 
 
 Some queries with a wrong syntax

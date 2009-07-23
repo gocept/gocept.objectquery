@@ -16,13 +16,12 @@ class RPEQueryParser(object):
         bracket         := open_bracket, rpe+, close_bracket
         normal          := PATH_SEPARATOR?, pathelem,
                            (PATH_SEPARATOR, pathelem)*
-        pathelem        := (WILDCARD / ELEM), pathway?, occurence?, predicate?
+        pathelem        := (WILDCARD / ELEM), occurence?, predicate?
         predicate       := PREDICATE_BEGIN, ID, COMPARER, ATTRVALUE, PREDICATE_END
         occurence       := OCC_NONE_OR_ONE / OCC_ONE_OR_MORE / OCC_MULTI
-        pathway         := '.', WAY
         WAY             := ELEM
         ID              := ELEM
-        ELEM            := [a-zA-Z0-9_]+
+        ELEM            := [a-zA-Z0-9_.]+
         ATTRVALUE       := ATTRVALUE_INT / ATTRVALUE_CHAR
         ATTRVALUE_INT   := [0-9.]+
         ATTRVALUE_CHAR  := '"', -["]*, '"'
@@ -108,9 +107,6 @@ class RPEQueryParser(object):
                 rtemp = (rtemp[0], rtemp[2], rtemp[1])
                 rtemp = ["ATTR", rtemp]
                 output = ['EAJOIN', rtemp, output]
-            elif result[0] == "pathway":
-                rtemp = self._build_queryplan(result[3], expression, [])
-                output = ['PWJOIN', output, rtemp]
             elif result[0] == "PATH_SEPARATOR":
                 seperator = expression[result[1]:result[2]]
                 if output == []:
