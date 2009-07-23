@@ -5,7 +5,7 @@ CHANGES
 0.1a3 (unreleased)
 ==================
 
-- Nothing changed yet.
+- Add support for querying for base classes of objects (#4880).
 
 
 0.1a2 (2009-06-17)
