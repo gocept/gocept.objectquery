@@ -45,11 +45,6 @@ class OOIndex(persistent.Persistent):
         """ Return True if key is present, otherwise False. """
         return key in self._index
 
-    def all(self):
-        """ Return all objects from the index. """
-        for set in self._index.values():
-            for elem in set:
-                yield elem
 
 
 class ClassIndex(OOIndex):

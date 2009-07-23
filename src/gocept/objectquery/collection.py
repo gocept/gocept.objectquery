@@ -49,11 +49,16 @@ class ObjectCollection(persistent.Persistent):
 
     def get_childs(self, elem):
         """ Return the childs for an element. """
-        return self._structureindex.index['childs'][elem]
+        return self.structure_index.index['childs'][elem]
 
     def all(self):
         """ Return all objects. """
-        return [ (elem, elem) for elem in self.class_index.all() ]
+        objects = []
+        for set in self.class_index._index.values():
+            for elem in set:
+                objects.append((elem, elem))
+        return objects
+
 
     def by_class(self, class_):
         """ Return a list of objects which match ``name``. """

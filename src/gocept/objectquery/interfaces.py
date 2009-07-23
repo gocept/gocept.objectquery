@@ -49,10 +49,6 @@ class IClassIndex(IIndex):
     def query(class_):
         """Return all objects that are instances of the given class or a subclass."""
 
-    def all():
-        """Return all objects of all classes."""
-        # XXX Move this to the collection API.
-
 
 class IAttributeIndex(IIndex):
     """Map attribute names to a list of objects with that attribute."""
@@ -73,6 +69,3 @@ class IStructureIndex(IIndex):
     def get(oid):
         """Return all paths (from the root) to the object with the given OID."""
 
-    def root():
-        """Return the root object."""
-        # XXX Move to collection
