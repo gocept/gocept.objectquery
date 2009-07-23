@@ -66,7 +66,7 @@ class ClassIndex(OOIndex):
         self._unindex_bases(obj.__class__, obj._p_oid)
 
     def query(self, class_):
-        # XXX Don't allow naive strings to be passed in
+        # XXX Don't allow naive strings to be passed in (#5778)
         if not isinstance(class_, str):
             class_ = class_.__name__
         return self.get(class_)

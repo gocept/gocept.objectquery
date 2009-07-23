@@ -130,7 +130,7 @@ class EAJoin(object):
         """
         resultlist = []
         # XXX: ToDo use a ValueIndex instead of unpickling the obj
-        # for retrieving its attribute values
+        # for retrieving its attribute values (#5779)
         for e in E:
             elem = e[1]
             if self.conn is not None:
