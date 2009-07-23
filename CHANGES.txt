@@ -2,8 +2,8 @@
 CHANGES
 =======
 
-0.1a3 (unreleased)
-==================
+0.1b (2009-07-23)
+=================
 
 - Small API refactorings (#5780)
 - Add support for querying for classes of a given module (#5778).

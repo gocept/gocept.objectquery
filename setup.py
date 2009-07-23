@@ -14,7 +14,7 @@ name = 'gocept.objectquery'
 
 setup(
     name=name,
-    version = '0.1a3dev',
+    version = '0.1b',
     url='https://intra.gocept.com/projects/projects/show/objectquery',
     license='ZPL 2.1',
     classifiers = [
