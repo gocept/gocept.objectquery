@@ -44,6 +44,7 @@ setup(
         'zope.interface',
         'zope.component',
         'ZODB3',
+        'sw.objectinspection',
     ],
     zip_safe=False,
     )

@@ -7,10 +7,10 @@ import ZODB.Connection
 import gocept.objectquery.interfaces
 import persistent
 from BTrees.OOBTree import OOBTree, OOTreeSet
-import gocept.objectquery.querysupport
+import sw.objectinspection
 
 
-parser = gocept.objectquery.querysupport.ObjectParser()
+parser = sw.objectinspection.ObjectParser()
 
 
 class OOIndex(persistent.Persistent):

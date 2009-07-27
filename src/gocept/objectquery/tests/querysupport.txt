@@ -2,67 +2,6 @@
 Using QuerySupport
 ==================
 
-ObjectParser
-============
-
-Initialization
---------------
-
-ObjectParser looks inside objects for attributes and following objects. First
-we create such an object:
-
-    >>> class Persistent(object):
-    ...     _p_oid = True
-
-    >>> class Child1(Persistent):
-    ...     pass
-    >>> class Child2(Persistent):
-    ...     pass
-    >>> class Child3(Persistent):
-    ...     pass
-    >>> class Child4(Persistent):
-    ...     misc = Child1()
-
-    >>> class ToParse(Persistent):
-    ...     some_var = ["some tupel", (Child2(), Child3())]
-    ...     other_var = {"foo": "bar"}
-    ...     _private_var = 10
-    ...     desc = Child4()
-    ...
-    ...     def some_method(self):
-    ...         pass
-
-    >>> obj = ToParse()
-
-You get an ObjectParser like this:
-
-    >>> from gocept.objectquery.querysupport import ObjectParser
-    >>> op = ObjectParser()
-    >>> op
-    <gocept.objectquery.querysupport.ObjectParser object at 0x...>
-
-
-To get all found attributes, use the get_attributes() method:
-
-    >>> attributes = op.get_attributes(obj)
-    >>> attributes
-    <generator object at 0x...>
-    >>> sorted(list(attributes))
-    ['desc', 'other_var', 'some_var']
-
-To get all descendants, use the appropriate method. Note, that Child1 is not
-part of the results because its a descendant of Child4:
-
-    >>> descendants = op.get_descendants(obj)
-    >>> descendants
-    <generator object at 0x...>
-    >>> r = list(descendants)
-    >>> sorted(r)
-    [<Child2 object at 0x...>, <Child3 object at 0x...>, <Child4 object at 0x...>]
-    >>> len(r)
-    3
-
-
 EEJoin
 ======
 

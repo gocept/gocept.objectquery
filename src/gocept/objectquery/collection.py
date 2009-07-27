@@ -4,8 +4,8 @@
 import persistent
 from gocept.objectquery.indexsupport import ClassIndex, AttributeIndex,\
     StructureIndex
-from gocept.objectquery.querysupport import EEJoin, EAJoin,\
-    KCJoin, Union, ObjectParser
+from gocept.objectquery.querysupport import EEJoin, EAJoin, KCJoin, Union
+from sw.objectinspection import ObjectParser
 from zope.interface import implements
 from gocept.objectquery.interfaces import IObjectCollection
 
