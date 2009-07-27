@@ -14,19 +14,25 @@ parser = gocept.objectquery.querysupport.ObjectParser()
 
 
 class OOIndex(persistent.Persistent):
+    """Base class for the Class-, Attribute- and StructureIndex.
+    
+    Stores the values for a key in a BTrees.OOBTree.OOTreeSet.
+    """
 
     def __init__(self):
-        """ """
         self._index = OOBTree()
 
     def insert(self, key, value):
-        """ Insert value under key into the index. """
+        "Insert value under key."
         if not self._index.has_key(key):
             self._index[key] = OOTreeSet()
         self._index[key].insert(value)
 
     def delete(self, key, value):
-        """ Delete value from key. """
+        """Delete value from key.
+        
+        If no value is left after deletion, key is deleted from the index.
+        """
         if not self._index.has_key(key):
             return
         if value not in self._index[key]:
@@ -36,23 +42,37 @@ class OOIndex(persistent.Persistent):
             del self._index[key]
 
     def get(self, key):
-        """ Get the set for a given key. """
+        "Return the OOTreeSet for a given key."
         if self.has_key(key):
+            # XXX: why yield?!?!
             for item in self._index[key]:
                 yield item
 
     def has_key(self, key):
-        """ Return True if key is present, otherwise False. """
+        "Check if index has values for key."
         return key in self._index
 
 
-
 class ClassIndex(OOIndex):
-    """Map class names to objects."""
+    """Map class names to oids.
+
+    The ClassIndex is used to find all objects which are of the same type.
+    Both the classname of the objects type and the classname of its base
+    classes are indexed.
+
+    To find objects, either the classname or a full module with classname must
+    be provided.
+    """
 
     zope.interface.implements(gocept.objectquery.interfaces.IClassIndex)
 
     def index(self, obj):
+        """Index the `obj`.
+
+        Save it under the name of the objects class and under the module +
+        classname. 
+        """
+
         self._insert(obj.__class__, obj._p_oid)
         self._index_bases(obj.__class__, obj._p_oid)
 
