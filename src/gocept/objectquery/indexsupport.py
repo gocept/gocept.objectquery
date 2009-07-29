@@ -7,10 +7,7 @@ import ZODB.Connection
 import gocept.objectquery.interfaces
 import persistent
 from BTrees.OOBTree import OOBTree, OOTreeSet
-import sw.objectinspection
-
-
-parser = sw.objectinspection.ObjectParser()
+from sw.objectinspection import IAttributesInspector, IChildrenInspector
 
 
 class OOIndex(persistent.Persistent):
@@ -117,7 +114,7 @@ class AttributeIndex(OOIndex):
     zope.interface.implements(gocept.objectquery.interfaces.IAttributeIndex)
 
     def index(self, obj):
-        for attr in parser.get_attributes(obj):
+        for attr in IAttributesInspector(obj)():
             self.insert(attr, obj._p_oid)
 
     def unindex(self, obj):
@@ -218,7 +215,7 @@ class StructureIndex(persistent.Persistent):
     def index(self, obj):
         recursive_unindex = []
         child_paths = []
-        for child in parser.get_descendants(obj):
+        for child in IChildrenInspector(obj)():
             new_paths = self.insert(obj, child)
             loops = [path for path in new_paths if overlong_loop(path)]
             if not loops:

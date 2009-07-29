@@ -5,11 +5,10 @@ import persistent
 from gocept.objectquery.indexsupport import ClassIndex, AttributeIndex,\
     StructureIndex
 from gocept.objectquery.querysupport import EEJoin, EAJoin, KCJoin, Union
-from sw.objectinspection import ObjectParser
+from sw.objectinspection import IAttributesInspector, IChildrenInspector
 from zope.interface import implements
 from gocept.objectquery.interfaces import IObjectCollection
 
-parser = ObjectParser()
 
 class ObjectCollection(persistent.Persistent):
     """ObjectCollection provides functionality to QueryProcessor.
@@ -40,7 +39,7 @@ class ObjectCollection(persistent.Persistent):
 
     def rindex(self, obj):
         self.index(obj)
-        for child in parser.get_descendants(obj):
+        for child in IChildrenInspector(obj)():
             self.rindex(child)
 
     def get_parents(self, elem):
