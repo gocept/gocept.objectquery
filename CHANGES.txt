@@ -6,7 +6,9 @@ CHANGES
 0.1b1 (unreleased)
 ==================
 
-- nothing changed yet.
+- Use sw.objectinspection instead of `ObjectParser` to inspect objects for
+  attributes and children. This brings much more flexibility in inspecting
+  custom objects.
 
 
 0.1b (2009-07-23)
