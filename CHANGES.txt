@@ -6,6 +6,7 @@ CHANGES
 0.1b1 (unreleased)
 ==================
 
+- Add support for windows by adding a SimpleParse egg.
 - Use sw.objectinspection instead of `ObjectParser` to inspect objects for
   attributes and children. This brings much more flexibility in inspecting
   custom objects.
