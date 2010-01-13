@@ -6,7 +6,7 @@ CHANGES
 0.1b2 (unreleased)
 ==================
 
-- Nothing changed yet.
+- Add newest SimpleParse version, upgrade to Python 2.5.
 
 
 0.1b1 (2009-08-13)

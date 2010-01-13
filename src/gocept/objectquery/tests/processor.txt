@@ -113,7 +113,7 @@ Search for all Books, that have are located in Halle and have been written in
 
     >>> r = query('/PersistentList/Library[@location="Halle"]/Book[@written==2007]')
     >>> sorted((elem.title, elem.isbn) for elem in r)
-    [('Web Component Development with Zope 3', 3540338071L)]
+    [('Web Component Development with Zope 3', 3540338071)]
 
 Handle Wildcards correctly:
 

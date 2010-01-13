@@ -12,7 +12,7 @@ from sw.objectinspection import IAttributesInspector, IChildrenInspector
 
 class OOIndex(persistent.Persistent):
     """Base class for the Class-, Attribute- and StructureIndex.
-    
+
     Stores the values for a key in a BTrees.OOBTree.OOTreeSet.
     """
 

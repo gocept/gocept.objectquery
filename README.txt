@@ -4,7 +4,7 @@ ObjectQuery
 
 ObjectQuery is licensed under ZPL 2.1.
 
-Copyright 2007-2009 by `gocept gmbh & co. kg`_.
+Copyright 2007-2010 by `gocept gmbh & co. kg`_.
 
 ObjectQuery enables you to query for persistent objects (e.g. objects in the
 ZODB). This is done with a XPath-like language named Regular Path Expressions
