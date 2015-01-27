@@ -15,7 +15,7 @@ name = 'gocept.objectquery'
 setup(
     name=name,
     version = '0.1b2dev',
-    url='https://intra.gocept.com/projects/projects/show/objectquery',
+    url='https://bitbucket.org/gocept/gocept.objectquery/',
     license='ZPL 2.1',
     classifiers = [
         'Intended Audience :: Developers',

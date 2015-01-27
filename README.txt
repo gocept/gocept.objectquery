@@ -13,8 +13,8 @@ ZODB). This is done with a XPath-like language named Regular Path Expressions
 It uses SimpleParse_ to parse the RPE-query.
 
 
-Please report bugs to `gocept project portal`_.
+Please report bugs to `bitbucket`_.
 
 .. _gocept gmbh & co. kg: http://www.gocept.com/
-.. _gocept project portal: https://intra.gocept.com/projects/projects/show/objectquery
+.. _bitbucket: https://bitbucket.org/gocept/gocept.objectquery/issues
 .. _SimpleParse: http://pypi.python.org/pypi/SimpleParse/
