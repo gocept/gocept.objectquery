@@ -1,0 +1,9 @@
+syntax: glob
+develop-eggs
+eggs
+bin
+parts
+.installed.cfg
+tags
+TAGS
+
